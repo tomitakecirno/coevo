@@ -33,25 +33,15 @@ typedef struct{
 	int draw;
 	int eval;
 	int nitch; /*0...所属ニッチなし 1~...所属しているニッチ番号*/
-	int obj[No+1];
-	double dis[No+1];
+	int obj[No];
+	double dis[No];
 	int Neigh_List2[K];
 }Indiv;
-typedef struct{
-	double n[DEM];
-	int flag;
-	int win;
-	int lose;
-	int draw;
-	int eval;
-	int nitch; /*0...所属ニッチなし 1~...所属しているニッチ番号*/
-	int obj[No+1];
-	double dis[No+1];
-	int Neigh_List2[K];
-}Sub_Indiv;
+Opponent[No];
 
 int end_flag = 1;
 int true_flag = 1;
+int while_flag = 1;
 int count_nitch=1;
 int opponent_number = No;
 
