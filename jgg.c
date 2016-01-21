@@ -57,10 +57,11 @@ void sort_eval(Indiv pare[],int N);
 void sort_distance(Indiv pare[],int N);
 double GetRand32(double pGetMax);
 void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window);
-void Init_Opponent(Indiv Opponent[]);
+void Set_Nitch(int i);
+void Init_Opponent(void);
 double cal_distance(double a_x,double a_y,double b_x,double b_y);
 void Prot_Frame(SDL_Surface *window);
-void Opponent_Prot(Indiv Opponent[],SDL_Surface *window);
+void Opponent_Prot(SDL_Surface *window);
 void Unit_Prot(Indiv pop[],SDL_Surface *window,int N);
 
 /***********
@@ -73,7 +74,6 @@ main(){
 	Indiv pare[Np]; /*親集団配列*/
 	Indiv child[Nc]; /*子集団配列*/
 	Indiv surv[Np]; /*残される子を入れておく*/
-	Indiv Opponent[No+1]; /*敵集団の配列*/
 	
 	int i,j,k; /*for文用*/
 
@@ -81,21 +81,7 @@ main(){
 	Init_Indiv(pop,Ns); /*解集団構造体初期化*/
 	Init_Indiv(pare,Np); /*親集団構造体初期化*/
 	Init_Indiv(child,Nc); /*子集団構造体初期化*/
-	Init_Opponent(Opponent); /*相手集団構造体初期化*/
-	/*
-	printf("Init後\n");
-	for(i=0;i<No;i++){
-		for(j=0;j<DEM;j++){
-			printf("Opponent[%d].n[%d] = %f\n",i,j,Opponent[i].n[j]);
-		}
-		printf("Opponent[%d].nitch = %d\n",i,Opponent[i].nitch);
-		for(j=0;j<No;j++){
-			printf("Opponent[%d].obj[%d] = %d\n",i,j,Opponent[i].obj[j]);
-			printf("Opponent[%d].dis[%d] = %f\n",i,j,Opponent[i].dis[j]);
-		}
-		putchar('\n');
-	}
-	*/
+	Init_Opponent(); /*相手集団構造体初期化*/
 	/*SDL初期化*/
 	SDL_Surface *window; // ウィンドウ（画像）データ、及び、文字列（画像）へのポインタ
 	SDL_Event event;
@@ -152,7 +138,7 @@ main(){
 		/*RexStarにより子個体を生成*/
 		RexStar(pare,child,window);
 		/*子個体を相手集団と戦わせる*/
-		Numbers(child,Opponent);
+		Numbers(child);
 		/*評価の良い順にソート*/
 		sort_eval(child,Nc);
 		/*子個体の最良Np個を初期集団へ（世代交代）*/
@@ -162,39 +148,16 @@ main(){
 			for(j=0;pop[j].flag != 1;j++){}
 			pop[j] = child[i];
 		}
-		/*update入る前*/
-		/*子集団の全勝個体を相手集団へ*/
-		/*
-		printf("Update入る前\n");
-		for(i=0;i<No;i++){
-			for(j=0;j<DEM;j++){
-				printf("Opponent[%d].n[%d] = %f\n",i,j,Opponent[i].n[j]);
-			}
-			printf("Opponent[%d].nitch = %d\n",i,Opponent[i].nitch);
-		}
-		*/
 		int win_count=0;
 		for(i=0;i<Nc;i++){
 			if(child[i].win == No){
-				Update_Opponent(child[i],Opponent);
+				Update_Opponent(child[i]);
 			}
 		}
-		/*
-		for(i=0;i<Nc;i++){
-			if(child[i].win == No)
-			Update_Opponent(child[i],Opponent);
-		}
-		*/
 		/*pop集団をプロット*/
 		Unit_Prot(pop,window,Ns);
-		for(i=0;i<No;i++){
-			for(j=0;j<DEM;j++){
-				printf("Opponent[%d].n[%d] = %f\n",i,j,Opponent[i].n[j]);
-			}
-			putchar('\n');
-		}
 		/*敵集団をプロット*/
-		Opponent_Prot(Opponent,window);
+		Opponent_Prot(window);
 		//Unit_Prot(child,window,Nc);
 		/*親集団構造体初期化*/
 		Init_Indiv(pare,Np);
@@ -259,7 +222,7 @@ void Init_Indiv(Indiv pare[],int N){
 /*********
 敵集団初期化
 *********/
-void Init_Opponent(Indiv Opponent[]){
+void Init_Opponent(){
 	int i,j,k;
 	int obj_count;
 	int tmp_obj;
@@ -354,6 +317,105 @@ void Init_Opponent(Indiv Opponent[]){
 			count_nitch++;
 			count_nitch_flag = 0;
 		}	
+	}
+}
+
+/*****************
+再帰的にニッチを割り当てていく
+*****************/
+void Set_Nitch(int i){
+	int tmp_NeighList2; /*近傍リスト内の個体の番号を一時的に保存しておく*/
+	int j;
+	if(Opponent[i].flag != 1){
+		/*ニッチに属していなければニッチ番号を割り振る*/
+		Opponent[i].nitch = count_nitch;
+		Opponent[i].flag = 1;
+			/*近傍リストを見ていく*/
+		for(j=0;j<K;j++){
+			tmp_NeighList2 = Opponent[i].Neigh_List2[j];
+			Set_Nitch(tmp_NeighList2);
+		}
+	}
+}
+/********************
+近傍リストを作る
+********************/
+void NeighList_Opponent(void)
+{
+	int i,j,k;
+	int obj_count;
+	for(i=0;i<No;i++){
+		Opponent[i].flag = 0;
+		if(i == No)
+		Opponent[No].flag = -1;
+		Opponent[i].win = 0;
+		Opponent[i].lose = 0;
+		Opponent[i].draw = 0;
+		Opponent[i].eval = 0;
+		Opponent[i].nitch = 0;
+		for(j=0;j<K;j++){
+			Opponent[i].Neigh_List2[j] = -1; /*実数値乱数*/
+		}
+	}
+	/*自身以外の個体との距離を総当たりで計測*/
+	for(i=0;i<No;i++){
+		obj_count=i; /*カウント初期化*/
+		for(j=i+1;j<No;j++){
+			Opponent[i].obj[obj_count] = j; /*配列の一番目に相手の番号を入れる*/
+			Opponent[j].obj[i] = i;
+			Opponent[i].dis[obj_count] = cal_distance(Opponent[i].n[0],
+							Opponent[i].n[1],
+							Opponent[j].n[0],
+							Opponent[j].n[1]);
+			Opponent[j].dis[i] = Opponent[i].dis[obj_count];
+			obj_count++;
+		}
+	}
+	/*近い順に並べ替え*/
+	for(i=0;i<No;i++){
+		for(j=0;j<No-2;j++){
+			for(k=No-2;k>j;k--){
+				/* 前の要素の方が大きかったら*/
+				if(Opponent[i].dis[k-1]>Opponent[i].dis[k]){
+					/*相手番号を並べ替え*/
+					tmp_obj = Opponent[i].obj[k];
+					Opponent[i].obj[k] = Opponent[i].obj[k-1];
+					Opponent[i].obj[k-1] = tmp_obj;
+					/*距離を並べ替えを並べ替え*/
+					tmp_dis = Opponent[i].dis[k];
+					Opponent[i].dis[k] = Opponent[i].dis[k-1];
+					Opponent[i].dis[k-1] = tmp_dis;
+				}
+			}
+		}
+	}
+	/*近傍リスト2生成*/
+	int save_obj;
+	int count_nitch_flag = 0;
+	for(i=0;i<No;i++){
+		obj_count=0; /*近傍リストをカウント*/
+		/*近傍リストを作る個体の近傍をＫ番目まで見る*/
+		for(j=0;j<K;j++){
+			save_obj = Opponent[i].obj[j];
+			/*近傍Ｋ番目までの個体の近傍にiが存在すればリストに加える*/
+			for(k=0;k<K;k++){
+				if(i == Opponent[save_obj].obj[k]){
+					Opponent[i].Neigh_List2[obj_count] = Opponent[i].obj[j];
+					obj_count++;
+				}
+			}
+		}
+	}
+	/*ニッチ番号を割り振る*/
+	count_nitch=1; /*ニッチ番号を初期化*/
+	for(i=0;i<No;i++){
+		if(Opponent[i].flag != 1){
+			Set_Nitch(i);
+			count_nitch++;
+		}
+	}
+	for(i=0;i<No;i++){
+		Opponent[i].flag = 0;
 	}
 }
 
@@ -587,16 +649,6 @@ void OneOnOne_Numbers(Indiv pare[],int N)
 	double base_fabs;
 	double save_fabs;
 	/*絶対値が一番小さいパラメータを求める*/
-	/*
-	printf("１個体目\n");
-	for(j=0;j<DEM;j++){
-		printf("pare.n[%d] = %f\n",j,pare.n[j]);
-	}
-	printf("2個体目\n");
-	for(j=0;j<DEM;j++){
-		printf("pare2.n[%d] = %f\n",j,pare2.n[j]);
-	}
-	*/
 	for(i=0;i<N;i++){
 		for(j=i+1;j<N;j++){
 			base_fabs = fabs(pare[i].n[0] - pare[j].n[0]);
@@ -663,180 +715,41 @@ void Pare_Numbers(Indiv pare[])
 /*************
 相手集団を更新
 *************/
-Update_Opponent(Indiv child, Indiv Opponent[])
+Update_Opponent(Indiv child)
 {
-	int tmp_obj;
-	double tmp_dis;
 	int i,j,k;
 	int obj_count;
-	Indiv sub_Opponent[No+1];
-	int save_tag[10];
-	/*sub_opponentに相手集団と子個体を追加*/
-	for(i=0;i<No+1;i++){
-		for(j=0;j<DEM;j++){
-			if(i == No){
-				sub_Opponent[i].n[j] = child.n[j];
-			}else {
-				sub_Opponent[i].n[j] = Opponent[i].n[j];
-			}
-		}
-		sub_Opponent[i].flag = 0;
-		sub_Opponent[i].win = 0;
-		sub_Opponent[i].lose = 0;
-		sub_Opponent[i].draw = 0;
-		sub_Opponent[i].eval = 0;
-		sub_Opponent[i].nitch = Opponent[i].nitch;
-	}
-	/*自身以外の個体との距離を総当たりで計測*/
-	for(i=0;i<No+1;i++){
-		obj_count=i; /*カウント初期化*/
-		for(j=i+1;j<No+1;j++){
-			sub_Opponent[i].obj[obj_count] = j; /*配列の一番目に相手の番号を入れる*/
-			sub_Opponent[j].obj[i] = i;
-			sub_Opponent[i].dis[obj_count] = cal_distance(Opponent[i].n[0],
-							Opponent[i].n[1],
-							Opponent[j].n[0],
-							Opponent[j].n[1]);
-			sub_Opponent[j].dis[i] = sub_Opponent[i].dis[obj_count];
-			obj_count++;
-		}
-	}
-	/*sub_opponentの各要素を並べ替え*/
-	for(i=0;i<No+1;i++){
-		for(j=0;j<No+1-2;j++){
-			for(k=No+1-2;k>j;k--){
-				/* 前の要素の方が大きかったら*/
-				if(sub_Opponent[i].dis[k-1]>sub_Opponent[i].dis[k]){
-					/*相手番号を並べ替え*/
-					tmp_obj = sub_Opponent[i].obj[k];
-					sub_Opponent[i].obj[k] = sub_Opponent[i].obj[k-1];
-					sub_Opponent[i].obj[k-1] = tmp_obj;
-					/*距離を並べ替えを並べ替え*/
-					tmp_dis = sub_Opponent[i].dis[k];
-					sub_Opponent[i].dis[k] = sub_Opponent[i].dis[k-1];
-					sub_Opponent[i].dis[k-1] = tmp_dis;
-				}
-			}
-		}
-	}
-	int save_obj;
-	int count_nitch_flag = 0;
-	obj_count=0;
-	for(i=0;i<No+1;i++){
-		obj_count=0; /*近傍リストをカウント*/
-		/*近傍リストを作る個体の近傍をＫ番目まで見る*/
-		for(j=0;j<K;j++){
-			save_obj = sub_Opponent[i].obj[j];
-			/*近傍Ｋ番目までの個体の近傍にiが存在すればリストに加える*/
-			for(k=0;k<K;k++){
-				if(i == sub_Opponent[save_obj].obj[k]){
-					sub_Opponent[i].Neigh_List2[obj_count] = sub_Opponent[i].obj[j];
-					obj_count++;
-				}
-			}
-		}
-		for(j=obj_count;j<=K;j++){
-			sub_Opponent[i].Neigh_List2[j] = -1;
-		}
-	}
-	/*入れる予定のニッチを取得*/
-	int forecast_nitch=0;
-	int add_nitch_count=0;
-	int add_flag = 0;
-	save_obj=0;
-	/*childの近傍リストに個体がないかどうかを確かめる*/
-	for(i=0;i<K;i++){
-		if(sub_Opponent[No].Neigh_List2[i]!=-1){
-			add_flag = 1;
-			save_obj = sub_Opponent[No].Neigh_List2[i];
-			forecast_nitch = sub_Opponent[save_obj].nitch;
-		}
-		break;
-	}
-	sub_Opponent[No].nitch = forecast_nitch;
-	printf("追加予定のニッチ:%d\n",forecast_nitch);
+	double min_dis;
+	double tmp_dis;
+
+	/*距離が最小の個体を見つけて、ニッチ番号を取得*/
+	min_indiv = 0;
+	min_dis = cal_distance(Opponent[min_indiv].n[0],Opponent[min_indiv].n[1],
+			       child.n[0],child.n[1]);
 	for(i=0;i<No;i++){
-		if(sub_Opponent[i].nitch == forecast_nitch){
-		printf("atai\n");
-			add_nitch_count++;
+		if(cal_distance(Opponent[i].n[0],Opponent[i].n[1],
+		   child.n[0],child.n[1]) < min_dis){
+		   	min_dis = cal_distance(Opponent[i].n[0],Opponent[i].n[1],
+		   				child.n[0],child.n[1]);
+		   	child.nitch = Opponent[i].nitch;
 		}
 	}
-	/*
-	for(j=0;j<DEM;j++){
-		printf("sub_Opponent[%d].n[%d] = %f\n",No,j,sub_Opponent[No].n[j]);
-	}
-	*/
-	//printf("sub_Opponent[%d].win = %f\n",No,sub_Opponent[No].win);
-	//printf("sub_Opponent[%d].eval = %f\n",No,sub_Opponent[No].eval);
-	//putchar('\n');
-	//printf("アドフラグ = %d\n",add_flag);
-	
-	if(add_flag == 1 && add_nitch_count){
-		/*追加予定のニッチの個体数を取得*/
-		printf("ニッチ内の個体数:%d\n",add_nitch_count);
-		/*子個体枠を追加*/
-		add_nitch_count++;
-		/*ニッチ内の個体＋子個体を入れて対戦するための構造体を定義*/
-		Indiv battle_Opponent[add_nitch_count];
-		for(i=0;i<add_nitch_count;i++){
-			for(j=0;sub_Opponent[j].nitch!=forecast_nitch;j++){}
-				battle_Opponent[i] = sub_Opponent[j];
-				sub_Opponent[j].nitch = -1;
-				sub_Opponent[j].flag = 1;
-		}
-		/*ナンバーズで競争*/
-		OneOnOne_Numbers(battle_Opponent,add_nitch_count);
-		/*評価値の良い順に並び替え*/
-		sort_eval(battle_Opponent,add_nitch_count);
-		/*
-		printf("ソート後\n");
-		for(i=0;i<add_nitch_count;i++){
-			for(j=0;j<DEM;j++){
-				printf("battle_Opponent[%d].n[%d] = %f\n",i,j,battle_Opponent[i].n[j]);
-			}
-			printf("battle_Opponent[%d].win = %d\n",i,battle_Opponent[i].win);
-			printf("battle_Opponent[%d].eval = %d\n",i,battle_Opponent[i].eval);
-			putchar('\n');
 
-		}
-		*/
-		/*battle内の個体をサブに戻す*/
-		for(i=0;i<add_nitch_count;i++){
-			for(j=0;sub_Opponent[j].flag!=1;j++){}
-			sub_Opponent[j] = battle_Opponent[i];
-			sub_Opponent[j].flag = 0;
-		}
-		/*
-		printf("戻す後\n");
-		for(i=0;i<No+1;i++){
-			for(j=0;j<DEM;j++){
-				printf("sub_Opponent[%d].n[%d] = %f\n",i,j,sub_Opponent[i].n[j]);
-			}
-			printf("sub_Opponent[%d].flag = %d\n",i,sub_Opponent[i].flag);
-			putchar('\n');
-
-		}
-		*/
-
-	}
-	/*sub内の個体を元の相手集団に戻す*/
+	/*戦闘データ初期化して、対戦させる*/
 	for(i=0;i<No;i++){
-		Opponent[i] = sub_Opponent[i];
-	}
-	/*
-		printf("戻す後\n");
-		for(i=0;i<No+1;i++){
-			for(j=0;j<DEM;j++){
-				printf("Opponent[%d].n[%d] = %f\n",i,j,Opponent[i].n[j]);
-			}
-			printf("Opponent[%d].flag = %d\n",i,Opponent[i].flag);
-			printf("Opponent[%d].eval = %d\n",i,Opponent[i].eval);
-			printf("Opponent[%d].nitch = %d\n",i,Opponent[i].nitch);
-			putchar('\n');
-
+		if(Opponent[i].nitch == child.nitch){
+			Opponent[i].win = 0;
+			Opponent[i].lose = 0;
+			Opponent[i].draw = 0;
+			Opponent[i].eval = 0;
 		}
-		*/
+	}
+	/*対戦させる*/
 
+	/*評価値の最小個体を求める*/
+	/*最小個体の位置に子個体を入れる*/
+
+	/*ニッチ番号初期化*/
 }
 
 
@@ -891,7 +804,7 @@ void Prot_Frame(SDL_Surface *window)
 /***************
 敵集団をプロット
 ***************/
-void Opponent_Prot(Indiv Opponent[],SDL_Surface *window)
+void Opponent_Prot(SDL_Surface *window)
 {
 	int i;
 	char tmp_n[5];
