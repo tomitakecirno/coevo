@@ -38,13 +38,12 @@ typedef struct{
 	double dis[No];
 	int Neigh_List2[K];
 }Indiv;
-Opponent[No];
+Indiv Opponent[No];
 
 int end_flag = 1;
 int true_flag = 1;
 int while_flag = 1;
 int count_nitch=1;
-int opponent_number = No;
 
 
 void Init_Indiv(Indiv pare[],int N);
@@ -55,7 +54,6 @@ void select_child(int optimal,int child[],int surv[]);
 
 void Child_Opponent_Numbers(Indiv child[],Indiv Opponent[]); /*子個体と相手集団を戦わせる*/
 void Pare_Numbers(Indiv pare[]); /*REXstar内で扱う*/
-void OneOnOne_Numbers(Indiv pare[],int N); /**/
 int Numbers(Indiv one,Indiv another);
 
 void sort_eval(Indiv pare[],int N);
@@ -145,7 +143,7 @@ main(){
 		/*RexStarにより子個体を生成*/
 		RexStar(pare,child,window);
 		/*子個体を相手集団と戦わせる*/
-		Numbers(child);
+		Child_Opponent_Numbers(child,Opponent);
 		/*評価の良い順にソート*/
 		sort_eval(child,Nc);
 		/*子個体の最良Np個を初期集団へ（世代交代）*/
@@ -303,6 +301,7 @@ void Init_Opponent(){
 					/*まだニッチに所属していなければニッチの番号を加える*/
 					if(Opponent[i].nitch == 0){
 						Opponent[i].nitch = count_nitch;
+
 						count_nitch_flag = 1;
 					}
 					if(Opponent[save_obj].nitch == 0){
@@ -351,6 +350,8 @@ void NeighList_Opponent(void)
 {
 	int i,j,k;
 	int obj_count;
+	int tmp_obj;
+	int tmp_dis;
 	for(i=0;i<No;i++){
 		Opponent[i].flag = 0;
 		if(i == No)
@@ -602,49 +603,25 @@ void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window)
 *********/
 void Child_Opponent_Numbers(Indiv child[],Indiv Opponent[])
 {
-	int i,j,k;
-	int base = 0; /*ナンバーズを行うパラメータを決定*/
-	double base_fabs;
-	double save_fabs;
+	int i,j;
 	/*絶対値が一番小さいパラメータを求める*/
 	for(i=0;i<Nc;i++){
 		for(j=0;j<No;j++){
-			base_fabs = fabs(child[i].n[0] - Opponent[j].n[0]);
-			base = 0;
-			for(k=1;k<DEM;k++){
-				if((save_fabs = fabs(child[i].n[0] - Opponent[j].n[0])) < base_fabs){
-					base_fabs = save_fabs;
-					base = k;
-				}
-			}
-			if(child[i].n[base]<Opponent[j].n[base]){
-				child[j].win += 1;
-				Opponent[i].lose += 1;
-			}else if(child[i].n[base] > pare2[j].n[base]){
-				pare[i].win += 1;
-				pare2[j].lose += 1;
-			}else if(pare[i].n[base] = pare2[j].n[base]){
-				pare[i].draw += 1;
-				pare2[j].draw += 1;
+			if(Numbers(child[i],Opponent[j]) == 0){
+				child[i].win += 1;
+				Opponent[j].lose += 1;
+			}else {
+				child[i].lose += 1;
+				Opponent[j].win += 1;				
 			}
 		}
 	}
 	for(i=0;i<Nc;i++){
-		pare[i].eval = pare[i].win+(-1)*pare[i].lose;
+		child[i].eval = child[i].win+(-1)*child[i].lose;
 	}
 	for(i=0;i<No;i++){
-		pare2[i].eval = pare2[i].win+(-1)*pare2[i].lose;
+		Opponent[i].eval = Opponent[i].win+(-1)*Opponent[i].lose;
 	}
-	/*
-	printf("子個体の勝率\n");
-	for(i=0;i<Np;i++){
-		printf("child[%d].win = %d\n",i,pare[i].win);
-		printf("child[%d].lose = %d\n",i,pare[i].lose);
-		printf("child[%d].draw = %d\n",i,pare[i].draw);
-	}
-	putchar('\n');
-	*/
-
 }
 
 /************
@@ -652,10 +629,7 @@ void Child_Opponent_Numbers(Indiv child[],Indiv Opponent[])
 ************/
 void Pare_Numbers(Indiv pare[])
 {
-	int i,j,k;
-	int base = 0; /*ナンバーズを行うパラメータを決定*/
-	double base_fabs;
-	double save_fabs;
+	int i,j;
 	/*絶対値が一番小さいパラメータを求める*/
 	for(i=0;i<Np;i++){
 		for(j=i+1;j<Np;j++){
@@ -706,6 +680,7 @@ Update_Opponent(Indiv child)
 {
 	int i,j,k;
 	int obj_count;
+	int min_indiv;
 	double min_dis;
 	double tmp_dis;
 	int nitch_indivcount = 0;
@@ -737,7 +712,7 @@ Update_Opponent(Indiv child)
 	Indiv sub_Opponent[nitch_indivcount];
 	for(i=0;i<No;i++){
 		if(Opponent[i].nitch == child.nitch){
-			sub_Opponent[obj_count] = Opponent[i].nitch;
+			sub_Opponent[obj_count].nitch = Opponent[i].nitch;
 			
 		}
 	}
