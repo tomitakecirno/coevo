@@ -74,7 +74,6 @@ void Unit_Prot(Indiv pop[],SDL_Surface *window,int N);
 メインルーチンmain
 ***********/
 main(){
-
 	/*個体を格納する配列定義*/
 	Indiv pop[Ns]; /*解集団配列*/
 	Indiv pare[Np]; /*親集団配列*/
@@ -145,9 +144,11 @@ main(){
 		RexStar(pare,child,window);
 		/*子個体を相手集団と戦わせる*/
 		Child_Opponent_Numbers(child,Opponent);
+		/*
 		for(i=0;i<Nc;i++){
 			printf("child[%d].eval = %d\n",i,child[i].eval);
 		}
+		*/
 		/*評価の良い順にソート*/
 		sort_eval(child,Nc);
 		/*子個体の最良Np個を初期集団へ（世代交代）*/
@@ -159,13 +160,11 @@ main(){
 		}
 		int win_count=0;
 		/*バグあり*/
-		for(i=0;i<Nc;i++){
-			if(child[i].win == No){
-				Update_Opponent(child[i]);
-			}
+		for(i=0;i<Np;i++){
+			Update_Opponent(child[i]);
 		}
 		/*pop集団をプロット*/
-		//Unit_Prot(pop,window,Ns);
+		Unit_Prot(pop,window,Ns);
 		/*敵集団をプロット*/
 		Opponent_Prot(window);
 		//Unit_Prot(child,window,Nc);
@@ -175,21 +174,22 @@ main(){
 		Init_Indiv(child,Nc); 
 		/*試行回数を数える*/
 		end_count++;
+		/*
 		if(end_count == END_STEP){
 			end_flag = 0;
 		}
+		*/
 		printf("end_count = %d\n",end_count);
 		printf("end_flag = %d\n",end_flag);
 		/*枠をプロット*/
 		Prot_Frame(window);
 		SDL_Flip(window); /*ウィンドウに反映*/
-		SDL_Delay(100);
+		SDL_Delay(500);
 	}
 	//printf("end_count = %d\n",end_count);
 	SDL_Quit();
 	return 0;
 }
-
 /****************
 キー入力のスレッド
 ****************/
@@ -589,16 +589,15 @@ void Pare_Numbers(Indiv pare[])
 *************/
 int Numbers(Indiv one,Indiv another)
 {
-
-	int i,j,k;
+	int k;
 	int base = 0; /*ナンバーズを行うパラメータを決定*/
 	double base_fabs;
 	/*絶対値が一番小さいパラメータを求める*/
 	base_fabs = fabs(one.n[0] - another.n[0]);
 	base = 0;
 	for(k=1;k<DEM;k++){
-		if(fabs(one.n[i] - another.n[i]) < base_fabs){
-			base_fabs = fabs(one.n[i] - another.n[i]);
+		if(fabs(one.n[k] - another.n[k]) < base_fabs){
+			base_fabs = fabs(one.n[k] - another.n[k]);
 			base = k;
 		}
 	}
