@@ -1,4 +1,3 @@
-
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
@@ -7,14 +6,14 @@
 #include <SDL/SDL_gfxPrimitives.h>
 #include"./header/MT.h"
 
-#define INIT		10	/*解集団の初期化範囲*/
-#define INIT_OPPOMEMT	50	/*敵集団の初期化範囲*/
+#define INIT		100	/*解集団の初期化範囲*/
+#define INIT_OPPOMEMT	100	/*敵集団の初期化範囲*/
 #define LIMIT		100	/*定義域*/
 #define Y		100	/*地域*/
 #define Ns		100	/*初期集団数*/
-#define No		100	/*敵集団数*/
-#define Np		5	/*親個体数*/
-#define Nc		10	/*子個体数*/
+#define No		20	/*敵集団数*/
+#define Np		4	/*親個体数*/
+#define Nc		20	/*子個体数*/
 #define DEM		2	/*次元数*/
 #define T		1	/*ステップサイズ*/
 #define END_STEP	200	/*終わるタイミング*/
@@ -22,7 +21,7 @@
 #define WINDOW_Y	800	/*地域*/
 #define PROT_X		600	/*定義域*/
 #define PROT_Y		600	/*地域*/
-#define K		10	/*ニッチの集団数*/
+#define K		3	/*ニッチの集団数*/
 
 double center[2] = {WINDOW_X/2,WINDOW_Y/2};
 
@@ -48,6 +47,7 @@ int count_nitch=1;
 
 void Init_Indiv(Indiv pare[],int N);
 void Init_Opponent(void);
+void Init_Opponent_BattleData(void);
 
 void creat_child(int pare[],int child[]);
 void select_child(int optimal,int child[],int surv[]);
@@ -61,6 +61,7 @@ void sort_distance(Indiv pare[],int N);
 double cal_distance(double a_x,double a_y,double b_x,double b_y);
 
 void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window);
+void NeighList_Opponent(void);
 void Set_Nitch(int i);
 
 static int thread_keyboad(void *data);
@@ -144,6 +145,9 @@ main(){
 		RexStar(pare,child,window);
 		/*子個体を相手集団と戦わせる*/
 		Child_Opponent_Numbers(child,Opponent);
+		for(i=0;i<Nc;i++){
+			printf("child[%d].eval = %d\n",i,child[i].eval);
+		}
 		/*評価の良い順にソート*/
 		sort_eval(child,Nc);
 		/*子個体の最良Np個を初期集団へ（世代交代）*/
@@ -154,13 +158,15 @@ main(){
 			pop[j] = child[i];
 		}
 		int win_count=0;
+		/*バグあり*/
 		for(i=0;i<Nc;i++){
 			if(child[i].win == No){
 				Update_Opponent(child[i]);
 			}
 		}
+
 		/*pop集団をプロット*/
-		Unit_Prot(pop,window,Ns);
+		//Unit_Prot(pop,window,Ns);
 		/*敵集団をプロット*/
 		Opponent_Prot(window);
 		//Unit_Prot(child,window,Nc);
@@ -229,9 +235,6 @@ void Init_Indiv(Indiv pare[],int N){
 *********/
 void Init_Opponent(){
 	int i,j,k;
-	int obj_count;
-	int tmp_obj;
-	double tmp_dis;
 	
 	/*敵集団初期化*/
 	
@@ -239,93 +242,28 @@ void Init_Opponent(){
 		for(j=0;j<DEM;j++){
 			Opponent[i].n[j] = GetRand32(INIT_OPPOMEMT); /*実数値乱数*/
 		}
+	}
+	Init_Opponent_BattleData();
+	NeighList_Opponent();
+}
+/*******************
+敵集団の戦闘データ初期化
+*******************/
+void Init_Opponent_BattleData(void)
+{
+	int i,j;
+	for(i=0;i<No;i++){
 		Opponent[i].flag = 0;
-		if(i == No)
-		Opponent[No].flag = -1;
 		Opponent[i].win = 0;
 		Opponent[i].lose = 0;
 		Opponent[i].draw = 0;
 		Opponent[i].eval = 0;
 		Opponent[i].nitch = 0;
 		for(j=0;j<K;j++){
-			Opponent[i].Neigh_List2[j] = -1; /*実数値乱数*/
-		}
-	}
-	
-	/*自身以外の個体との距離を総当たりで計測*/
-	for(i=0;i<No;i++){
-		obj_count=i; /*カウント初期化*/
-		for(j=i+1;j<No;j++){
-			Opponent[i].obj[obj_count] = j; /*配列の一番目に相手の番号を入れる*/
-			Opponent[j].obj[i] = i;
-			Opponent[i].dis[obj_count] = cal_distance(Opponent[i].n[0],
-							Opponent[i].n[1],
-							Opponent[j].n[0],
-							Opponent[j].n[1]);
-			Opponent[j].dis[i] = Opponent[i].dis[obj_count];
-			obj_count++;
-		}
-	}
-	/*近い順に並べ替え*/
-	for(i=0;i<No;i++){
-		for(j=0;j<No-2;j++){
-			for(k=No-2;k>j;k--){
-				/* 前の要素の方が大きかったら*/
-				if(Opponent[i].dis[k-1]>Opponent[i].dis[k]){
-					/*相手番号を並べ替え*/
-					tmp_obj = Opponent[i].obj[k];
-					Opponent[i].obj[k] = Opponent[i].obj[k-1];
-					Opponent[i].obj[k-1] = tmp_obj;
-					/*距離を並べ替えを並べ替え*/
-					tmp_dis = Opponent[i].dis[k];
-					Opponent[i].dis[k] = Opponent[i].dis[k-1];
-					Opponent[i].dis[k-1] = tmp_dis;
-				}
-			}
-		}
-	}
-	/*近傍リスト2生成*/
-	int save_obj;
-	int count_nitch_flag = 0;
-	count_nitch = 1;
-	for(i=0;i<No;i++){
-		obj_count=0; /*近傍リストをカウント*/
-		/*近傍リストを作る個体の近傍をＫ番目まで見る*/
-		for(j=0;j<K;j++){
-			save_obj = Opponent[i].obj[j];
-			/*近傍Ｋ番目までの個体の近傍にiが存在すればリストに加える*/
-			for(k=0;k<K;k++){
-				if(i == Opponent[save_obj].obj[k]){ /*ミス*/
-					Opponent[i].Neigh_List2[obj_count] = Opponent[i].obj[j];
-					obj_count++;
-					/*まだニッチに所属していなければニッチの番号を加える*/
-					if(Opponent[i].nitch == 0){
-						Opponent[i].nitch = count_nitch;
-
-						count_nitch_flag = 1;
-					}
-					if(Opponent[save_obj].nitch == 0){
-						Opponent[save_obj].nitch = Opponent[i].nitch;
-						count_nitch_flag = 1;
-					}					
-				}
-			}
-		}
-		if(Opponent[i].nitch == 0){
-			Opponent[i].nitch = count_nitch;
-			count_nitch_flag = 1;
-		}
-		for(j=obj_count;j<=K;j++){
 			Opponent[i].Neigh_List2[j] = -1;
 		}
-		/*カウントを更新*/
-		if(count_nitch_flag == 1){
-			count_nitch++;
-			count_nitch_flag = 0;
-		}	
 	}
 }
-
 /*****************
 再帰的にニッチを割り当てていく
 *****************/
@@ -697,32 +635,50 @@ Update_Opponent(Indiv child)
 		   	child.nitch = Opponent[i].nitch;
 		}
 	}
-	/*戦闘データ初期化して、対戦させる*/
+	/*戦闘データ初期化*/
 	for(i=0;i<No;i++){
 		if(Opponent[i].nitch == child.nitch){
 			Opponent[i].win = 0;
 			Opponent[i].lose = 0;
 			Opponent[i].draw = 0;
 			Opponent[i].eval = 0;
+			Opponent[i].flag = 0;
 			nitch_indivcount++;
 		}
 	}
-	obj_count=0;
-	Indiv sub_Opponent[nitch_indivcount];
+	/*該当するニッチの個体を対戦させる*/
 	for(i=0;i<No;i++){
-		if(Opponent[i].nitch == child.nitch){
-			sub_Opponent[obj_count].nitch = Opponent[i].nitch;
-			
+		if(Opponent[i].nitch == child.nitch && Opponent[i].flag == 0){
+			for(j=i+1;j<No;j++){
+				if(Opponent[i].nitch == child.nitch){
+					if(Numbers(Opponent[i],Opponent[j]) == 0){
+						Opponent[i].win += 1;
+						Opponent[j].lose += 1;
+					}else {
+						Opponent[j].win += 1;
+						Opponent[i].lose += 1;
+					}
+				}
+			}
+			Opponent[i].flag = 1; /*フラグ立て*/
 		}
 	}
-	/*対戦させる*/
 	for(i=0;i<No;i++){
-
+		Opponent[i].eval = Opponent[i].win - Opponent[i].lose;
 	}
 	/*評価値の最小個体を求める*/
+	int min_eval = No;
+	for(i=0;i<No;i++){
+		if(Opponent[i].nitch == child.nitch && Opponent[i].eval < min_eval){
+			min_eval = Opponent[i].eval;
+			min_indiv = i;
+		}
+	}
 	/*最小個体の位置に子個体を入れる*/
-
-	/*ニッチ番号初期化*/
+	Opponent[min_indiv] = child;
+	/*対戦データおよびニッチ番号初期化*/
+	Init_Opponent_BattleData();
+	NeighList_Opponent();
 }
 
 
