@@ -1,3 +1,4 @@
+
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
@@ -46,20 +47,26 @@ int count_nitch=1;
 int opponent_number = No;
 
 
-static int thread_keyboad(void *data);
-void creat_child(int pare[],int child[]);
-void Numbers(Indiv pare[],Indiv pare2[]);
-void Pare_Numbers(Indiv pare[]);
-void OneOnOne_Numbers(Indiv pare[],int N);
-void select_child(int optimal,int child[],int surv[]);
 void Init_Indiv(Indiv pare[],int N);
+void Init_Opponent(void);
+
+void creat_child(int pare[],int child[]);
+void select_child(int optimal,int child[],int surv[]);
+
+void Child_Opponent_Numbers(Indiv child[],Indiv Opponent[]); /*子個体と相手集団を戦わせる*/
+void Pare_Numbers(Indiv pare[]); /*REXstar内で扱う*/
+void OneOnOne_Numbers(Indiv pare[],int N); /**/
+int Numbers(Indiv one,Indiv another);
+
 void sort_eval(Indiv pare[],int N);
 void sort_distance(Indiv pare[],int N);
-double GetRand32(double pGetMax);
+double cal_distance(double a_x,double a_y,double b_x,double b_y);
+
 void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window);
 void Set_Nitch(int i);
-void Init_Opponent(void);
-double cal_distance(double a_x,double a_y,double b_x,double b_y);
+
+static int thread_keyboad(void *data);
+double GetRand32(double pGetMax);
 void Prot_Frame(SDL_Surface *window);
 void Opponent_Prot(SDL_Surface *window);
 void Unit_Prot(Indiv pop[],SDL_Surface *window,int N);
@@ -593,7 +600,7 @@ void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window)
 /*********
 ナンバーズ
 *********/
-void Numbers(Indiv pare[],Indiv pare2[])
+void Child_Opponent_Numbers(Indiv child[],Indiv Opponent[])
 {
 	int i,j,k;
 	int base = 0; /*ナンバーズを行うパラメータを決定*/
@@ -602,18 +609,18 @@ void Numbers(Indiv pare[],Indiv pare2[])
 	/*絶対値が一番小さいパラメータを求める*/
 	for(i=0;i<Nc;i++){
 		for(j=0;j<No;j++){
-			base_fabs = fabs(pare[i].n[0] - pare2[j].n[0]);
+			base_fabs = fabs(child[i].n[0] - Opponent[j].n[0]);
 			base = 0;
 			for(k=1;k<DEM;k++){
-				if((save_fabs = fabs(pare[i].n[0] - pare2[j].n[0])) < base_fabs){
+				if((save_fabs = fabs(child[i].n[0] - Opponent[j].n[0])) < base_fabs){
 					base_fabs = save_fabs;
 					base = k;
 				}
 			}
-			if(pare[i].n[base]<pare2[j].n[base]){
-				pare2[j].win += 1;
-				pare[i].lose += 1;
-			}else if(pare[i].n[base] > pare2[j].n[base]){
+			if(child[i].n[base]<Opponent[j].n[base]){
+				child[j].win += 1;
+				Opponent[i].lose += 1;
+			}else if(child[i].n[base] > pare2[j].n[base]){
 				pare[i].win += 1;
 				pare2[j].lose += 1;
 			}else if(pare[i].n[base] = pare2[j].n[base]){
@@ -639,44 +646,9 @@ void Numbers(Indiv pare[],Indiv pare2[])
 	*/
 
 }
-/************************
-1on1でナンバーズ
-************************/
-void OneOnOne_Numbers(Indiv pare[],int N)
-{
-	int i,j,k;
-	int base = 0; /*ナンバーズを行うパラメータを決定*/
-	double base_fabs;
-	double save_fabs;
-	/*絶対値が一番小さいパラメータを求める*/
-	for(i=0;i<N;i++){
-		for(j=i+1;j<N;j++){
-			base_fabs = fabs(pare[i].n[0] - pare[j].n[0]);
-			base = 0;
-			for(k=1;k<DEM;k++){
-				if((save_fabs = fabs(pare[i].n[0] - pare[j].n[0])) < base_fabs){
-					base_fabs = save_fabs;
-					base = k;
-				}
-			}
-			if(pare[i].n[base]<pare[j].n[base]){	
-				pare[j].win += 1;
-				pare[i].lose += 1;
-			}else if(pare[i].n[base] > pare[j].n[base]){
-				pare[i].win += 1;
-				pare[j].lose += 1;
-			}else if(pare[i].n[base] = pare[j].n[base]){
-				pare[i].draw += 1;
-				pare[j].draw += 1;
-			}
-			pare[i].eval = pare[i].win+(-1)*pare[i].lose;
-			pare[j].eval = pare[j].win+(-1)*pare[j].lose;
-		}
-	}
-}
 
 /************
-親のナンバーズ
+親のナンバーズ.rexstarで利用
 ************/
 void Pare_Numbers(Indiv pare[])
 {
@@ -687,23 +659,12 @@ void Pare_Numbers(Indiv pare[])
 	/*絶対値が一番小さいパラメータを求める*/
 	for(i=0;i<Np;i++){
 		for(j=i+1;j<Np;j++){
-			base_fabs = fabs(pare[i].n[0] - pare[j].n[0]);
-			base = 0;
-			for(k=1;k<DEM;k++){
-				if((save_fabs = fabs(pare[i].n[0] - pare[j].n[0])) < base_fabs){
-					base_fabs = save_fabs;
-					base = k;
-				}
-			}
-			if(pare[i].n[base]<pare[j].n[base]){	
-				pare[j].win += 1;
-				pare[i].lose += 1;
-			}else if(pare[i].n[base] > pare[j].n[base]){
+			if(Numbers(pare[i],pare[j]) == 0){
 				pare[i].win += 1;
 				pare[j].lose += 1;
-			}else if(pare[i].n[base] = pare[j].n[base]){
-				pare[i].draw += 1;
-				pare[j].draw += 1;
+			}else{
+				pare[j].win += 1;
+				pare[i].lose += 1;
 			}
 		}
 	}
@@ -711,6 +672,32 @@ void Pare_Numbers(Indiv pare[])
 		pare[i].eval = pare[i].win+(-1)*pare[i].lose;
 	}
 }
+
+/*************
+対戦させる関数 0で1番目の引数の個体が勝ち、1で2番目の引数の個体が勝ち
+*************/
+int Numbers(Indiv one,Indiv another)
+{
+
+	int i,j,k;
+	int base = 0; /*ナンバーズを行うパラメータを決定*/
+	double base_fabs;
+	/*絶対値が一番小さいパラメータを求める*/
+	base_fabs = fabs(one.n[0] - another.n[0]);
+	base = 0;
+	for(k=1;k<DEM;k++){
+		if(fabs(one.n[i] - another.n[i]) < base_fabs){
+			base_fabs = fabs(one.n[i] - another.n[i]);
+			base = k;
+		}
+	}
+	if(one.n[base] > another.n[base]){
+		return 0;
+	}else if(one.n[base] > another.n[base]){
+		return 1;
+	}
+}
+
 
 /*************
 相手集団を更新
@@ -721,6 +708,7 @@ Update_Opponent(Indiv child)
 	int obj_count;
 	double min_dis;
 	double tmp_dis;
+	int nitch_indivcount = 0;
 
 	/*距離が最小の個体を見つけて、ニッチ番号を取得*/
 	min_indiv = 0;
@@ -742,10 +730,21 @@ Update_Opponent(Indiv child)
 			Opponent[i].lose = 0;
 			Opponent[i].draw = 0;
 			Opponent[i].eval = 0;
+			nitch_indivcount++;
+		}
+	}
+	obj_count=0;
+	Indiv sub_Opponent[nitch_indivcount];
+	for(i=0;i<No;i++){
+		if(Opponent[i].nitch == child.nitch){
+			sub_Opponent[obj_count] = Opponent[i].nitch;
+			
 		}
 	}
 	/*対戦させる*/
+	for(i=0;i<No;i++){
 
+	}
 	/*評価値の最小個体を求める*/
 	/*最小個体の位置に子個体を入れる*/
 
@@ -829,4 +828,3 @@ void Unit_Prot(Indiv pop[],SDL_Surface *window,int N)
 			0xff0000ff);
 	}
 }
-
