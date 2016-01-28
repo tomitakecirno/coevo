@@ -697,7 +697,6 @@ Update_Opponent(Indiv child)
 		   	child.nitch = Opponent[i].nitch;
 		}
 	}
-
 	/*戦闘データ初期化して、対戦させる*/
 	for(i=0;i<No;i++){
 		if(Opponent[i].nitch == child.nitch){
