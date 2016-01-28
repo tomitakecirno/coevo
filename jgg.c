@@ -164,7 +164,6 @@ main(){
 				Update_Opponent(child[i]);
 			}
 		}
-
 		/*pop集団をプロット*/
 		//Unit_Prot(pop,window,Ns);
 		/*敵集団をプロット*/
