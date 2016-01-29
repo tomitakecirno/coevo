@@ -11,11 +11,11 @@
 #define LIMIT		100	/*定義域*/
 #define Y		100	/*地域*/
 #define Ns		100	/*初期集団数*/
-#define No		20	/*敵集団数*/
+#define No		30	/*敵集団数*/
 #define Np		10	/*親個体数*/
 #define Nc		50	/*子個体数*/
 #define DEM		2	/*次元数*/
-#define T		1	/*ステップサイズ*/
+#define T		2	/*ステップサイズ*/
 #define END_STEP	500	/*終わるタイミング*/
 #define WINDOW_X	800	/*定義域*/
 #define WINDOW_Y	800	/*地域*/
@@ -39,6 +39,11 @@ typedef struct{
 }Indiv;
 Indiv Opponent[No];
 
+typedef struct{
+	double x;
+	double y;
+}Gravity;
+Gravity Gra_Nitch[No];
 int end_flag = 1;
 int true_flag = 1;
 int while_flag = 1;
@@ -63,6 +68,7 @@ double cal_distance(double a_x,double a_y,double b_x,double b_y);
 void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window);
 void NeighList_Opponent(void);
 void Set_Nitch(int i);
+void Update_Opponent(Indiv child);
 
 static int thread_keyboad(void *data);
 double GetRand32(double pGetMax);
@@ -144,19 +150,7 @@ main(){
 		/*RexStarにより子個体を生成*/
 		RexStar(pare,child,window);
 		/*子個体を相手集団と戦わせる*/
-		//Child_Opponent_Numbers(child,Opponent);
-		for(i=0;i<Nc;i++){
-			for(j=i+1;j<Nc;j++){
-				if(Numbers(child[i],child[j])==0){
-					child[i].win += 1;
-					child[j].lose += 1;
-				}else {
-					child[j].win += 1;
-					child[i].lose += 1;
-				}
-			}
-			child[i].eval = child[i].win-child[i].lose;
-		}
+		Child_Opponent_Numbers(child,Opponent);
 		/*評価の良い順にソート*/
 		sort_eval(child,Nc);
 		/*子個体の最良Np個を初期集団へ（世代交代）*/
@@ -166,16 +160,21 @@ main(){
 			pop[j] = child[i];
 			pop[j].flag = 0;
 		}
-		/*バグあり*/
 		/*
-		for(i=0;i<Np;i++){
-			Update_Opponent(child[i]);
-		}
+		全勝個体を残す　→　相手に変化がほとんど見られない
+		解集団へ残す個体を全て残す　→　逆に変化しすぎ
+		勝率8割以上の個体を残す　→　最適解付近の個体以外変化無し。もうちょい進化圧がほしい
+
 		*/
+		for(i=0;i<Nc;i++){
+			if(child[i].win > No/2){
+				Update_Opponent(child[i]);
+			}
+		}
 		/*pop集団をプロット*/
-		Unit_Prot(pop,window,Ns);
+		//Unit_Prot(pop,window,Ns);
 		/*敵集団をプロット*/
-		//Opponent_Prot(window);
+		Opponent_Prot(window);
 		//Unit_Prot(child,window,Nc);
 		/*親集団構造体初期化*/
 		Init_Indiv(pare,Np);
@@ -191,10 +190,10 @@ main(){
 		/*枠をプロット*/
 		Prot_Frame(window);
 		SDL_Flip(window); /*ウィンドウに反映*/
-		SDL_Delay(50);
+		SDL_Delay(1000);
 		/*画像出力*/
 		if(end_count%100 == 0 && end_count != 0){
-			sprintf(name,"./picture/coevo%d.bmp",end_count);
+			sprintf(name,"./picture/list2/coevo%d.bmp",end_count);
 			SDL_SaveBMP(window,name);
 		}
 	}
@@ -373,6 +372,24 @@ void NeighList_Opponent(void)
 	for(i=0;i<No;i++){
 		Opponent[i].flag = 0;
 	}
+	/*重心を求める*/
+	double	sum_x,sum_y;
+	int	count_sum;
+	for(i=1;i<count_nitch;i++){
+		count_sum=0;
+		sum_x = 0;
+		sum_y = 0;
+		for(j=0;j<No;j++){
+			if(Opponent[j].nitch == i){
+				sum_x += Opponent[j].n[0];
+				sum_y += Opponent[j].n[1];
+				count_sum++;
+			}
+		}
+		Gra_Nitch[i].x = sum_x/(double)count_sum;
+		Gra_Nitch[i].y = sum_y/(double)count_sum;
+	}
+	
 }
 
 /**********
@@ -504,13 +521,6 @@ void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window)
 	for(i=0;i<DEM;i++){
 		high_gra[i] = sum_n[i]/Np; /*xbを求める*/
 	}
-	/*
-	filledCircleColor(window,
-		(high_gra[0]*2)+center[0],
-		(high_gra[1]*2)+center[1],
-		4,
-		0xff0000ff);
-	*/
 	/*子個体生成*/
 	double diag[DEM];
 	double sum_coe[DEM]={0},coe=0; /*親のベクトル*乱数の総和*/
@@ -623,25 +633,22 @@ int Numbers(Indiv one,Indiv another)
 /*************
 相手集団を更新
 *************/
-Update_Opponent(Indiv child)
+void Update_Opponent(Indiv child)
 {
 	int i,j,k;
 	int obj_count;
 	int min_indiv;
 	double min_dis;
 	double tmp_dis;
-	int nitch_indivcount = 0;
 
-	/*距離が最小の個体を見つけて、ニッチ番号を取得*/
-	min_indiv = 0;
-	min_dis = cal_distance(Opponent[min_indiv].n[0],Opponent[min_indiv].n[1],
+	/*距離が最小のニッチの重心を見つけて、ニッチ番号を取得*/
+	child.nitch = 1;
+	min_dis = cal_distance(Gra_Nitch[1].x,Gra_Nitch[1].y,
 			       child.n[0],child.n[1]);
-	for(i=0;i<No;i++){
-		if(cal_distance(Opponent[i].n[0],Opponent[i].n[1],
-		   child.n[0],child.n[1]) < min_dis){
-		   	min_dis = cal_distance(Opponent[i].n[0],Opponent[i].n[1],
-		   				child.n[0],child.n[1]);
-		   	child.nitch = Opponent[i].nitch;
+	for(i=1;i<count_nitch;i++){
+		if(cal_distance(Gra_Nitch[i].x,Gra_Nitch[i].y,child.n[0],child.n[1]) < min_dis){
+		   	min_dis = cal_distance(Gra_Nitch[i].x,Gra_Nitch[i].y,child.n[0],child.n[1]);
+		   	child.nitch = i;
 		}
 	}
 	/*戦闘データ初期化*/
@@ -652,10 +659,14 @@ Update_Opponent(Indiv child)
 			Opponent[i].draw = 0;
 			Opponent[i].eval = 0;
 			Opponent[i].flag = 0;
-			nitch_indivcount++;
 		}
 	}
-	/*該当するニッチの個体を対戦させる*/
+	child.win = 0;
+	child.lose = 0;
+	child.draw = 0;
+	child.eval = 0;
+	child.flag = 0;
+	/*該当するニッチの個体と子個体でリーグ戦*/
 	for(i=0;i<No;i++){
 		if(Opponent[i].nitch == child.nitch && Opponent[i].flag == 0){
 			for(j=i+1;j<No;j++){
@@ -668,6 +679,13 @@ Update_Opponent(Indiv child)
 						Opponent[i].lose += 1;
 					}
 				}
+			}
+			if(Numbers(Opponent[i],child) == 0){
+				Opponent[i].win += 1;
+				child.lose += 1;
+			}else {
+				child.win += 1;
+				Opponent[i].lose += 1;
 			}
 			Opponent[i].flag = 1; /*フラグ立て*/
 		}
@@ -683,8 +701,10 @@ Update_Opponent(Indiv child)
 			min_indiv = i;
 		}
 	}
-	/*最小個体の位置に子個体を入れる*/
-	Opponent[min_indiv] = child;
+	/*相手集団の中で子個体より弱い相手のところに入れる*/
+	if(Opponent[min_indiv].eval < child.eval){
+		Opponent[min_indiv] = child;
+	}
 	/*対戦データおよびニッチ番号初期化*/
 	Init_Opponent_BattleData();
 	NeighList_Opponent();
@@ -750,6 +770,13 @@ void Opponent_Prot(SDL_Surface *window)
 		sprintf(tmp_n,"%d",Opponent[i].nitch);
 		stringColor(window, (Opponent[i].n[0]*2)+center[0], (Opponent[i].n[1]*2)+center[1], tmp_n, 0x000000ff);
 		tmp_n[0] = '\0';
+	}
+	for(i=1;i<count_nitch;i++){
+		filledCircleColor(window,
+		(Gra_Nitch[i].x*2)+center[0],
+		(Gra_Nitch[i].y*2)+center[1],
+		3,
+		0xff0000ff);
 	}
 }
 
