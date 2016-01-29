@@ -25,6 +25,7 @@
 
 double center[2] = {WINDOW_X/2,WINDOW_Y/2};
 
+
 typedef struct{
 	double n[DEM];
 	int flag;
