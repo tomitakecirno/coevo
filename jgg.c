@@ -12,11 +12,11 @@
 #define Y		100	/*地域*/
 #define Ns		100	/*初期集団数*/
 #define No		20	/*敵集団数*/
-#define Np		4	/*親個体数*/
-#define Nc		20	/*子個体数*/
+#define Np		10	/*親個体数*/
+#define Nc		50	/*子個体数*/
 #define DEM		2	/*次元数*/
 #define T		1	/*ステップサイズ*/
-#define END_STEP	200	/*終わるタイミング*/
+#define END_STEP	500	/*終わるタイミング*/
 #define WINDOW_X	800	/*定義域*/
 #define WINDOW_Y	800	/*地域*/
 #define PROT_X		600	/*定義域*/
@@ -81,6 +81,7 @@ main(){
 	Indiv surv[Np]; /*残される子を入れておく*/
 	
 	int i,j,k; /*for文用*/
+	char name[10];
 
 	init_genrand((unsigned)time(NULL)); /*乱数初期化*/
 	Init_Indiv(pop,Ns); /*解集団構造体初期化*/
@@ -143,30 +144,38 @@ main(){
 		/*RexStarにより子個体を生成*/
 		RexStar(pare,child,window);
 		/*子個体を相手集団と戦わせる*/
-		Child_Opponent_Numbers(child,Opponent);
-		/*
+		//Child_Opponent_Numbers(child,Opponent);
 		for(i=0;i<Nc;i++){
-			printf("child[%d].eval = %d\n",i,child[i].eval);
+			for(j=i+1;j<Nc;j++){
+				if(Numbers(child[i],child[j])==0){
+					child[i].win += 1;
+					child[j].lose += 1;
+				}else {
+					child[j].win += 1;
+					child[i].lose += 1;
+				}
+			}
+			child[i].eval = child[i].win-child[i].lose;
 		}
-		*/
 		/*評価の良い順にソート*/
 		sort_eval(child,Nc);
 		/*子個体の最良Np個を初期集団へ（世代交代）*/
-		count = 0;
 		for(i=0;i<Np;i++){
 			/*親として選ばれた場所に子個体を入れる*/
 			for(j=0;pop[j].flag != 1;j++){}
 			pop[j] = child[i];
+			pop[j].flag = 0;
 		}
-		int win_count=0;
 		/*バグあり*/
+		/*
 		for(i=0;i<Np;i++){
 			Update_Opponent(child[i]);
 		}
+		*/
 		/*pop集団をプロット*/
 		Unit_Prot(pop,window,Ns);
 		/*敵集団をプロット*/
-		Opponent_Prot(window);
+		//Opponent_Prot(window);
 		//Unit_Prot(child,window,Nc);
 		/*親集団構造体初期化*/
 		Init_Indiv(pare,Np);
@@ -174,19 +183,21 @@ main(){
 		Init_Indiv(child,Nc); 
 		/*試行回数を数える*/
 		end_count++;
-		/*
 		if(end_count == END_STEP){
 			end_flag = 0;
 		}
-		*/
 		printf("end_count = %d\n",end_count);
 		printf("end_flag = %d\n",end_flag);
 		/*枠をプロット*/
 		Prot_Frame(window);
 		SDL_Flip(window); /*ウィンドウに反映*/
-		SDL_Delay(500);
+		SDL_Delay(50);
+		/*画像出力*/
+		if(end_count%100 == 0 && end_count != 0){
+			sprintf(name,"./picture/coevo%d.bmp",end_count);
+			SDL_SaveBMP(window,name);
+		}
 	}
-	//printf("end_count = %d\n",end_count);
 	SDL_Quit();
 	return 0;
 }
@@ -580,7 +591,7 @@ void Pare_Numbers(Indiv pare[])
 		}
 	}
 	for(i=0;i<Np;i++){
-		pare[i].eval = pare[i].win+(-1)*pare[i].lose;
+		pare[i].eval = pare[i].win-pare[i].lose;
 	}
 }
 
@@ -603,7 +614,7 @@ int Numbers(Indiv one,Indiv another)
 	}
 	if(one.n[base] > another.n[base]){
 		return 0;
-	}else if(one.n[base] > another.n[base]){
+	}else if(one.n[base] < another.n[base]){
 		return 1;
 	}
 }

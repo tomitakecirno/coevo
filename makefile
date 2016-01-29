@@ -8,7 +8,7 @@ FILE = jgg
 FILE2 = prot
 LINK = -lm -lSDL -lSDL_image -lSDL_mixer -lSDL_ttf -lSDL_gfx -L/usr/lib
 
-JGG:$(FILE).c
+jgg:$(FILE).c
 	$(CC) -o $(FILE) $(FILE).c $(LINK) -g
 
 
