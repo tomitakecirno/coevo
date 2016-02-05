@@ -2,8 +2,10 @@
 #include<stdlib.h>
 #include<math.h>
 #include<stdio.h>
-#include<SDL/SDL.h>
-#include <SDL/SDL_gfxPrimitives.h>
+#include<SDL2/SDL.h>
+#include<SDL2/SDL_video.h>
+
+#include <SDL2/SDL_gfxPrimitives.h>
 #include"./header/MT.h"
 
 #define INIT		100	/*解集団の初期化範囲*/
@@ -72,6 +74,7 @@ void Set_Nitch(int i);
 void Update_Opponent(Indiv child);
 
 static int thread_keyboad(void *data);
+static int thread_window(void *data);
 double GetRand32(double pGetMax);
 void Prot_Frame(SDL_Surface *window);
 void Opponent_Prot(SDL_Surface *window);
@@ -111,6 +114,8 @@ main(){
 	Init_Opponent(); /*相手集団構造体初期化*/
 	/*SDL初期化*/
 	SDL_Surface *window; // ウィンドウ（画像）データ、及び、文字列（画像）へのポインタ
+	
+
 	SDL_Event event;
 	if ( SDL_Init(SDL_INIT_VIDEO)  < 0 ){
 	        printf("failed to initialize SDL.\n");
@@ -123,9 +128,9 @@ main(){
 		printf("failed to initialize videomode.\n");
 		exit(-1);
 	}
-	
-	SDL_Thread *thr_keyboad;
+	SDL_Thread *thr_keyboad,*thr_window;
 	thr_keyboad = SDL_CreateThread(thread_keyboad,NULL);
+	thr_window = SDL_CreateThread(thread_window,NULL);
 
 	/*初期解生成*/
 	for(i=0;i<Ns;i++){
@@ -161,19 +166,22 @@ main(){
 
 		/*RexStarにより子個体を生成*/
 		RexStar(pare,child,window);
-		/*子個体を相手集団と戦わせる*/
-		Child_Opponent_Numbers(child,Opponent);
+		/*子集団と親集団をpare_childへ統合する*/
 		for(i=0;i<Np;i++){
 			pare_child[i] = pare[i];
 		}
 		for(i=0;i<Nc;i++){
 			pare_child[Np+i] = child[i];
 		}
+		/*子個体を相手集団と戦わせる*/
+		Child_Opponent_Numbers(pare_child,Opponent);
 		/*評価の良い順にソート*/
 		sort_win(pare_child,Np+Nc);
+		/*
 		for(i=0;i<(Np+Nc);i++){
 			printf("pare_child[%d].win = %d\n",i,pare_child[i].win);
 		}
+		*/
 		/*
 		全勝個体を残す　→　相手に変化がほとんど見られない
 		解集団へ残す個体を全て残す　→　逆に変化しすぎ
@@ -206,7 +214,8 @@ main(){
 		/*枠をプロット*/
 		Prot_Frame(window);
 		SDL_Flip(window); /*ウィンドウに反映*/
-		SDL_Delay(50);
+
+		SDL_Delay(500);
 		/*画像出力*/
 		/*
 		if(end_count%100 == 0){
@@ -239,7 +248,25 @@ static int thread_keyboad(void *data){
 		}
 	}
 }
+/****************
 
+画面出力のスレッド
+****************/
+static int thread_window(void *data)
+{
+	SDL_Event event;
+	SDL_Surface *window_sub; // ウィンドウ（画像）データ、及び、文字列（画像）へのポインタ
+	
+	if((window_sub = SDL_SetVideoMode(WINDOW_X, WINDOW_Y, 32, SDL_SWSURFACE)) == NULL) {
+		printf("failed to initialize videomode.\n");
+		exit(-1);
+	}
+	
+	while(end_flag){
+		SDL_FillRect(window_sub, NULL, 0x00ffffff);
+		SDL_Flip(window_sub); /*ウィンドウに反映*/
+	}
+}
 /*********
 初期化
 *********/
@@ -583,7 +610,7 @@ void Child_Opponent_Numbers(Indiv child[],Indiv Opponent[])
 {
 	int i,j;
 	/*絶対値が一番小さいパラメータを求める*/
-	for(i=0;i<Nc;i++){
+	for(i=0;i<Nc+Np;i++){
 		for(j=0;j<No;j++){
 			Numbers(&child[i],&Opponent[j]);
 		}
@@ -755,8 +782,8 @@ void Opponent_Prot(SDL_Surface *window)
 		filledCircleColor(window,
 		(Gra_Nitch[i].x*2)+center[0],
 		(Gra_Nitch[i].y*2)+center[1],
-		3,
-		0xff0000ff);
+		5,
+		0x000000ff);
 	}
 	/*個体を描画*/
 	for(i=0;i<No;i++){
