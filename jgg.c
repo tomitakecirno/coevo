@@ -2,10 +2,9 @@
 #include<stdlib.h>
 #include<math.h>
 #include<stdio.h>
-#include<SDL2/SDL.h>
-#include<SDL2/SDL_video.h>
-
-#include <SDL2/SDL_gfxPrimitives.h>
+#include<SDL/SDL.h>
+#include<SDL/SDL_video.h>
+#include <SDL/SDL_gfxPrimitives.h>
 #include"./header/MT.h"
 
 #define INIT		100	/*解集団の初期化範囲*/
@@ -32,9 +31,6 @@ typedef struct{
 	double n[DEM];
 	int flag;
 	int win;
-	int lose;
-	int draw;
-	int eval;
 	int nitch; /*0...所属ニッチなし 1~...所属しているニッチ番号*/
 	int obj[No];
 	double dis[No];
@@ -115,9 +111,8 @@ main(){
 	/*SDL初期化*/
 	SDL_Surface *window; // ウィンドウ（画像）データ、及び、文字列（画像）へのポインタ
 	
-
-	SDL_Event event;
-	if ( SDL_Init(SDL_INIT_VIDEO)  < 0 ){
+	/*SDLの全ての機能を初期化*/
+	if ( SDL_Init(SDL_INIT_EVERYTHING)  < 0 ){
 	        printf("failed to initialize SDL.\n");
 	        fprintf(stderr,"%s\n",SDL_GetError());
 	        SDL_GetError();
@@ -278,9 +273,6 @@ void Init_Indiv(Indiv pare[],int N){
 		}
 		pare[i].flag = 0;
 		pare[i].win = 0;
-		pare[i].lose = 0;
-		pare[i].draw = 0;
-		pare[i].eval = 0;
 		pare[i].nitch = 0;
 	}
 }
@@ -310,9 +302,6 @@ void Init_Opponent_BattleData(void)
 	for(i=0;i<No;i++){
 		Opponent[i].flag = 0;
 		Opponent[i].win = 0;
-		Opponent[i].lose = 0;
-		Opponent[i].draw = 0;
-		Opponent[i].eval = 0;
 		Opponent[i].nitch = 0;
 		for(j=0;j<K;j++){
 			Opponent[i].Neigh_List2[j] = -1;
@@ -350,9 +339,6 @@ void NeighList_Opponent(void)
 		if(i == No)
 		Opponent[No].flag = -1;
 		Opponent[i].win = 0;
-		Opponent[i].lose = 0;
-		Opponent[i].draw = 0;
-		Opponent[i].eval = 0;
 		Opponent[i].nitch = 0;
 		for(j=0;j<K;j++){
 			Opponent[i].Neigh_List2[j] = -1; /*実数値乱数*/
@@ -466,7 +452,6 @@ void sort_distance(Indiv pare[],int N)
 	int i,j,k;
 	int save_obj;
 	double save_dis;
-	int Eval[N];
 	/*ソートする*/
 	for(k=0;k<No;k++){
 		for(i=0;i<N-1;i++){
@@ -681,16 +666,10 @@ void Update_Opponent(Indiv child)
 	for(i=0;i<No;i++){
 		if(Opponent[i].nitch == child.nitch){
 			Opponent[i].win = 0;
-			Opponent[i].lose = 0;
-			Opponent[i].draw = 0;
-			Opponent[i].eval = 0;
 			Opponent[i].flag = 0;
 		}
 	}
 	child.win = 0;
-	child.lose = 0;
-	child.draw = 0;
-	child.eval = 0;
 	child.flag = 0;
 	/*該当するニッチの個体と子個体でリーグ戦*/
 	for(i=0;i<No;i++){
