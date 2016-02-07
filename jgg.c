@@ -23,6 +23,7 @@
 #define PROT_X		600	/*定義域*/
 #define PROT_Y		600	/*地域*/
 #define K		3	/*ニッチの集団数*/
+#define DELETE		50	
 
 double center[2] = {WINDOW_X/2,WINDOW_Y/2};
 
@@ -32,6 +33,9 @@ typedef struct{
 	int flag;
 	int win;
 	int nitch; /*0...所属ニッチなし 1~...所属しているニッチ番号*/
+	int comp_flag;
+	int gene_count;
+	int delete_flag;
 	int obj[No];
 	double dis[No];
 	int Neigh_List2[K];
@@ -178,9 +182,7 @@ main(){
 		}
 		*/
 		/*
-		全勝個体を残す　→　相手に変化がほとんど見られない
-		解集団へ残す個体を全て残す　→　逆に変化しすぎ
-		勝率8割以上の個体を残す　→　最適解付近の個体以外変化無し。もうちょい進化圧がほしい
+		Np個体残そう
 		*/
 		for(i=0;i<Np;i++){
 			for(j=0;pop[j].flag != 1;j++){}
@@ -188,6 +190,20 @@ main(){
 			pop[j].flag = 0;
 			Update_Opponent(pare_child[i]);
 		}
+		/*生存競争を1世代に1回でも行っていればカウント初期化。行っていなければカウント。*/
+		for(i=0;i<No;i++){
+			if(Opponent[i].comp_flag == 0){
+				Opponent[i].gene_count++;
+				if(Opponent[i].gene_count > DELETE){
+					Opponent[i].gene_count = DELETE;
+				}
+			}if(Opponent[i].comp_flag == 1){
+				Opponent[i].gene_count = 0;
+			}
+			Opponent[i].comp_flag = 0;
+		}
+
+		/***ここで個体の選別。一定世代生存選択を受けていないならdelete_flag=1***/
 		/*子個体の最良Np個を初期集団へ（世代交代）*/
 		/*pop集団をプロット*/
 		Pop_Prot(pop,window);
@@ -289,6 +305,9 @@ void Init_Opponent(){
 		for(j=0;j<DEM;j++){
 			Opponent[i].n[j] = GetRand32(INIT_OPPOMEMT); /*実数値乱数*/
 		}
+		Opponent[i].gene_count = 0;
+		Opponent[i].comp_flag = 0;
+		Opponent[i].delete_flag = 0;
 	}
 	Init_Opponent_BattleData();
 	NeighList_Opponent();
@@ -679,8 +698,9 @@ void Update_Opponent(Indiv child)
 					Numbers(&Opponent[i],&Opponent[j]);
 				}
 			}
-			Numbers(&Opponent[i],&child);
-			Opponent[i].flag = 1; /*フラグ立て*/
+			Numbers(&Opponent[i],&child);	/*ナンバーズ*/
+			Opponent[i].flag = 1; 		/*フラグ立て*/
+			Opponent[i].comp_flag = 1; 	/*生存競争したフラグ*/
 		}
 	}
 	/*評価値の最小個体を求める*/
