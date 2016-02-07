@@ -10,53 +10,28 @@ SDL使用
 **********************************/
 #include<stdio.h>
 #include<stdlib.h>
-#include<math.h>
-#include<stdio.h>
-#include<SDL/SDL.h>
-#include <SDL/SDL_gfxPrimitives.h>
+#include<SDL2/SDL.h>
 
 #define WINDOW_X	800	/*定義域*/
 #define WINDOW_Y	800	/*地域*/
 #define PROT_X		600	/*定義域*/
 #define PROT_Y		600	/*地域*/
+#define END		50
 
 
 /*ループの時に使うフラグ*/
 int end_flag;
-void SDL_InitSet(SDL_Surface *window);
+int end_count=0;
+
 static int thread_keyboad(void *data);
 void Prot_Frame(SDL_Surface *window);
 
 int main(void){
 	/*SDL関係の初期化*/
 	end_flag = 1; /*ここでフラグを1にしておく*/
-	SDL_Surface *window;
-	SDL_InitSet(window);
-
-	/*スレッドを立てる*/
-
-	int Opponent_Size;
-	int Opponent_X[Opponent_Size];
-	int Opponent_Y[Opponent_Size];
-	int Opponent_Nitch[Opponent_Size];
-	int gene;
-
-	while(end_flag){
-		/*背景を白に*/
-		/*エラー*/
-		SDL_FillRect(window, NULL, 0x00ffffff);
-		/*フレームをプロット*/
-		Prot_Frame(window);
-		/*画面の変化をウィンドウに反映*/
-		SDL_Flip(window);
-	}
-
-	return 0;
-}
-/****************
-SDL初期化
-*****************/
-void SDL_InitSet(SDL_Surface *window){
+	SDL_Window *window;
+	char name[10];
+	/*SDL初期化*/
 	if ( SDL_Init(SDL_INIT_VIDEO)  < 0 ){
 	        printf("failed to initialize SDL.\n");
 	        fprintf(stderr,"%s\n",SDL_GetError());
@@ -64,15 +39,48 @@ void SDL_InitSet(SDL_Surface *window){
 	        exit(-1); 
 	}
 	/* ウィンドウ生成（800*600、1677万色）*/
-	if((window = SDL_SetVideoMode(WINDOW_X, WINDOW_Y, 32, SDL_SWSURFACE)) == NULL) {
+	window = SDL_CreateWindow("TEST", SDL_WINDOWPOS_UNDEFINED,
+                                  SDL_WINDOWPOS_UNDEFINED, WINDOW_X,
+                                  WINDOW_Y,0);
+	if(window == NULL) {
 		printf("failed to initialize videomode.\n");
 		exit(-1);
 	}
-	SDL_Thread *thr_keyboad;
-	thr_keyboad = SDL_CreateThread(thread_keyboad,NULL);
-
-}
 	
+	/*スレッドを立てる*/
+	SDL_Thread *thr_keyboad;
+	thr_keyboad = SDL_CreateThread(thread_keyboad,"keyboard",NULL);
+	/*ファイルオープン*/
+	while(end_flag){
+		/*背景を白に*/
+		/*
+		SDL_FillRect(window, NULL, 0x00ffffff);
+		*/
+		/*ファイル操作に関する処理*/
+		/*フレームをプロット*/
+		/*
+		Prot_Frame(window);
+		*/
+		/*画面の変化をウィンドウに反映*/
+		/*
+		SDL_Flip(window);
+		*/
+		/*
+		sprintf(name,"./picture/test%d.bmp",end_count);
+		if(end_count%10 == 0){
+			SDL_SaveBMP(window,name);
+		}
+		end_count++;
+		if(end_count>END){
+			end_flag = 0;
+		}
+		*/
+	}
+	SDL_Delay(500);
+	SDL_DestroyWindow(window);
+	SDL_Quit();
+	return 0;
+}
 
 /****************
 キー入力のスレッド
@@ -94,10 +102,10 @@ static int thread_keyboad(void *data){
 		}
 	}
 }
-
 /**********
 枠を描画
 ***********/
+/*
 void Prot_Frame(SDL_Surface *window)
 {
 	lineColor(window, 
@@ -106,35 +114,30 @@ void Prot_Frame(SDL_Surface *window)
 		WINDOW_X,
 		WINDOW_Y/2,
 		0x000000ff);
-	/*Y軸*/
 	lineColor(window,
 		WINDOW_X/2,
 		0,
 		WINDOW_X/2,
 		WINDOW_Y,
 		0x000000ff);
-	/*内枠X軸上側*/
 	lineColor(window,
 		WINDOW_X-PROT_X,
 		WINDOW_Y-PROT_Y,
 		PROT_X,
 		WINDOW_Y-PROT_Y,
 		0x000000ff);
-	/*内枠X軸下側*/
 	lineColor(window, 
 		WINDOW_X-PROT_X,
 		PROT_Y,
 		PROT_X,
 		PROT_Y,
 		0x000000ff);
-	/*内枠Y軸左側*/
 	lineColor(window,
 		WINDOW_X-PROT_X,
 		WINDOW_Y-PROT_Y,
 		WINDOW_X-PROT_X,
 		PROT_Y,
 		0x000000ff);
-	/*内枠Y軸右側*/
 	lineColor(window, 
 		PROT_X,
 		WINDOW_Y-PROT_Y,
@@ -142,6 +145,7 @@ void Prot_Frame(SDL_Surface *window)
 		PROT_Y,
 		0x000000ff);
 }
+*/
 
 
 
