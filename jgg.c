@@ -7,12 +7,12 @@
 #include <SDL/SDL_gfxPrimitives.h>
 #include"./header/MT.h"
 
-#define INIT		100	/*解集団の初期化範囲*/
-#define INIT_OPPOMEMT	100	/*敵集団の初期化範囲*/
+#define INIT		50	/*解集団の初期化範囲*/
+#define INIT_OPPOMEMT	50	/*敵集団の初期化範囲*/
 #define LIMIT		100	/*定義域*/
 #define Y		100	/*地域*/
 #define Ns		50	/*初期集団数*/
-#define No		30	/*敵集団数*/
+#define No		10	/*敵集団数*/
 #define Np		5	/*親個体数*/
 #define Nc		50	/*子個体数*/
 #define DEM		2	/*次元数*/
@@ -23,7 +23,7 @@
 #define PROT_X		600	/*定義域*/
 #define PROT_Y		600	/*地域*/
 #define K		3	/*ニッチの集団数*/
-#define DELETE		50	
+#define DELETE		100	
 
 double center[2] = {WINDOW_X/2,WINDOW_Y/2};
 
@@ -176,6 +176,8 @@ main(){
 		Child_Opponent_Numbers(pare_child,Opponent);
 		/*評価の良い順にソート*/
 		sort_win(pare_child,Np+Nc);
+		printf("pare_child[0].x = %.2f\n",pare_child[0].n[0]);
+		printf("pare_child[0].y = %.2f\n",pare_child[0].n[1]);
 		/*
 		for(i=0;i<(Np+Nc);i++){
 			printf("pare_child[%d].win = %d\n",i,pare_child[i].win);
@@ -192,15 +194,22 @@ main(){
 		}
 		/*生存競争を1世代に1回でも行っていればカウント初期化。行っていなければカウント。*/
 		for(i=0;i<No;i++){
-			if(Opponent[i].comp_flag == 0){
-				Opponent[i].gene_count++;
-				if(Opponent[i].gene_count > DELETE){
-					Opponent[i].gene_count = DELETE;
+			if(Opponent[i].delete_flag != 1){
+				if(Opponent[i].comp_flag == 0){
+					Opponent[i].gene_count++;
+				}else if(Opponent[i].comp_flag == 1){
+					Opponent[i].gene_count = 0;
 				}
-			}if(Opponent[i].comp_flag == 1){
-				Opponent[i].gene_count = 0;
+				Opponent[i].comp_flag = 0;
+				if(DELETE <= Opponent[i].gene_count){
+					Opponent[i].delete_flag = 1;
+					Opponent[i].nitch = 0;
+				}
 			}
-			Opponent[i].comp_flag = 0;
+				printf("Opponent[%d].comp_flag	= %d\n",i,Opponent[i].comp_flag);
+				printf("Opponent[%d].gene_count	= %d\n",i,Opponent[i].gene_count);
+				printf("Opponent[%d].delete_flag	= %d\n",i,Opponent[i].delete_flag);
+				printf("Opponent[%d].nitch	= %d\n",i,Opponent[i].nitch);
 		}
 
 		/***ここで個体の選別。一定世代生存選択を受けていないならdelete_flag=1***/
@@ -226,14 +235,12 @@ main(){
 		Prot_Frame(window);
 		SDL_Flip(window); /*ウィンドウに反映*/
 
-		SDL_Delay(500);
+		SDL_Delay(100);
 		/*画像出力*/
-		/*
 		if(end_count%100 == 0){
-			sprintf(name,"./picture/pop/pop1%d.bmp",end_count);
+			sprintf(name,"./picture/pop/coevo%d.bmp",end_count);
 			SDL_SaveBMP(window,name);
 		}
-		*/
 	}
 	SDL_Quit();
 	return 0;
@@ -290,6 +297,9 @@ void Init_Indiv(Indiv pare[],int N){
 		pare[i].flag = 0;
 		pare[i].win = 0;
 		pare[i].nitch = 0;
+		pare[i].gene_count = 0;
+		pare[i].comp_flag = 0;
+		pare[i].delete_flag = 0;
 	}
 }
 
@@ -368,30 +378,34 @@ void NeighList_Opponent(void)
 	for(i=0;i<No;i++){
 		obj_count=i; /*カウント初期化*/
 		for(j=i+1;j<No;j++){
-			Opponent[i].obj[obj_count] = j; /*配列の一番目に相手の番号を入れる*/
-			Opponent[j].obj[i] = i;
-			Opponent[i].dis[obj_count] = cal_distance(Opponent[i].n[0],
-							Opponent[i].n[1],
-							Opponent[j].n[0],
-							Opponent[j].n[1]);
-			Opponent[j].dis[i] = Opponent[i].dis[obj_count];
-			obj_count++;
+			if(Opponent[i].delete_flag == 0 && Opponent[j].delete_flag == 0){
+				Opponent[i].obj[obj_count] = j; /*配列の一番目に相手の番号を入れる*/
+				Opponent[j].obj[i] = i;
+				Opponent[i].dis[obj_count] = cal_distance(Opponent[i].n[0],
+								Opponent[i].n[1],
+								Opponent[j].n[0],
+								Opponent[j].n[1]);
+				Opponent[j].dis[i] = Opponent[i].dis[obj_count];
+				obj_count++;
+			}
 		}
 	}
 	/*近い順に並べ替え*/
 	for(i=0;i<No;i++){
-		for(j=0;j<No-2;j++){
-			for(k=No-2;k>j;k--){
-				/* 前の要素の方が大きかったら*/
-				if(Opponent[i].dis[k-1]>Opponent[i].dis[k]){
-					/*相手番号を並べ替え*/
-					tmp_obj = Opponent[i].obj[k];
-					Opponent[i].obj[k] = Opponent[i].obj[k-1];
-					Opponent[i].obj[k-1] = tmp_obj;
-					/*距離を並べ替えを並べ替え*/
-					tmp_dis = Opponent[i].dis[k];
-					Opponent[i].dis[k] = Opponent[i].dis[k-1];
-					Opponent[i].dis[k-1] = tmp_dis;
+		if(Opponent[i].delete_flag == 0){
+			for(j=0;j<No-2;j++){
+				for(k=No-2;k>j;k--){
+					/* 前の要素の方が大きかったら*/
+					if(Opponent[i].dis[k-1]>Opponent[i].dis[k]){
+						/*相手番号を並べ替え*/
+						tmp_obj = Opponent[i].obj[k];
+						Opponent[i].obj[k] = Opponent[i].obj[k-1];
+						Opponent[i].obj[k-1] = tmp_obj;
+						/*距離を並べ替えを並べ替え*/
+						tmp_dis = Opponent[i].dis[k];
+						Opponent[i].dis[k] = Opponent[i].dis[k-1];
+						Opponent[i].dis[k-1] = tmp_dis;
+					}
 				}
 			}
 		}
@@ -400,15 +414,17 @@ void NeighList_Opponent(void)
 	int save_obj;
 	int count_nitch_flag = 0;
 	for(i=0;i<No;i++){
-		obj_count=0; /*近傍リストをカウント*/
-		/*近傍リストを作る個体の近傍をＫ番目まで見る*/
-		for(j=0;j<K;j++){
-			save_obj = Opponent[i].obj[j];
-			/*近傍Ｋ番目までの個体の近傍にiが存在すればリストに加える*/
-			for(k=0;k<K;k++){
-				if(i == Opponent[save_obj].obj[k]){
-					Opponent[i].Neigh_List2[obj_count] = Opponent[i].obj[j];
-					obj_count++;
+		if(Opponent[i].delete_flag == 0){
+			obj_count=0; /*近傍リストをカウント*/
+			/*近傍リストを作る個体の近傍をＫ番目まで見る*/
+			for(j=0;j<K;j++){
+				save_obj = Opponent[i].obj[j];
+				/*近傍Ｋ番目までの個体の近傍にiが存在すればリストに加える*/
+				for(k=0;k<K;k++){
+					if(i == Opponent[save_obj].obj[k] && Opponent[save_obj].delete_flag == 0){
+						Opponent[i].Neigh_List2[obj_count] = Opponent[i].obj[j];
+						obj_count++;
+					}
 				}
 			}
 		}
@@ -416,7 +432,7 @@ void NeighList_Opponent(void)
 	/*ニッチ番号を割り振る*/
 	count_nitch=1; /*ニッチ番号を初期化*/
 	for(i=0;i<No;i++){
-		if(Opponent[i].flag != 1){
+		if(Opponent[i].flag != 1 && Opponent[i].delete_flag == 0){
 			Set_Nitch(i);
 			count_nitch++;
 		}
@@ -713,7 +729,16 @@ void Update_Opponent(Indiv child)
 	}
 	/*相手集団の中で子個体より弱い相手のところに入れる*/
 	if(Opponent[min_indiv].win < child.win){
-		Opponent[min_indiv] = child;
+		for(i=0;Opponent[i].delete_flag == 0 && i<No; i++){}
+		if(i != No){
+			Opponent[i] = child;
+			Opponent[i].comp_flag = 1;
+			Opponent[i].delete_flag = 0;
+		}else if(i == No){
+			Opponent[min_indiv] = child;
+			Opponent[min_indiv].comp_flag = 1;
+			Opponent[min_indiv].delete_flag = 0;
+		}
 	}
 	/*対戦データおよびニッチ番号初期化*/
 	Init_Opponent_BattleData();
@@ -786,9 +811,11 @@ void Opponent_Prot(SDL_Surface *window)
 	}
 	/*個体を描画*/
 	for(i=0;i<No;i++){
-		sprintf(tmp_n,"%d",Opponent[i].nitch);
-		stringColor(window, (Opponent[i].n[0]*2)+center[0], (Opponent[i].n[1]*2)+center[1], tmp_n, 0x000000ff);
-		tmp_n[0] = '\0';
+		if(Opponent[i].delete_flag == 0){
+			sprintf(tmp_n,"%d",Opponent[i].nitch);
+			stringColor(window, (Opponent[i].n[0]*2)+center[0], (Opponent[i].n[1]*2)+center[1], tmp_n, 0x000000ff);
+			tmp_n[0] = '\0';
+		}
 	}
 }
 /********************
