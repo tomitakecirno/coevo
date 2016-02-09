@@ -838,7 +838,7 @@ void Opponent_Prot(SDL_Surface *window)
 		filledCircleColor(window,(Opponent[i].n[0]*2)+center[0],
 				(Opponent[i].n[1]*2)+center[1],3,0x00ff00ff);
 	}
-}
+}  
 /********************
 pop集団をプロット
 ********************/
