@@ -7,13 +7,13 @@
 #include <SDL/SDL_gfxPrimitives.h>
 #include"./header/MT.h"
 
-#define INIT		50	/*解集団の初期化範囲*/
-#define INIT_OPPOMEMT	50	/*敵集団の初期化範囲*/
+#define INIT		100	/*解集団の初期化範囲*/
+#define INIT_OPPOMEMT	100	/*敵集団の初期化範囲*/
 #define LIMIT		100	/*定義域*/
 #define Y		100	/*地域*/
 #define Ns		50	/*初期集団数*/
-#define No		10	/*敵集団数*/
-#define Np		5	/*親個体数*/
+#define No		20	/*敵集団数*/
+#define Np		3	/*親個体数*/
 #define Nc		50	/*子個体数*/
 #define DEM		2	/*次元数*/
 #define T		2	/*ステップサイズ*/
@@ -206,10 +206,12 @@ main(){
 					Opponent[i].nitch = 0;
 				}
 			}
+			/*
 				printf("Opponent[%d].comp_flag	= %d\n",i,Opponent[i].comp_flag);
 				printf("Opponent[%d].gene_count	= %d\n",i,Opponent[i].gene_count);
 				printf("Opponent[%d].delete_flag	= %d\n",i,Opponent[i].delete_flag);
 				printf("Opponent[%d].nitch	= %d\n",i,Opponent[i].nitch);
+				*/
 		}
 
 		/***ここで個体の選別。一定世代生存選択を受けていないならdelete_flag=1***/
@@ -237,13 +239,18 @@ main(){
 
 		SDL_Delay(100);
 		/*画像出力*/
-		/*
 		if(end_count%100 == 0){
-			sprintf(name,"./picture/pop/coevo%d.bmp",end_count);
+			sprintf(name,"./picture/pop/1coevo%d.bmp",end_count);
 			SDL_SaveBMP(window,name);
 		}
-		*/
 	}
+	for(i=0;i<Ns;i++){
+		for(j=i+1;i<Ns;i++){
+			Numbers(&pop[i],&pop[j]);
+		}
+	}
+	sort_win(pop,Ns);
+	printf("pop[0] = (%.2f,%.2f)\n",pop[0].n[0],pop[0].n[1]);
 	SDL_Quit();
 	return 0;
 }
@@ -520,7 +527,7 @@ double cal_distance(double a_x,double a_y,double b_x,double b_y){
 }
 
 /************
-JGG＋REXstar
+JGG＋REX
 ************/
 void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window)
 {
@@ -569,20 +576,19 @@ void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window)
 	/*ナンバーズを適用して評価のいい順にソート*/
 	Pare_Numbers(sum_pare);
 	sort_win(sum_pare,Np*2);
-
 	/*上位半分の両個体の重心、下位半分の両個体の重心を求める*/
 	double high_gra[DEM] = {0};
 	for(j=0;j<DEM;j++){
-		sum_n[j] = 0; /*親のx,yをそれぞれ足す*/
+		sum_n[j] = 0;
 	}
 	for(i=0;i<Np;i++){
 		for(j=0;j<DEM;j++){
-			sum_n[j] += sum_pare[i].n[j]; /*親のx,yをそれぞれ足す*/
+			sum_n[j] += sum_pare[i].n[j];
 		}
 	}
 
 	for(i=0;i<DEM;i++){
-		high_gra[i] = sum_n[i]/Np; /*xbを求める*/
+		high_gra[i] = sum_n[i]/Np;
 	}
 	/*子個体生成*/
 	double diag[DEM];
@@ -598,7 +604,7 @@ void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window)
 		}
 		/*式(11)の第３項の動作*/
 		for(i=0;i<Np;i++){
-			coe = GetRand32( sqrt(3/(DEM+1)) );/*一様乱数生成*/
+			coe = GetRand32( sqrt(3/(DEM+1)) );
 			for(j=0;j<DEM;j++){
 				sum_coe[j] += coe * (sum_pare[i].n[j]-base_gra[j]);
 			}
@@ -606,7 +612,7 @@ void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window)
 		for(i=0;i<DEM;i++){
 			child_save[i] = base_gra[i] + diag[i]*(high_gra[i]-base_gra[i])+sum_coe[i];
 		}
-		if(fabs(child_save[0]) <= 100 && fabs(child_save[1]) <= 100){
+		if(fabs(child_save[0]) <= 100.00 && fabs(child_save[1]) <= 100.00){
 			for(i=0;i<DEM;i++){
 				child[count].n[i] = child_save[i]; /*式(11)の動作*/
 			}
