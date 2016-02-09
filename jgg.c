@@ -15,13 +15,13 @@
 #define INIT_OPTIMAL	100	/*敵集団の初期化範囲*/
 #define LIMIT		100	/*定義域*/
 #define Y		100	/*地域*/
-#define Ns		50	/*初期集団数*/
-#define No		50	/*敵集団数*/
+#define Ns		20	/*初期集団数*/
+#define No		20	/*敵集団数*/
 #define Np		3	/*親個体数*/
 #define Nc		10	/*子個体数*/
 #define DEM		2	/*次元数*/
 #define T		1	/*ステップサイズ*/
-#define END_STEP	500	/*終わるタイミング*/
+#define END_STEP	300	/*終わるタイミング*/
 #define WINDOW_X	800	/*定義域*/
 #define WINDOW_Y	800	/*地域*/
 #define PROT_X		600	/*定義域*/
@@ -140,7 +140,6 @@ main(){
 	int end_count = 0;
 	while(end_flag){
 		/*ウィンドウの（背景）色を変更（白色の矩形で塗りつぶし）*/
-		SDL_FillRect(window, NULL, 0x00ffffff);
 		count = 0;
 		while_flag = 1;
 		/*親を選ぶ*/
@@ -206,11 +205,28 @@ main(){
 
 		/*子個体の最良Np個を初期集団へ（世代交代）*/
 		/*pop集団をプロット*/
+		SDL_FillRect(window, NULL, 0x00ffffff);
 		Pop_Prot(pop,window);
-		/*最適解をプロット*/
+		/*
 		Unit_Optimal(window);
+		Prot_Frame(window);
+		SDL_Flip(window);
+		if(end_count%20 == 0){
+			sprintf(name,"./picture/pop/pop0%d.bmp",end_count);
+			SDL_SaveBMP(window,name);
+		}
+		*/
 		/*敵集団をプロット*/
+		//SDL_FillRect(window, NULL, 0x00ffffff);
 		Opponent_Prot(window);
+		Unit_Optimal(window);
+		Prot_Frame(window);
+		SDL_Flip(window);
+		if(end_count%20 == 0){
+			sprintf(name,"./picture/list2/opponent0%d.bmp",end_count);
+			SDL_SaveBMP(window,name);
+		}
+				//SDL_Delay(500);
 		//Unit_Prot(child,window,Nc);
 		/*親集団構造体初期化*/
 		Init_Indiv(pare,Np);
@@ -218,30 +234,22 @@ main(){
 		Init_Indiv(child,Nc); 
 		/*試行回数を数える*/
 		end_count++;
-		if(end_count == END_STEP){
+		if(end_count > END_STEP){
 			end_flag = 0;
 		}
-		printf("end_count = %d\n",end_count);
-		printf("end_flag = %d\n",end_flag);
-
-		/*枠をプロット*/
-		Prot_Frame(window);
-		SDL_Flip(window); /*ウィンドウに反映*/
-
-		SDL_Delay(100);
-		/*画像出力*/
-		if(end_count%20 == 0 || end_count == 1){
-			sprintf(name,"./picture/pop/coevo1%d.bmp",end_count);
-			SDL_SaveBMP(window,name);
-		}
 	}
+
+	double sum_unit[DEM] = {0};
+	
 	for(i=0;i<Ns;i++){
-		for(j=i+1;i<Ns;i++){
-			Numbers(&pop[i],&pop[j]);
+		for(j=0;j<DEM;j++){
+			sum_unit[j] += pop[i].n[j];
 		}
 	}
-	sort_win(pop,Ns);
-	printf("pop[0] = (%.2f,%.2f)\n",pop[0].n[0],pop[0].n[1]);
+	sum_unit[0] = sum_unit[0]/Ns;
+	sum_unit[1] = sum_unit[1]/Ns;
+
+	printf("pop = (%.2f,%.2f)\n",sum_unit[0],sum_unit[1]);
 	for(i=0;i<Optimal_N;i++){
 		printf("Optimal[%d] = (%.2f,%.2f)\n",i,Optimal[i].n[0],Optimal[i].n[1]);
 	}
@@ -768,6 +776,7 @@ void Update_Opponent(Indiv child)
 ***********/
 void Prot_Frame(SDL_Surface *window)
 {
+	char num[5],num2[5],num3[5];
 	lineColor(window, 
 		0, 
 		WINDOW_Y/2,
@@ -809,6 +818,12 @@ void Prot_Frame(SDL_Surface *window)
 		PROT_X,
 		PROT_Y,
 		0x000000ff);
+	sprintf(num,"0");
+	sprintf(num2,"-100");
+	sprintf(num3,"100");
+	stringColor(window, center[0],center[1], num, 0x000000ff);
+	stringColor(window, WINDOW_X-PROT_X-30,WINDOW_Y/2, num2, 0x000000ff);
+	stringColor(window, PROT_X,WINDOW_Y/2, num3, 0x000000ff);
 }
 
 /***************
@@ -818,25 +833,20 @@ void Opponent_Prot(SDL_Surface *window)
 {
 	int i;
 	char tmp_n[5];
-	/*ニッチの重心を描画*/
-	/*
-	for(i=1;i<count_nitch;i++){
-		filledCircleColor(window,
-		(Gra_Nitch[i].n[0]*2)+center[0],
-		(Gra_Nitch[i].n[1]*2)+center[1],
-		3,
-		0x000000ff);
-	}
-	*/
 	/*個体を描画*/
 	for(i=0;i<No;i++){
-		/*
+	/*
 		sprintf(tmp_n,"%d",Opponent[i].nitch);
-		stringColor(window, (Opponent[i].n[0]*2)+center[0], (Opponent[i].n[1]*2)+center[1], tmp_n, 0x000000ff);
-		tmp_n[0] = '\0';
-		*/
-		filledCircleColor(window,(Opponent[i].n[0]*2)+center[0],
-				(Opponent[i].n[1]*2)+center[1],3,0x00ff00ff);
+		stringColor(window, (Opponent[i].n[0]*2)+center[0]-2,
+			    (Opponent[i].n[1]*2)+center[1]-2, tmp_n, 0x000000ff);
+	*/
+		trigonColor(window, (Opponent[i].n[0]*2)+center[0],
+				    (Opponent[i].n[1]*2)+center[1]-5,
+				    (Opponent[i].n[0]*2)+center[0]+6,
+				    (Opponent[i].n[1]*2)+center[1]+6,
+				    (Opponent[i].n[0]*2)+center[0]-5,
+				    (Opponent[i].n[1]*2)+center[1]+6,
+				    0x000000ff);	// 三角形を描画
 	}
 }  
 /********************
@@ -847,11 +857,11 @@ void Pop_Prot(Indiv pop[],SDL_Surface *window)
 	int i;
 	for(i=0;i<Ns;i++){
 		if(pop[i].flag == 0){
-			filledCircleColor(window,
+			circleColor(window,
 				(pop[i].n[0]*2)+center[0],
 				(pop[i].n[1]*2)+center[1],
-				3,
-				0x00ff00ff);
+				4,
+				0x000000ff);
 		}
 	}
 }
@@ -862,11 +872,11 @@ void Unit_Prot(Indiv pop[],SDL_Surface *window,int N)
 {
 	int i;
 	for(i=0;i<N;i++){
-		filledCircleColor(window,
+		circleColor(window,
 			(pop[i].n[0]*2)+center[0],
 			(pop[i].n[1]*2)+center[1],
-			3,
-			0xff0000ff);
+			4,
+			0x00000000);
 	}
 }
 /********************
@@ -876,10 +886,11 @@ void Unit_Optimal(SDL_Surface *window)
 {
 	int i;
 	for(i=0;i<Optimal_N;i++){
-		filledCircleColor(window,
-			(Optimal[i].n[0]*2)+center[0],
-			(Optimal[i].n[1]*2)+center[1],
-			3,
-			0xff0000ff);
+		boxColor(window,
+			(Optimal[i].n[0]*2)+center[0]-4,
+			(Optimal[i].n[1]*2)+center[1]-4,
+			(Optimal[i].n[0]*2)+center[0]+4,
+			(Optimal[i].n[1]*2)+center[1]+4,
+			0x000000ff);
 	}
 }
