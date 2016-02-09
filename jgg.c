@@ -237,10 +237,12 @@ main(){
 
 		SDL_Delay(100);
 		/*画像出力*/
+		/*
 		if(end_count%100 == 0){
 			sprintf(name,"./picture/pop/coevo%d.bmp",end_count);
 			SDL_SaveBMP(window,name);
 		}
+		*/
 	}
 	SDL_Quit();
 	return 0;
@@ -378,34 +380,30 @@ void NeighList_Opponent(void)
 	for(i=0;i<No;i++){
 		obj_count=i; /*カウント初期化*/
 		for(j=i+1;j<No;j++){
-			if(Opponent[i].delete_flag == 0 && Opponent[j].delete_flag == 0){
-				Opponent[i].obj[obj_count] = j; /*配列の一番目に相手の番号を入れる*/
-				Opponent[j].obj[i] = i;
-				Opponent[i].dis[obj_count] = cal_distance(Opponent[i].n[0],
-								Opponent[i].n[1],
-								Opponent[j].n[0],
-								Opponent[j].n[1]);
-				Opponent[j].dis[i] = Opponent[i].dis[obj_count];
-				obj_count++;
-			}
+			Opponent[i].obj[obj_count] = j; /*配列の一番目に相手の番号を入れる*/
+			Opponent[j].obj[i] = i;
+			Opponent[i].dis[obj_count] = cal_distance(Opponent[i].n[0],
+							Opponent[i].n[1],
+							Opponent[j].n[0],
+							Opponent[j].n[1]);
+			Opponent[j].dis[i] = Opponent[i].dis[obj_count];
+			obj_count++;
 		}
 	}
 	/*近い順に並べ替え*/
 	for(i=0;i<No;i++){
-		if(Opponent[i].delete_flag == 0){
-			for(j=0;j<No-2;j++){
-				for(k=No-2;k>j;k--){
-					/* 前の要素の方が大きかったら*/
-					if(Opponent[i].dis[k-1]>Opponent[i].dis[k]){
-						/*相手番号を並べ替え*/
-						tmp_obj = Opponent[i].obj[k];
-						Opponent[i].obj[k] = Opponent[i].obj[k-1];
-						Opponent[i].obj[k-1] = tmp_obj;
-						/*距離を並べ替えを並べ替え*/
-						tmp_dis = Opponent[i].dis[k];
-						Opponent[i].dis[k] = Opponent[i].dis[k-1];
-						Opponent[i].dis[k-1] = tmp_dis;
-					}
+		for(j=0;j<No-2;j++){
+			for(k=No-2;k>j;k--){
+				/* 前の要素の方が大きかったら*/
+				if(Opponent[i].dis[k-1]>Opponent[i].dis[k]){
+					/*相手番号を並べ替え*/
+					tmp_obj = Opponent[i].obj[k];
+					Opponent[i].obj[k] = Opponent[i].obj[k-1];
+					Opponent[i].obj[k-1] = tmp_obj;
+					/*距離を並べ替えを並べ替え*/
+					tmp_dis = Opponent[i].dis[k];
+					Opponent[i].dis[k] = Opponent[i].dis[k-1];
+					Opponent[i].dis[k-1] = tmp_dis;
 				}
 			}
 		}
@@ -414,17 +412,15 @@ void NeighList_Opponent(void)
 	int save_obj;
 	int count_nitch_flag = 0;
 	for(i=0;i<No;i++){
-		if(Opponent[i].delete_flag == 0){
-			obj_count=0; /*近傍リストをカウント*/
-			/*近傍リストを作る個体の近傍をＫ番目まで見る*/
-			for(j=0;j<K;j++){
-				save_obj = Opponent[i].obj[j];
-				/*近傍Ｋ番目までの個体の近傍にiが存在すればリストに加える*/
-				for(k=0;k<K;k++){
-					if(i == Opponent[save_obj].obj[k] && Opponent[save_obj].delete_flag == 0){
+		obj_count=0; /*近傍リストをカウント*/
+		/*近傍リストを作る個体の近傍をＫ番目まで見る*/
+		for(j=0;j<K;j++){
+			save_obj = Opponent[i].obj[j];
+			/*近傍Ｋ番目までの個体の近傍にiが存在すればリストに加える*/
+			for(k=0;k<K;k++){
+				if(i == Opponent[save_obj].obj[k]){
 						Opponent[i].Neigh_List2[obj_count] = Opponent[i].obj[j];
-						obj_count++;
-					}
+					obj_count++;
 				}
 			}
 		}
@@ -432,7 +428,7 @@ void NeighList_Opponent(void)
 	/*ニッチ番号を割り振る*/
 	count_nitch=1; /*ニッチ番号を初期化*/
 	for(i=0;i<No;i++){
-		if(Opponent[i].flag != 1 && Opponent[i].delete_flag == 0){
+		if(Opponent[i].flag != 1){
 			Set_Nitch(i);
 			count_nitch++;
 		}
@@ -727,7 +723,7 @@ void Update_Opponent(Indiv child)
 			min_indiv = i;
 		}
 	}
-	/*相手集団の中で子個体より弱い相手のところに入れる*/
+	/*削除予定の個体の枠へ子個体へ入れる、または相手集団の中で子個体より弱い相手のところに入れる*/
 	if(Opponent[min_indiv].win < child.win){
 		for(i=0;Opponent[i].delete_flag == 0 && i<No; i++){}
 		if(i != No){
@@ -811,11 +807,9 @@ void Opponent_Prot(SDL_Surface *window)
 	}
 	/*個体を描画*/
 	for(i=0;i<No;i++){
-		if(Opponent[i].delete_flag == 0){
-			sprintf(tmp_n,"%d",Opponent[i].nitch);
-			stringColor(window, (Opponent[i].n[0]*2)+center[0], (Opponent[i].n[1]*2)+center[1], tmp_n, 0x000000ff);
-			tmp_n[0] = '\0';
-		}
+		sprintf(tmp_n,"%d",Opponent[i].nitch);
+		stringColor(window, (Opponent[i].n[0]*2)+center[0], (Opponent[i].n[1]*2)+center[1], tmp_n, 0x000000ff);
+		tmp_n[0] = '\0';
 	}
 }
 /********************
