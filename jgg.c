@@ -13,8 +13,6 @@
 #define INIT		100	/*解集団の初期化範囲*/
 #define INIT_OPPOMEMT	100	/*敵集団の初期化範囲*/
 #define INIT_OPTIMAL	100	/*敵集団の初期化範囲*/
-#define LIMIT		100	/*定義域*/
-#define Y		100	/*地域*/
 #define Ns		20	/*初期集団数*/
 #define No		20	/*敵集団数*/
 #define Np		3	/*親個体数*/
@@ -65,7 +63,6 @@ void Init_Opponent_BattleData(void);
 void Init_Optimal(void);
 
 void creat_child(int pare[],int child[]);
-void select_child(int optimal,int child[],int surv[]);
 
 void Child_Opponent_Numbers(Indiv child[],Indiv Opponent[]); /*子個体と相手集団を戦わせる*/
 void Pare_Numbers(Indiv pare[]); /*REXstar内で扱う*/
@@ -96,7 +93,6 @@ main(){
 	Indiv pop[Ns];		/*解集団配列*/
 	Indiv pare[Np];		/*親集団配列*/
 	Indiv child[Nc];	/*子集団配列*/
-	Indiv surv[Np]; 	/*残される子を入れておく*/
 	Indiv pare_child[Np+Nc];/*子個体と親個体を合わせる*/
 
 	int i,j,k; /*for文用*/
@@ -125,7 +121,6 @@ main(){
 	}
 	SDL_Thread *thr_keyboad,*thr_window;
 	thr_keyboad = SDL_CreateThread(thread_keyboad,NULL);
-	thr_window = SDL_CreateThread(thread_window,NULL);
 
 	/*初期解生成*/
 	for(i=0;i<Ns;i++){
@@ -277,25 +272,7 @@ static int thread_keyboad(void *data){
 		}
 	}
 }
-/****************
 
-画面出力のスレッド
-****************/
-static int thread_window(void *data)
-{
-	SDL_Event event;
-	SDL_Surface *window_sub; // ウィンドウ（画像）データ、及び、文字列（画像）へのポインタ
-	
-	if((window_sub = SDL_SetVideoMode(WINDOW_X, WINDOW_Y, 32, SDL_SWSURFACE)) == NULL) {
-		printf("failed to initialize videomode.\n");
-		exit(-1);
-	}
-	
-	while(end_flag){
-		SDL_FillRect(window_sub, NULL, 0x00ffffff);
-		SDL_Flip(window_sub); /*ウィンドウに反映*/
-	}
-}
 /*********
 初期化
 *********/

@@ -81,6 +81,7 @@ main(){
 	Indiv pop[Ns];		/*解集団配列*/
 	Indiv pare[Np];		/*親集団配列*/
 	Indiv child[Nc];	/*子集団配列*/
+	Indiv pare_child[Np+Nc];
 
 	init_genrand((unsigned)time(NULL)); /*乱数初期化*/
 	Init_Indiv(pop,Ns); /*解集団構造体初期化*/
@@ -137,18 +138,27 @@ main(){
 		}
 		/*RexStarにより子個体を生成*/
 		RexStar(pare,child,window);
+		for(i=0;i<Np;i++){
+			pare_child[i] = pare[i];
+			pare_child[i].win = 0;
+		}
+		for(i=Np;i<Np+Nc;i++){
+			pare_child[i] = child[i];
+		}
 		/*子個体でナンバーズ*/
 		for(i=0;i<Nc;i++){
 			for(j=i;j<Nc;j++){
-				Numbers(&child[i],&child[j]);
+				Numbers(&pare_child[i],&pare_child[j]);
 			}
 		}
+		/*子個体をスケーリング*/
+		FitnessShare(pare_child,Nc);
 		/*評価の良い順にソート*/
-		sort_win(child,Nc);
+		sort_win(pare_child,Nc);
 		/*Np個体残す*/
 		for(i=0;i<Np;i++){
 			for(j=0;pop[j].flag != 1;j++){}
-			pop[j] = child[i];
+			pop[j] = pare_child[i];
 			pop[j].flag = 0;
 		}
 
@@ -165,6 +175,7 @@ main(){
 		if(end_count > END_STEP){
 			end_flag = 0;
 		}
+		SDL_Delay(500);
 	}
 	return 0;
 }
