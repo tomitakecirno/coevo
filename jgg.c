@@ -1,6 +1,3 @@
-/***********************************************************************************
-***********************************************************************************/
-
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
@@ -19,18 +16,16 @@
 #define Nc		10	/*子個体数*/
 #define DEM		2	/*次元数*/
 #define T		1	/*ステップサイズ*/
-#define END_STEP	300	/*終わるタイミング*/
+#define END_STEP	500	/*終わるタイミング*/
 #define WINDOW_X	800	/*定義域*/
 #define WINDOW_Y	800	/*地域*/
 #define PROT_X		600	/*定義域*/
 #define PROT_Y		600	/*地域*/
 #define K		3	/*ニッチの集団数*/
 #define DELETE		50
-#define Optimal_N	1
+#define Optimal_N	4
 
 double center[2] = {WINDOW_X/2,WINDOW_Y/2};
-
-
 typedef struct{
 	double n[DEM];
 	int flag;
@@ -156,30 +151,35 @@ main(){
 		/*RexStarにより子個体を生成*/
 		RexStar(pare,child,window);
 		/*子集団と親集団をpare_childへ統合する*/
+		/*
 		for(i=0;i<Np;i++){
 			pare_child[i] = pare[i];
+			pare_child[i].win = 0;
 		}
+		*/
+		/*
 		for(i=0;i<Nc;i++){
 			pare_child[Np+i] = child[i];
 		}
+		*/
 		/*子個体を相手集団と戦わせる*/
-		Child_Opponent_Numbers(pare_child,Opponent);
+		Child_Opponent_Numbers(child,Opponent);
 		/*評価の良い順にソート*/
-		sort_win(pare_child,Np+Nc);
+		sort_win(child,Nc);
 		/*
 		Np個体残そう
 		*/
 		for(i=0;i<Np;i++){
 			for(j=0;pop[j].flag != 1;j++){}
-			pop[j] = pare_child[i];
+			pop[j] = child[i];
 			pop[j].flag = 0;
 			for(k=0;Opponent[k].delete_flag == 0 && k<No;k++){}
 			if(k != No){
-				Opponent[k] = pare_child[i];
+				Opponent[k] = child[i];
 				Opponent[k].comp_flag = 1;
 				Opponent[k].delete_flag = 0;
 			}if(k == No){
-				Update_Opponent(pare_child[i]);
+				Update_Opponent(child[i]);
 			}
 		}
 		/*生存競争を1世代に1回でも行っていればカウント初期化。行っていなければカウント。*/
@@ -218,10 +218,10 @@ main(){
 		Prot_Frame(window);
 		SDL_Flip(window);
 		if(end_count%20 == 0){
-			sprintf(name,"./picture/list2/opponent0%d.bmp",end_count);
+			sprintf(name,"./picture/nitch/opponent0%d.bmp",end_count);
 			SDL_SaveBMP(window,name);
 		}
-				//SDL_Delay(500);
+		/*SDL_Delay(500);*/
 		//Unit_Prot(child,window,Nc);
 		/*親集団構造体初期化*/
 		Init_Indiv(pare,Np);
@@ -623,7 +623,7 @@ void Child_Opponent_Numbers(Indiv child[],Indiv Opponent[])
 {
 	int i,j;
 	/*絶対値が一番小さいパラメータを求める*/
-	for(i=0;i<Nc+Np;i++){
+	for(i=0;i<Nc;i++){
 		for(j=0;j<No;j++){
 			Numbers(&child[i],&Opponent[j]);
 		}
@@ -637,6 +637,7 @@ void Pare_Numbers(Indiv pare[])
 {
 	int i,j;
 	/*絶対値が一番小さいパラメータを求める*/
+
 	for(i=0;i<Np*2;i++){
 		for(j=i+1;j<Np*2;j++){
 			Numbers(&pare[i],&pare[j]);

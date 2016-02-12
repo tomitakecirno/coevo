@@ -10,22 +10,24 @@
 #define INIT		100	/*解集団の初期化範囲*/
 #define INIT_OPPOMEMT	100	/*敵集団の初期化範囲*/
 #define INIT_OPTIMAL	100	/*敵集団の初期化範囲*/
-#define Ns		25	/*初期集団数*/
-#define No		25	/*敵集団数*/
+#define Ns		20	/*初期集団数*/
+#define No		20	/*敵集団数*/
 #define Np		3	/*親個体数*/
 #define Nc		10	/*子個体数*/
+#define O_Np		3	/*親個体数*/
+#define O_Nc		10	/*子個体数*/
 #define DEM		2	/*次元数*/
 #define ALFA		1
 #define BETA		2
-#define RAD_SHARE	90
-#define MAX_POINT	25
+#define RAD_SHARE	50
+#define MAX_POINT	100
 #define T		1	/*ステップサイズ*/
-#define END_STEP	300	/*終わるタイミング*/
+#define END_STEP	500	/*終わるタイミング*/
 #define WINDOW_X	800	/*定義域*/
 #define WINDOW_Y	800	/*地域*/
 #define PROT_X		600	/*定義域*/
 #define PROT_Y		600	/*地域*/
-#define Optimal_N	1
+#define Optimal_N	4
 
 double center[2] = {WINDOW_X/2,WINDOW_Y/2};
 typedef struct{
@@ -54,6 +56,7 @@ void Init_Opponent();
 void Init_Optimal(void);
 
 void sort_win(Indiv pare[],int N);
+void sort_eval(Indiv pare[],int N);
 double GetRand_Real(double pGetMax);
 
 double cal_distance(double a_x,double a_y,double b_x,double b_y);
@@ -61,9 +64,12 @@ double Sharing(double dis);
 void FitnessShare(Indiv unit[],int N);
 
 void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window);
+void OpponentRex(Indiv pare[],Indiv child[],SDL_Surface *window);
+
 
 void Pare_Numbers(Indiv pare[]);
 void Child_Opponent_Numbers(Indiv child[],Indiv Opponent[]);
+void OpponentChild_pop_Numbers(Indiv OpponentChild[],Indiv pop[]);
 int Numbers(Indiv *one,Indiv *another);
 double ScalingEval(int point,double eval);
 
@@ -78,19 +84,24 @@ main(){
 	int count;
 	int tmp;
 	int i,j,k;
+	char name[50];
 	Indiv pop[Ns];		/*解集団配列*/
 	Indiv pare[Np];		/*親集団配列*/
 	Indiv child[Nc];	/*子集団配列*/
+	Indiv OpponentPare[Np];		/*敵親集団配列*/
+	Indiv OpponentChild[Nc];	/*敵子集団配列*/
 	Indiv pare_child[Np+Nc];
-
 	init_genrand((unsigned)time(NULL)); /*乱数初期化*/
 	Init_Indiv(pop,Ns); /*解集団構造体初期化*/
 	Init_Indiv(pare,Np); /*親集団構造体初期化*/
 	Init_Indiv(child,Nc); /*子集団構造体初期化*/
+	Init_Indiv(OpponentPare,Np); /*親集団構造体初期化*/
+	Init_Indiv(OpponentChild,Nc); /*子集団構造体初期化*/
+
 	Init_Opponent(); /*相手集団構造体初期化*/
 	Init_Optimal();
 
-	/*初期解生成*/
+	/*左側集団の座標生成*/
 	for(i=0;i<Ns;i++){
 		for(j=0;j<DEM;j++){
 			pop[i].n[j] = GetRand_Real(INIT); /*実数値乱数*/
@@ -112,12 +123,10 @@ main(){
 		printf("failed to initialize videomode.\n");
 		exit(-1);
 	}
-
 	end_flag = 1;
 	end_count = 0;
 	SDL_Thread *thr_keyboad,*thr_window;
 	thr_keyboad = SDL_CreateThread(thread_keyboad,NULL);
-
 	while(end_flag){
 		/*親を選ぶ*/
 		count = 0;
@@ -136,47 +145,83 @@ main(){
 				while_flag = 0;
 			}
 		}
-		/*RexStarにより子個体を生成*/
-		RexStar(pare,child,window);
-		for(i=0;i<Np;i++){
-			pare_child[i] = pare[i];
-			pare_child[i].win = 0;
-		}
-		for(i=Np;i<Np+Nc;i++){
-			pare_child[i] = child[i];
-		}
-		/*子個体でナンバーズ*/
-		for(i=0;i<Nc;i++){
-			for(j=i;j<Nc;j++){
-				Numbers(&pare_child[i],&pare_child[j]);
+		/*敵の親を選ぶ*/
+		count = 0;
+		while_flag = 1;
+		while(while_flag){
+			tmp = genrand_int32() % No;
+			if(Opponent[tmp].flag == 0){
+				for(j=0;j<DEM;j++){
+					OpponentPare[count].n[j] = Opponent[tmp].n[j];
+				}
+				OpponentPare[count].flag = 0;
+				Opponent[tmp].flag = 1;
+				count++;
+			}
+			if(count == Np){
+				while_flag = 0;
 			}
 		}
-		/*子個体をスケーリング*/
-		FitnessShare(pare_child,Nc);
-		/*評価の良い順にソート*/
-		sort_win(pare_child,Nc);
-		/*Np個体残す*/
+		/*RexStarにより子個体を生成*/
+		RexStar(pare,child,window);
+		/*RexStarにより敵子個体を生成*/
+		RexStar(OpponentPare,OpponentChild,window);
+		/*子個体と敵集団を対戦*/
+		Child_Opponent_Numbers(child,Opponent);
+		/*敵子個体と元集団を対戦*/
+		Child_Opponent_Numbers(OpponentChild,pop);
+		/*敵子個体をスケーリング*/
+		FitnessShare(OpponentChild,Nc);
+		/*評価の良い順にソート.敵の子個体は評価値＝スケーリング補正後の評価値*/
+		sort_eval(OpponentChild,Nc);
+		/*評価の良い順にソート.元の子個体は評価値＝勝ち数*/
+		sort_win(child,Nc);
+		/*子個体をNp個体残す*/
 		for(i=0;i<Np;i++){
 			for(j=0;pop[j].flag != 1;j++){}
-			pop[j] = pare_child[i];
+			pop[j] = child[i];
 			pop[j].flag = 0;
 		}
-
+		/*敵子個体をNp個体残す*/
+		for(i=0;i<Np;i++){
+			for(j=0;Opponent[j].flag != 1;j++){}
+			Opponent[j] = OpponentChild[i];
+			Opponent[j].flag = 0;
+		}
 		/*プロット処理*/
 		SDL_FillRect(window, NULL, 0x00ffffff);
 		Unit_Optimal(window);
 		Prot_Frame(window);
 		Pop_Prot(pop,window);
+		Opponent_Prot(window);
 		SDL_Flip(window);
+		/*ファイル出力*/
+		if(end_count%20 == 0){
 
+			sprintf(name,"./picture/bfs/opponent0%d.bmp",end_count);
+			SDL_SaveBMP(window,name);
+		}
 		Init_Indiv(pare,Np);
 		Init_Indiv(child,Nc);
+		Init_Indiv(OpponentPare,Np);
+		Init_Indiv(OpponentChild,Nc);
 		end_count++;
 		if(end_count > END_STEP){
 			end_flag = 0;
 		}
-		SDL_Delay(500);
+		/*SDL_Delay(1000);*/
 	}
+	double sum_unit[DEM] = {0};
+	
+	for(i=0;i<Ns;i++){
+		for(j=0;j<DEM;j++){
+			sum_unit[j] += pop[i].n[j];
+		}
+	}
+	for(i=0;i<DEM;i++){
+		sum_unit[i] = sum_unit[i]/Ns;
+	}
+	SDL_Quit();
 	return 0;
 }
 
@@ -240,8 +285,7 @@ void Init_Optimal(void)
 	int i,j;
 	for(i=0;i<Optimal_N;i++){
 		for(j=0;j<DEM;j++){
-			Optimal[i].n[0] = GetRand_Real(INIT_OPTIMAL);
-			Optimal[i].n[1] = GetRand_Real(INIT_OPTIMAL);
+			Optimal[i].n[j] = GetRand_Real(INIT_OPTIMAL);
 		}
 	}
 }
@@ -264,7 +308,25 @@ void sort_win(Indiv pare[],int N){
             	}
         }
 }
-
+/**********
+評価値の降順に並べ替え
+*********/
+void sort_eval(Indiv pare[],int N)
+{
+	int i,j;
+	Indiv tmp_pare;
+	/*ソートする*/
+	for(i=0;i<N-1;i++){
+		for(j=N-1;j>i;j--){
+			/* 前の要素の方が大きかったら */
+			if(pare[j-1].eval<pare[j].eval){
+				tmp_pare = pare[j]; /* 交換する */
+				pare[j] = pare[j-1];
+				pare[j-1] = tmp_pare;
+            		}
+            	}
+        }
+}
 /*****************
 乱数生成
 *****************/
@@ -294,13 +356,25 @@ void Child_Opponent_Numbers(Indiv child[],Indiv Opponent[])
 {
 	int i,j;
 	/*絶対値が一番小さいパラメータを求める*/
-	for(i=0;i<Nc+Np;i++){
+	for(i=0;i<Nc;i++){
 		for(j=0;j<No;j++){
 			Numbers(&child[i],&Opponent[j]);
 		}
 	}
 }
-
+/*********
+ナンバーズ
+*********/
+void OpponentChild_pop_Numbers(Indiv OpponentChild[],Indiv pop[])
+{
+	int i,j;
+	/*絶対値が一番小さいパラメータを求める*/
+	for(i=0;i<Nc;i++){
+		for(j=0;j<Ns;j++){
+			Numbers(&OpponentChild[i],&pop[j]);
+		}
+	}
+}
 /************
 親のナンバーズ.rexstarで利用
 ************/
@@ -358,7 +432,7 @@ int Numbers(Indiv *one,Indiv *another)
 }
 
 /************
-JGG＋REX
+JGG＋REXstar
 ************/
 void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window)
 {
@@ -454,6 +528,61 @@ void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window)
 		}
 	}
 }
+/***************
+敵に関するJGG＋REX
+***************/
+void OpponentRex(Indiv pare[],Indiv child[],SDL_Surface *window)
+{
+	double base_gra[DEM] = {0}; /*基準となる重心*/
+	double sum_n[DEM] = {0}; /*x,yそれぞれの和を一時的に保存しておく配列*/
+	int i,j;
+	
+	/*ベースとなる重心を求める*/
+	for(i=0;i<Np;i++){
+		for(j=0;j<DEM;j++){
+			sum_n[j] += pare[i].n[j]; /*親のx,yをそれぞれ足す*/
+		}
+	}
+	for(i=0;i<DEM;i++){
+		base_gra[i] = sum_n[i]/Np; /*親のそれぞれx,yの和を割る*/
+	}
+
+	/*重心から親に対するベクトルを求める*/
+	Indiv vector[Np];
+	for(i=0;i<Np;i++){
+		for(j=0;j<DEM;j++){
+			vector[i].n[j] = pare[i].n[j] - base_gra[j];
+		}
+	}
+	/*子個体生成*/
+	double diag[DEM];
+	double sum_coe[DEM]={0},coe=0; /*親のベクトル*乱数の総和*/
+	double child_save[DEM];
+	int count = 0;
+	true_flag = 1;
+	while(true_flag){
+		/*式(11)の第2項の動作*/
+		for(i=0;i<Np;i++){
+			coe = GetRand_Real( sqrt(3/Np) );
+			for(j=0;j<DEM;j++){
+				sum_coe[j] += coe * vector[i].n[j];/*親個体と重心のベクトルに乱数を掛ける*/
+			}
+		}
+		for(i=0;i<DEM;i++){
+			child_save[i] = base_gra[i] + sum_coe[i];
+		}
+		if(fabs(child_save[0]) <= 100.00 && fabs(child_save[1]) <= 100.00){
+			for(i=0;i<DEM;i++){
+				child[count].n[i] = child_save[i]; /*式(11)の動作*/
+			}
+			count++;
+		}
+		if(count == Nc){
+			true_flag = 0;
+		}
+	}
+}
+
 /****************
 適応度共有法
 ****************/
