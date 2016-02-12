@@ -16,13 +16,13 @@
 #define Nc		10	/*子個体数*/
 #define DEM		2	/*次元数*/
 #define T		1	/*ステップサイズ*/
-#define END_STEP	500	/*終わるタイミング*/
+#define END_STEP	300	/*終わるタイミング*/
 #define WINDOW_X	800	/*定義域*/
 #define WINDOW_Y	800	/*地域*/
 #define PROT_X		600	/*定義域*/
 #define PROT_Y		600	/*地域*/
 #define K		3	/*ニッチの集団数*/
-#define DELETE		50
+#define DELETE		100
 #define Optimal_N	4
 
 double center[2] = {WINDOW_X/2,WINDOW_Y/2};
@@ -50,6 +50,7 @@ int end_flag = 1;
 int true_flag = 1;
 int while_flag = 1;
 int count_nitch=1;
+int end_count = 0;
 
 
 void Init_Indiv(Indiv pare[],int N);
@@ -127,7 +128,6 @@ main(){
 	int while_flag = 1;
 	int count= 0; /*親の数をカウント*/
 	int tmp;
-	int end_count = 0;
 	while(end_flag){
 		/*ウィンドウの（背景）色を変更（白色の矩形で塗りつぶし）*/
 		count = 0;
@@ -151,35 +151,31 @@ main(){
 		/*RexStarにより子個体を生成*/
 		RexStar(pare,child,window);
 		/*子集団と親集団をpare_childへ統合する*/
-		/*
 		for(i=0;i<Np;i++){
 			pare_child[i] = pare[i];
 			pare_child[i].win = 0;
 		}
-		*/
-		/*
 		for(i=0;i<Nc;i++){
 			pare_child[Np+i] = child[i];
 		}
-		*/
 		/*子個体を相手集団と戦わせる*/
-		Child_Opponent_Numbers(child,Opponent);
+		Child_Opponent_Numbers(pare_child,Opponent);
 		/*評価の良い順にソート*/
-		sort_win(child,Nc);
+		sort_win(pare_child,Nc);
 		/*
 		Np個体残そう
 		*/
 		for(i=0;i<Np;i++){
 			for(j=0;pop[j].flag != 1;j++){}
-			pop[j] = child[i];
+			pop[j] = pare_child[i];
 			pop[j].flag = 0;
 			for(k=0;Opponent[k].delete_flag == 0 && k<No;k++){}
 			if(k != No){
-				Opponent[k] = child[i];
+				Opponent[k] = pare_child[i];
 				Opponent[k].comp_flag = 1;
 				Opponent[k].delete_flag = 0;
 			}if(k == No){
-				Update_Opponent(child[i]);
+				Update_Opponent(pare_child[i]);
 			}
 		}
 		/*生存競争を1世代に1回でも行っていればカウント初期化。行っていなければカウント。*/
@@ -218,7 +214,7 @@ main(){
 		Prot_Frame(window);
 		SDL_Flip(window);
 		if(end_count%20 == 0){
-			sprintf(name,"./picture/nitch/opponent0%d.bmp",end_count);
+			sprintf(name,"./picture/nitch/10/opponent0%d.bmp",end_count);
 			SDL_SaveBMP(window,name);
 		}
 		/*SDL_Delay(500);*/
@@ -330,13 +326,20 @@ void Init_Opponent_BattleData(void)
 *******************/
 void Init_Optimal(void)
 {
+	double tmp_n = -100;
 	int i,j;
-	for(i=0;i<Optimal_N;i++){
-		for(j=0;j<DEM;j++){
-			Optimal[i].n[0] = GetRand_Real(INIT_OPTIMAL);
-			Optimal[i].n[1] = GetRand_Real(INIT_OPTIMAL);
-		}
-	}
+	Optimal[0].n[0] = -50;
+	Optimal[0].n[1] = -50;
+	
+	Optimal[1].n[0] = -50;
+	Optimal[1].n[1] =  50;
+	
+	Optimal[2].n[0] =  50;
+	Optimal[2].n[1] = -50;
+	
+	Optimal[3].n[0] =  50;
+	Optimal[3].n[1] =  50;
+
 }
 /*****************
 再帰的にニッチを割り当てていく
@@ -802,6 +805,10 @@ void Prot_Frame(SDL_Surface *window)
 	stringColor(window, center[0],center[1], num, 0x000000ff);
 	stringColor(window, WINDOW_X-PROT_X-30,WINDOW_Y/2, num2, 0x000000ff);
 	stringColor(window, PROT_X,WINDOW_Y/2, num3, 0x000000ff);
+
+	char num4[10];
+	sprintf(num4,"%d",end_count);
+	stringColor(window, 50,50, num4, 0x000000ff);
 }
 
 /***************
@@ -824,7 +831,7 @@ void Opponent_Prot(SDL_Surface *window)
 				    (Opponent[i].n[1]*2)+center[1]+6,
 				    (Opponent[i].n[0]*2)+center[0]-5,
 				    (Opponent[i].n[1]*2)+center[1]+6,
-				    0x000000ff);	// 三角形を描画
+				    0x0000ffff);	// 三角形を描画
 	}
 }  
 /********************
@@ -839,7 +846,7 @@ void Pop_Prot(Indiv pop[],SDL_Surface *window)
 				(pop[i].n[0]*2)+center[0],
 				(pop[i].n[1]*2)+center[1],
 				4,
-				0x000000ff);
+				0xff0000ff);
 		}
 	}
 }

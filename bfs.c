@@ -22,7 +22,7 @@
 #define RAD_SHARE	50
 #define MAX_POINT	100
 #define T		1	/*ステップサイズ*/
-#define END_STEP	500	/*終わるタイミング*/
+#define END_STEP	300	/*終わるタイミング*/
 #define WINDOW_X	800	/*定義域*/
 #define WINDOW_Y	800	/*地域*/
 #define PROT_X		600	/*定義域*/
@@ -198,7 +198,7 @@ main(){
 		/*ファイル出力*/
 		if(end_count%20 == 0){
 
-			sprintf(name,"./picture/bfs/opponent0%d.bmp",end_count);
+			sprintf(name,"./picture/bfs/10/opponent0%d.bmp",end_count);
 			SDL_SaveBMP(window,name);
 		}
 		Init_Indiv(pare,Np);
@@ -282,12 +282,20 @@ void Init_Opponent(){
 *******************/
 void Init_Optimal(void)
 {
+	double tmp_n = -100;
 	int i,j;
-	for(i=0;i<Optimal_N;i++){
-		for(j=0;j<DEM;j++){
-			Optimal[i].n[j] = GetRand_Real(INIT_OPTIMAL);
-		}
-	}
+	Optimal[0].n[0] = -50;
+	Optimal[0].n[1] = -50;
+	
+	Optimal[1].n[0] = -50;
+	Optimal[1].n[1] =  50;
+	
+	Optimal[2].n[0] =  50;
+	Optimal[2].n[1] = -50;
+	
+	Optimal[3].n[0] =  50;
+	Optimal[3].n[1] =  50;
+
 }
 
 /**********
@@ -634,30 +642,6 @@ double ScalingEval(int point,double eval)
 
 	return scaling_n;
 }
-/***************
-敵集団をプロット
-***************/
-void Opponent_Prot(SDL_Surface *window)
-{
-	int i;
-	char tmp_n[5];
-	/*個体を描画*/
-	for(i=0;i<No;i++){
-	/*
-		sprintf(tmp_n,"%d",Opponent[i].nitch);
-		stringColor(window, (Opponent[i].n[0]*2)+center[0]-2,
-			    (Opponent[i].n[1]*2)+center[1]-2, tmp_n, 0x000000ff);
-	*/
-		trigonColor(window, (Opponent[i].n[0]*2)+center[0],
-				    (Opponent[i].n[1]*2)+center[1]-5,
-				    (Opponent[i].n[0]*2)+center[0]+6,
-				    (Opponent[i].n[1]*2)+center[1]+6,
-				    (Opponent[i].n[0]*2)+center[0]-5,
-				    (Opponent[i].n[1]*2)+center[1]+6,
-				    0x000000ff);	// 三角形を描画
-	}
-}
-
 /**********
 枠を描画
 ***********/
@@ -711,6 +695,9 @@ void Prot_Frame(SDL_Surface *window)
 	stringColor(window, center[0],center[1], num, 0x000000ff);
 	stringColor(window, WINDOW_X-PROT_X-30,WINDOW_Y/2, num2, 0x000000ff);
 	stringColor(window, PROT_X,WINDOW_Y/2, num3, 0x000000ff);
+	char num4[10];
+	sprintf(num4,"%d",end_count);
+	stringColor(window, 50,50, num4, 0x000000ff);
 }
 
 
@@ -726,8 +713,31 @@ void Pop_Prot(Indiv pop[],SDL_Surface *window)
 				(pop[i].n[0]*2)+center[0],
 				(pop[i].n[1]*2)+center[1],
 				4,
-				0x000000ff);
+				0xff0000ff);
 		}
+	}
+}
+/***************
+敵集団をプロット
+***************/
+void Opponent_Prot(SDL_Surface *window)
+{
+	int i;
+	char tmp_n[5];
+	/*個体を描画*/
+	for(i=0;i<No;i++){
+	/*
+		sprintf(tmp_n,"%d",Opponent[i].nitch);
+		stringColor(window, (Opponent[i].n[0]*2)+center[0]-2,
+			    (Opponent[i].n[1]*2)+center[1]-2, tmp_n, 0x000000ff);
+	*/
+		trigonColor(window, (Opponent[i].n[0]*2)+center[0],
+				    (Opponent[i].n[1]*2)+center[1]-5,
+				    (Opponent[i].n[0]*2)+center[0]+6,
+				    (Opponent[i].n[1]*2)+center[1]+6,
+				    (Opponent[i].n[0]*2)+center[0]-5,
+				    (Opponent[i].n[1]*2)+center[1]+6,
+				    0x0000ffff);	// 三角形を描画
 	}
 }
 /********************
