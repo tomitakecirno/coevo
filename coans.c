@@ -457,9 +457,16 @@ void AnsList3(Indiv pop[])
 		/*近い順に並べ替え*/
 		sort_distance(&pop[i],Ns);
 	}
+	for(i=0;i<Ns;i++){
+		for(j=0;j<Ns;j++){
+		/*
+			printf("pop[%d].obj[%d] = %d\n",i,j,pop[i].obj[j]);
+			printf("pop[%d].dis[%d] = %.2f\n",i,j,pop[i].dis[j]);
+			*/
+		}
+	}
+
 	/*近傍リスト3生成*/
-	int save_obj;
-	int count_nitch_flag = 0;
 	for(i=0;i<Ns;i++){
 		kotai_count=0; /*近傍リストをカウント*/
 		/*近傍リストを作る個体の近傍をＫ番目まで見る*/
