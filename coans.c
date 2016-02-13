@@ -23,7 +23,7 @@
 #define PROT_Y		600	/*地域*/
 #define K		6	/*ニッチの集団数*/
 #define DELETE		100
-#define Optimal_N	4
+#define Optimal_N	2
 
 double center[2] = {WINDOW_X/2,WINDOW_Y/2};
 typedef struct{
@@ -66,7 +66,7 @@ int Numbers(Indiv *one,Indiv *another);
 
 void sort_win(Indiv pare[],int N);
 void sort_distance(Indiv *unit,int N);
-double cal_distance(double a_x,double a_y,double b_x,double b_y);
+double cal_coord_distance(Indiv *one,Xy_str *coord);
 double cal_kotai_distance(Indiv one, Indiv another);
 
 void NeighList_Opponent(void);
@@ -201,18 +201,42 @@ main(){
 		/*主親より評価値のいい子個体がいたら入れ替える*/
 		if(MainPare.win < child[0].win){
 			MainPare = child[0];
+			/*削除予定の個体があれば*/
+			for(k=0;Opponent[k].delete_flag == 0 && k<No;k++){}
+			if(k != No){
+				Opponent[k] = child[0];
+				Opponent[k].comp_flag = 1;
+				Opponent[k].delete_flag = 0;
+			}if(k == No){
+				Update_Opponent(child[0]);
+			}
 		}
+		/*生存競争を1世代に1回でも行っていればカウント初期化。行っていなければカウント。*/
+		for(i=0;i<No;i++){
+			if(Opponent[i].delete_flag != 1){
+				if(Opponent[i].comp_flag == 0){
+					Opponent[i].gene_count++;
+				}else if(Opponent[i].comp_flag == 1){
+					Opponent[i].gene_count = 0;
+				}
+				Opponent[i].comp_flag = 0;
+				if(DELETE <= Opponent[i].gene_count){
+					Opponent[i].delete_flag = 1;
+					Opponent[i].nitch = 0;
+				}
+			}
+		}
+		/*主親を集団に戻す*/
 		pop[MainPare_n] = MainPare;
 		Unit_Optimal(window);
+		Opponent_Prot(window);
 		Pop_Prot(pop,window);
 		Prot_Frame(window);
 		SDL_Flip(window);
-		/*
 		if(end_count%20 == 0){
 			sprintf(name,"./picture/nitch/10/opponent0%d.bmp",end_count);
 			SDL_SaveBMP(window,name);
 		}
-		*/
 		//SDL_Delay(500);
 
 		/*構造体初期化*/
@@ -309,6 +333,7 @@ void Init_Optimal(void)
 {
 	double tmp_n = -100;
 	int i,j;
+	/*
 	Optimal[0].n[0] = -50;
 	Optimal[0].n[1] = -50;
 	
@@ -320,7 +345,12 @@ void Init_Optimal(void)
 	
 	Optimal[3].n[0] =  50;
 	Optimal[3].n[1] =  50;
-
+	*/
+	for(i=0;i<Optimal_N;i++){
+		for(j=0;j<DEM;j++){
+			Optimal[i].n[j] = GetRand_Real(INIT_OPTIMAL);
+		}
+	}
 }
 /*****************
 再帰的にニッチを割り当てていく
@@ -360,35 +390,11 @@ void NeighList_Opponent(void)
 	}
 	/*自身以外の個体との距離を総当たりで計測*/
 	for(i=0;i<No;i++){
-		obj_count=i; /*カウント初期化*/
-		for(j=i+1;j<No;j++){
-			Opponent[i].obj[obj_count] = j; /*配列の一番目に相手の番号を入れる*/
-			Opponent[j].obj[i] = i;
-			Opponent[i].dis[obj_count] = cal_distance(Opponent[i].n[0],
-							Opponent[i].n[1],
-							Opponent[j].n[0],
-							Opponent[j].n[1]);
-			Opponent[j].dis[i] = Opponent[i].dis[obj_count];
-			obj_count++;
+		for(j=0;j<No;j++){
+			Opponent[i].obj[j] = j; /*配列の一番目に相手の番号を入れる*/
+			Opponent[i].dis[j] = cal_kotai_distance(Opponent[i],Opponent[j]);
 		}
-	}
-	/*近い順に並べ替え*/
-	for(i=0;i<No;i++){
-		for(j=0;j<No-2;j++){
-			for(k=No-2;k>j;k--){
-				/* 前の要素の方が大きかったら*/
-				if(Opponent[i].dis[k-1]>Opponent[i].dis[k]){
-					/*相手番号を並べ替え*/
-					tmp_obj = Opponent[i].obj[k];
-					Opponent[i].obj[k] = Opponent[i].obj[k-1];
-					Opponent[i].obj[k-1] = tmp_obj;
-					/*距離を並べ替えを並べ替え*/
-					tmp_dis = Opponent[i].dis[k];
-					Opponent[i].dis[k] = Opponent[i].dis[k-1];
-					Opponent[i].dis[k-1] = tmp_dis;
-				}
-			}
-		}
+		sort_distance(&Opponent[i],No);
 	}
 	/*近傍リスト2生成*/
 	int save_obj;
@@ -623,10 +629,14 @@ double Uniform( void )
 /*************
 距離計測
 *************/
-double cal_distance(double a_x,double a_y,double b_x,double b_y){
-	double cal_save;
-	cal_save = pow(b_x-a_x,2)+pow(b_y-a_y,2);
-	return( sqrt(cal_save) );
+double cal_coord_distance(Indiv *one,Xy_str *coord)
+{
+	double cal_sum = 0;
+	int i;
+	for(i=0;i<DEM;i++){
+		cal_sum += (one->n[i] - coord->n[i])*(one->n[i] - coord->n[i]);
+	}
+	return( sqrt(cal_sum) );
 }
 
 /*************
@@ -680,16 +690,16 @@ int Numbers(Indiv *one,Indiv *another)
 {
 	int i;
 	int min_one = 0,min_another = 0;
-	double dis_one = cal_distance(one->n[0],one->n[1],Optimal[0].n[0],Optimal[0].n[1]);
-	double dis_another = cal_distance(another->n[0],another->n[1],Optimal[0].n[0],Optimal[0].n[1]);
+	double dis_one = cal_coord_distance(one,&Optimal[0]);
+	double dis_another = cal_coord_distance(another,&Optimal[0]);
 
 	for(i=1;i<Optimal_N;i++){
-		if(cal_distance(one->n[0],one->n[1],Optimal[i].n[0],Optimal[i].n[1]) < dis_one){
-			dis_one = cal_distance(one->n[0],one->n[1],Optimal[i].n[0],Optimal[i].n[1]);
+		if(cal_coord_distance(one,&Optimal[i]) < dis_one){
+			dis_one = cal_coord_distance(one,&Optimal[i]);
 			min_one = i;
 		}
-		if(cal_distance(another->n[0],another->n[1],Optimal[i].n[0],Optimal[i].n[1]) < dis_another){
-			dis_one = cal_distance(one->n[0],one->n[1],Optimal[i].n[0],Optimal[i].n[1]);
+		if(cal_coord_distance(another,&Optimal[i]) < dis_another){
+			dis_one = cal_coord_distance(another,&Optimal[i]);
 			min_another = i;
 		}
 	}
@@ -698,18 +708,13 @@ int Numbers(Indiv *one,Indiv *another)
 	double distance_another;
 	
 	/*最適値に対して絶対値が一番小さい方が勝ち*/
-	distance_one = cal_distance(one->n[0],one->n[1],
-					Optimal[min_one].n[0],Optimal[min_one].n[1]);
-	distance_another = cal_distance(another->n[0],another->n[1],
-					Optimal[min_another].n[0],Optimal[min_another].n[1]);
+	distance_one = cal_coord_distance(one,&Optimal[min_one]);
+	distance_another = cal_coord_distance(another,&Optimal[min_another]);
 	if(distance_one < distance_another){
 		one->win++;
 	}else if(distance_one > distance_another){
 		another->win++;
-	}/*else if(distance_one == distance_another){
-		one->win++;
-		another->win++;
-	}*/
+	}
 }
 
 
@@ -727,11 +732,10 @@ void Update_Opponent(Indiv child)
 	/*いらない相手を残すと有害。勝ち数で残す個体判断しているので、余計な勝ち数がカウントされる。*/
 	/*距離が最小のニッチの重心を見つけて、ニッチ番号を取得*/
 	child.nitch = 1;
-	min_dis = cal_distance(Gra_Nitch[1].n[0],Gra_Nitch[1].n[1],
-			       child.n[0],child.n[1]);
+	min_dis = cal_coord_distance(&child,&Gra_Nitch[1]);
 	for(i=1;i<count_nitch;i++){
-		if(cal_distance(Gra_Nitch[i].n[0],Gra_Nitch[i].n[1],child.n[0],child.n[1]) < min_dis){
-		   	min_dis = cal_distance(Gra_Nitch[i].n[0],Gra_Nitch[i].n[1],child.n[0],child.n[1]);
+		if(cal_coord_distance(&child,&Gra_Nitch[i]) < min_dis){
+		   	min_dis = cal_coord_distance(&child,&Gra_Nitch[i]);
 		   	child.nitch = i;
 		}
 	}
