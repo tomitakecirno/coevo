@@ -146,8 +146,9 @@ main(){
 			for(i=0;pop[MainPare_n].Neigh_List2[i] != -1 && i<K;i++){}
 			pare_count = i;
 			/*近傍リストに個体があれば主親にして、ループを抜ける*/
-			if(pare_count  > 0){
+			if(pare_count  >= Np){
 				MainPare = pop[MainPare_n]; /*主親へ*/
+				MainPare.win = 0;
 				while_flag = 0;
 			}
 		}
@@ -157,8 +158,9 @@ main(){
 			int SubPare_n[pare_count];
 			Indiv SubPare[pare_count];
 			for(i=0;i<pare_count;i++){
-				SubPare_n[i] = MainPare.Neigh_List2[i]; /*副親の番号取得*/
+				SubPare_n[i] = MainPare.Neigh_List2[i];
 				SubPare[i] = pop[SubPare_n[i]];
+				SubPare[i].win = 0;
 			}
 			/*主親と副親で拡張XLM*/
 			ExtensionXLM(MainPare,SubPare,pare_count,child);
@@ -175,6 +177,7 @@ main(){
 					if(MainPare.Neigh_List2[tmp_rand] != -1){
 						SubPare_n[i] = MainPare.Neigh_List2[tmp_rand];
 						SubPare[i] = pop[SubPare_n[i]];
+						SubPare[i].win = 0;
 						/*個体と取り出して空にする*/
 						MainPare.Neigh_List2[tmp_rand] = -1;
 						while_flag = 0;
@@ -193,13 +196,15 @@ main(){
 		}
 		/*評価の良い順にソート*/
 		sort_win(child,Nc);
+		printf("child[0].win = %d\n",child[0].win);
+		printf("MainPare.win = %d\n",MainPare.win);
 		/*主親より評価値のいい子個体がいたら入れ替える*/
 		if(MainPare.win < child[0].win){
 			MainPare = child[0];
 		}
 		pop[MainPare_n] = MainPare;
-		Pop_Prot(pop,window);
 		Unit_Optimal(window);
+		Pop_Prot(pop,window);
 		Prot_Frame(window);
 		SDL_Flip(window);
 		/*
@@ -459,28 +464,35 @@ void AnsList3(Indiv pop[])
 	}
 	for(i=0;i<Ns;i++){
 		for(j=0;j<Ns;j++){
-		/*
 			printf("pop[%d].obj[%d] = %d\n",i,j,pop[i].obj[j]);
 			printf("pop[%d].dis[%d] = %.2f\n",i,j,pop[i].dis[j]);
-			*/
 		}
 	}
-
-	/*近傍リスト3生成*/
 	for(i=0;i<Ns;i++){
-		kotai_count=0; /*近傍リストをカウント*/
-		/*近傍リストを作る個体の近傍をＫ番目まで見る*/
+		for(j=0;j<K;j++){
+			pop[i].Neigh_List2[j] = pop[i].obj[j];
+			//printf("pop[%d].AnsList[%d] = %d\n",i,j,pop[i].Neigh_List2[j]);
+		}
+		//putchar('\n')
+	}
+	/*近傍リスト3生成*/
+	/*
+	for(i=0;i<Ns;i++){
+		kotai_count=0;
 		for(j=0;j<Ns;j++){
-			/*近傍Ｋ番目までの個体の近傍にiが存在すればリストに加える*/
 			for(k=1;k<K;k++){
 				if(pop[j].obj[k] == i){
 					pop[i].Neigh_List2[kotai_count] = j;
 					kotai_count++;
-					printf("pop[%d].AnsList[%d] = %d\n",i,kotai_count,pop[i].Neigh_List2[kotai_count]);
+					
 				}
 			}
 		}
+		for(j=0;j<K;j++){
+			printf("pop[%d].AnsList[%d] = %d\n",i,j,pop[i].Neigh_List2[j]);
+		}
 	}
+	*/
 }
 
 /**********************
