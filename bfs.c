@@ -1,3 +1,5 @@
+/**************************
+**************************/
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
@@ -12,8 +14,8 @@
 #define INIT_OPTIMAL	100	/*敵集団の初期化範囲*/
 #define Ns		25	/*初期集団数*/
 #define No		25	/*敵集団数*/
-#define Np		5	/*親個体数*/
-#define Nc		20	/*子個体数*/
+#define Np		3	/*親個体数*/
+#define Nc		10	/*子個体数*/
 #define O_Np		5	/*親個体数*/
 #define O_Nc		20	/*子個体数*/
 #define DEM		2	/*次元数*/
@@ -22,7 +24,7 @@
 #define RAD_SHARE	50
 #define MAX_POINT	100
 #define T		1	/*ステップサイズ*/
-#define END_STEP	300	/*終わるタイミング*/
+#define END_STEP	500	/*終わるタイミング*/
 #define WINDOW_X	800	/*定義域*/
 #define WINDOW_Y	800	/*地域*/
 #define PROT_X		600	/*定義域*/
@@ -60,20 +62,22 @@ void sort_eval(Indiv pare[],int N);
 double GetRand_Real(double pGetMax);
 double GetRand_plus_Real(double pGetMax);
 
-double cal_distance(double a_x,double a_y,double b_x,double b_y);
+double cal_Indiv_distance(Indiv *one,Indiv *another);
+double cal_coord_distance(Indiv *one,Xy_str *coord);
 double Sharing(double dis);
 void FitnessShare(Indiv unit[],int N);
 
 void RouletteSelect(Indiv unit[],Indiv pare[],int N);
-void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window);
+void PareRandSelect(Indiv pop[],int N,Indiv pare[]);
+void RexStar(Indiv pare[],Indiv child[]);
 void OpponentRex(Indiv pare[],Indiv child[],SDL_Surface *window);
-void ExtensionXLM(Indiv pare[], Indiv child[],int Main_n);
+void REX(Indiv pare[], Indiv child[]);
 double rand_normal( double mu, double sigma );
 double Uniform( void );
 
 void Pare_Numbers(Indiv pare[]);
 void pop_Opponent_Numbers(Indiv pop[],Indiv Opponent[]);
-void OpponentChild_pop_Numbers(Indiv OpponentChild[],Indiv pop[]);
+void OpponentChild_pop_Numbers(Indiv OpponentChild[],Indiv pop[],int N);
 int Numbers(Indiv *one,Indiv *another);
 double ScalingEval(int point,double eval);
 
@@ -132,8 +136,6 @@ main(){
 	SDL_Thread *thr_keyboad,*thr_window;
 	thr_keyboad = SDL_CreateThread(thread_keyboad,NULL);
 	while(end_flag){
-	printf("start\n");
-		/*集団間で対戦*/
 		for(i=0;i<Ns;i++){
 			pop[i].flag = 0;
 			pop[i].win = 0;
@@ -144,63 +146,43 @@ main(){
 			Opponent[i].win = 0;
 			Opponent[i].eval = 0;
 		}
-		pop_Opponent_Numbers(pop,Opponent);
-		
+		/*親個体選択*/
+		PareRandSelect(pop,Ns,pare);
+		PareRandSelect(Opponent,No,OpponentPare);
+		/*REX*/
+		RexStar(pare,child);
+		RexStar(OpponentPare,OpponentChild);
+		/*ナンバーズ*/
+		OpponentChild_pop_Numbers(child,Opponent,No);
+		OpponentChild_pop_Numbers(OpponentChild,pop,Ns);
 		for(i=0;i<Ns;i++){
 			pop[i].eval = (double)pop[i].win;
 		}
-
 		/*敵集団をスケーリング*/
-		FitnessShare(Opponent,No);
-		/*元集団ルーレット選択*/
-		RouletteSelect(pop,pare,Ns);
-		/*敵集団ルーレット選択*/
-		RouletteSelect(Opponent,OpponentPare,No); /*バグ*/
-		/*XLMにより子個体を生成*/
-		for(i=0;i<Np;i++){
-			ExtensionXLM(pare,child,i);
-		}
-
-		for(i=0;i<Np;i++){
-			ExtensionXLM(OpponentPare,OpponentChild,i);
-		}
-		/*元集団更新*/
-		for(i=0;i<Np;i++){
-			pop[i] = pare[i];
-			Opponent[i] = OpponentPare[i];
-		}
-		for(i=0;i<Nc;i++){
-			pop[Np+i] = child[i];
-			Opponent[Np+i] = OpponentChild[i];
-		}
-		for(i=0;i<Ns;i++){
-			for(j=0;j<DEM;j++){
-				printf("pop[%d].n[%d] = %.2f\n",i,j,pop[i].n[j]);
-			}
-		}
-		//return 0;
+		FitnessShare(OpponentChild,Nc);
+		/*評価値順にソート*/
+		sort_win(child,Nc);
 		/*
-		for(i=0;i<Np;i++){
-			for(j=0;j<DEM;j++){
-				printf("pare[%d].n[%d] = %.2f\n",i,j,pare[i].n[j]);
-			}
-		}
 		for(i=0;i<Nc;i++){
-			for(j=0;j<DEM;j++){
-				printf("child[%d].n[%d] = %.2f\n",i,j,child[i].n[j]);
-			}
-		}
-		for(i=0;i<Np;i++){
-			for(j=0;j<DEM;j++){
-				printf("OpponentPare[%d].n[%d] = %.2f\n",i,j,OpponentPare[i].n[j]);
-			}
-		}
-		for(i=0;i<Nc;i++){
-			for(j=0;j<DEM;j++){
-				printf("OpponentChild[%d].n[%d] = %.2f\n",i,j,OpponentChild[i].n[j]);
-			}
+			printf("child[%d].win = %d\n",i,child[i].win);
 		}
 		*/
+		sort_eval(OpponentChild,Nc);
+		/*
+		for(i=0;i<Nc;i++){
+			printf("OpponentChild[%d].eval = %.2f\n",i,OpponentChild[i].eval);
+		}
+		*/
+		for(i=0;i<Np;i++){
+			for(j=0;pop[j].flag != 1;j++){}
+			pop[j] = child[i];
+			pop[j].flag = 0;
+		}
+		for(i=0;i<Np;i++){
+			for(j=0;Opponent[j].flag != 1;j++){}
+			Opponent[j] = OpponentChild[i];
+			Opponent[j].flag = 0;
+		}
 		/*プロット処理*/
 		SDL_FillRect(window, NULL, 0x00ffffff);
 		Unit_Optimal(window);
@@ -209,11 +191,11 @@ main(){
 		Opponent_Prot(window);
 		SDL_Flip(window);
 		/*ファイル出力*/
-		if(end_count%20 == 0){
+		//if(end_count%20 == 0){
 
-			sprintf(name,"./picture/bfs/10/opponent0%d.bmp",end_count);
+			sprintf(name,"./picture/bfs/opponent1%d.bmp",end_count);
 			SDL_SaveBMP(window,name);
-		}
+		//}
 		Init_Indiv(pare,Np);
 		Init_Indiv(child,Nc);
 		Init_Indiv(OpponentPare,Np);
@@ -339,7 +321,7 @@ void sort_eval(Indiv pare[],int N)
 	/*ソートする*/
 	for(i=0;i<N-1;i++){
 		for(j=N-1;j>i;j--){
-			/* 前の要素の方が大きかったら */
+			/* 前の要素の方が小さかったら */
 			if(pare[j-1].eval<pare[j].eval){
 				tmp_pare = pare[j]; /* 交換する */
 				pare[j] = pare[j-1];
@@ -373,20 +355,33 @@ double GetRand_plus_Real(double pGetMax)
 /*************
 距離計測
 *************/
-double cal_distance(double a_x,double a_y,double b_x,double b_y)
+double cal_Indiv_distance(Indiv *one,Indiv *another)
 {
-	double cal_save;
-	cal_save = pow(b_x-a_x,2)+pow(b_y-a_y,2);
+	int i,j;
+	double cal_save = 0;
+	for(i=0;i<DEM;i++){
+		cal_save += (one->n[i] - another->n[i])*(one->n[i] - another->n[i]);
+	}
 	return( sqrt(cal_save) );
 }
-
+/*************
+距離計測
+*************/
+double cal_coord_distance(Indiv *one,Xy_str *coord)
+{
+	double cal_sum = 0;
+	int i;
+	for(i=0;i<DEM;i++){
+		cal_sum += (one->n[i] - coord->n[i])*(one->n[i] - coord->n[i]);
+	}
+	return( sqrt(cal_sum) );
+}
 /*********
 ナンバーズ
 *********/
 void pop_Opponent_Numbers(Indiv pop[],Indiv Opponent[])
 {
 	int i,j;
-	/*絶対値が一番小さいパラメータを求める*/
 	for(i=0;i<Ns;i++){
 		for(j=0;j<No;j++){
 			Numbers(&pop[i],&Opponent[j]);
@@ -396,12 +391,11 @@ void pop_Opponent_Numbers(Indiv pop[],Indiv Opponent[])
 /*********
 ナンバーズ
 *********/
-void OpponentChild_pop_Numbers(Indiv OpponentChild[],Indiv pop[])
+void OpponentChild_pop_Numbers(Indiv OpponentChild[],Indiv pop[],int N)
 {
 	int i,j;
-	/*絶対値が一番小さいパラメータを求める*/
 	for(i=0;i<Nc;i++){
-		for(j=0;j<Ns;j++){
+		for(j=0;j<N;j++){
 			Numbers(&OpponentChild[i],&pop[j]);
 		}
 	}
@@ -420,6 +414,8 @@ void Pare_Numbers(Indiv pare[])
 	}
 }
 
+
+
 /*************
 対戦させる関数 0で1番目の引数の個体が勝ち、1で2番目の引数の個体が勝ち
 *************/
@@ -427,22 +423,16 @@ int Numbers(Indiv *one,Indiv *another)
 {
 	int i;
 	int min_one = 0,min_another = 0;
-	double dis_one = cal_distance(one->n[0],
-				      one->n[1],
-				      Optimal[0].n[0],
-				      Optimal[0].n[1]);
-	double dis_another = cal_distance(another->n[0],
-					  another->n[1],
-					  Optimal[0].n[0],
-					  Optimal[0].n[1]);
+	double dis_one = cal_coord_distance(one,&Optimal[0]);
+	double dis_another = cal_coord_distance(another,&Optimal[0]);
 
 	for(i=1;i<Optimal_N;i++){
-		if(cal_distance(one->n[0],one->n[1],Optimal[i].n[0],Optimal[i].n[1]) < dis_one){
-			dis_one = cal_distance(one->n[0],one->n[1],Optimal[i].n[0],Optimal[i].n[1]);
+		if(cal_coord_distance(one,&Optimal[i]) < dis_one){
+			dis_one = cal_coord_distance(one,&Optimal[i]);
 			min_one = i;
 		}
-		if(cal_distance(another->n[0],another->n[1],Optimal[i].n[0],Optimal[i].n[1]) < dis_another){
-			dis_one = cal_distance(one->n[0],one->n[1],Optimal[i].n[0],Optimal[i].n[1]);
+		if(cal_coord_distance(another,&Optimal[i]) < dis_another){
+			dis_another = cal_coord_distance(another,&Optimal[i]);
 			min_another = i;
 		}
 	}
@@ -451,16 +441,11 @@ int Numbers(Indiv *one,Indiv *another)
 	double distance_another;
 	
 	/*最適値に対して絶対値が一番小さい方が勝ち*/
-	distance_one = cal_distance(one->n[0],one->n[1],
-					Optimal[min_one].n[0],Optimal[min_one].n[1]);
-	distance_another = cal_distance(another->n[0],another->n[1],
-					Optimal[min_another]. n[0],Optimal[min_another].n[1]);
+	distance_one = cal_coord_distance(one,&Optimal[min_one]);
+	distance_another = cal_coord_distance(another,&Optimal[min_another]);
 	if(distance_one < distance_another){
 		one->win++;
 	}else if(distance_one > distance_another){
-		another->win++;
-	}else {
-		one->win++;
 		another->win++;
 	}
 	
@@ -473,21 +458,22 @@ void RouletteSelect(Indiv unit[],Indiv pare[],int N)
 	int i;
 	int PareCount = 0;
 	double SelectNumber;
-	double win_sum = 0;
+	double eval_sum = 0;
 	double tmp_sum = 0;
 	for(i=0;i<N;i++){
-		win_sum += unit[i].eval;
-		printf("unit[%d].eval = %.2f\n",i,unit[i].eval);
+		eval_sum += unit[i].eval;
 	}
 	while(PareCount<Np){
-		SelectNumber = GetRand_plus_Real(win_sum);
+		//printf("eval_sum = %.2f\n",eval_sum);
+		SelectNumber = GetRand_plus_Real(eval_sum);
 		//printf("SelectNumber = %.2f\n",SelectNumber);
 		//printf("PareCount = %d\n",PareCount);
 		tmp_sum = 0;
 		/*N回回す間に選んだ番号より上になったら抜ける*/
 		for(i=0;i<N;i++){
 			tmp_sum += unit[i].eval;
-			if(tmp_sum > SelectNumber && unit[i].flag != 1){
+			//printf("tmp_sum = %.2f\n",tmp_sum);
+			if(tmp_sum > SelectNumber && unit[i].flag == 0){
 				pare[PareCount] = unit[i];
 				unit[i].flag = 1;
 				PareCount++;
@@ -497,12 +483,39 @@ void RouletteSelect(Indiv unit[],Indiv pare[],int N)
 			}
 		}
 	}
+	for(i=0;i<N;i++){
+		unit[i].flag = 0;
+	}
+}
 
+/**************
+親をランダムに選ぶ
+**************/
+void PareRandSelect(Indiv pop[],int N,Indiv pare[])
+{
+	int count = 0;
+	int tmp;
+	int i,j;
+	while_flag = 1;
+	while(while_flag){
+		tmp = genrand_int32() % N;
+		if(pop[tmp].flag == 0){
+			for(j=0;j<DEM;j++){
+				pare[count].n[j] = pop[tmp].n[j];
+			}
+			pare[count].flag = 0;
+			pop[tmp].flag = 1;
+			count++;
+		}
+		if(count == Np){
+			while_flag = 0;
+		}
+	}
 }
 /************
 JGG＋REXstar
 ************/
-void RexStar(Indiv pare[],Indiv child[],SDL_Surface *window)
+void RexStar(Indiv pare[],Indiv child[])
 {
 	double base_gra[DEM] = {0}; /*基準となる重心*/
 	double sum_n[DEM] = {0}; /*x,yそれぞれの和を一時的に保存しておく配列*/
@@ -651,70 +664,52 @@ void OpponentRex(Indiv pare[],Indiv child[],SDL_Surface *window)
 	}
 }
 
-/**********************
-拡張XLM
-**********************/
-void ExtensionXLM(Indiv pare[], Indiv child[],int Main_n)
+/*****************************
+拡張XLMの予定だったけど面倒だからREX
+*****************************/
+void REX(Indiv pare[], Indiv child[])
 {
-	double SubPare_Gra[DEM] = {0}; /*基準となる重心*/
+	double PareGra[DEM] = {0}; /*基準となる重心*/
 	double sum_n[DEM] = {0}; /*x,yそれぞれの和を一時的に保存しておく配列*/
 	int i,j,k;
 	int count = 0;
-	Indiv MainPare;
-	Indiv SubPare[Np-1];
-	Indiv sub_child[Np-1];
 	
 	for(i=0;i<Np;i++){
-		if(i == Main_n){
-			MainPare = pare[i];
-			/*
-			for(j=0;j<DEM;j++){
-				printf("Main.n[%d] = %.2f\n",j,MainPare.n[j]);
-			}
-			*/
-		}else {
-			SubPare[count] = pare[i];
-			/*
-			for(j=0;j<DEM;j++){
-				printf("Sub[%d].n[%d] = %.2f\n",count,j,SubPare[count].n[j]);
-			}
-			*/
-			count++;
+		for(j=0;j<DEM;j++){
+			sum_n[j] = pare[i].n[j];
 		}
 	}
 	/*ベースとなる重心を求める*/
-	for(i=0;i<Np-1;i++){
-		for(j=0;j<DEM;j++){
-			sum_n[j] += SubPare[i].n[j]; /*親のx,yをそれぞれ足す*/
-		}
-	}
 	for(i=0;i<DEM;i++){
-		SubPare_Gra[i] = sum_n[i]/(Np-1); /*親のそれぞれx,yの和を割る*/
+		PareGra[i] = sum_n[i]/Np; /*親のx,yをそれぞれ足す*/
+		//printf("PareGra[%d] = %.2f\n",i,PareGra[i]);
 	}
 	/*重心から親に対するベクトルを求める*/
-	double vector[Np-1][DEM];
-	for(i=0;i<Np-1;i++){
+	double vector[Np][DEM];
+	for(i=0;i<Np;i++){
 		for(j=0;j<DEM;j++){
-			vector[i][j] = SubPare[i].n[j] - SubPare_Gra[j];
+			vector[i][j] = pare[i].n[j] - PareGra[j];
+			//printf("vector[%d][%d] = %.2f\n",i,j,vector[i][j]);
 		}
 	}
 	/*子個体生成*/
 	double sum_coe[DEM]={0},coe; /*親のベクトル*乱数の総和*/
 	double child_save[DEM];
-	for(k=Main_n*4;k<Main_n*4+4;k++){
+	for(k=0;k<Nc;k++){
 		true_flag = 1;
 		while(true_flag){
 			for(i=0;i<DEM;i++){
 				sum_coe[i] = 0;
 			}
-			for(i=0;i<Np-1;i++){
-				coe = rand_normal(0,1/sqrt(Np-1));
+			for(i=0;i<Np;i++){
+				coe = GetRand_Real(1/sqrt(Np));
+				printf("coe = %.2f\n",coe);
 				for(j=0;j<DEM;j++){
 					sum_coe[j] += coe * vector[i][j];
 				}
 			}
 			for(i=0;i<DEM;i++){
-				child_save[i] = MainPare.n[i]+sum_coe[i];
+				child_save[i] = PareGra[i]+sum_coe[i];
 			}
 			if(fabs(child_save[0]) <= 100.00 && fabs(child_save[1]) <= 100.00){
 				for(i=0;i<DEM;i++){
@@ -754,10 +749,7 @@ void FitnessShare(Indiv unit[],int N)
 		/*分母を求める*/
 		sh_sum = 0;
 		for(j=0;j<N;j++){
-			tmp_dis = cal_distance(unit[i].n[0],
-					       unit[i].n[1],
-					       unit[j].n[0],
-					       unit[j].n[1]);
+			tmp_dis = cal_Indiv_distance(&unit[i],&unit[j]);
 			sh_sum += Sharing(tmp_dis);
 		}
 		/*補正後の評価値を代入*/

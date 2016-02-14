@@ -16,14 +16,14 @@
 #define Nc		10	/*子個体数*/
 #define DEM		2	/*次元数*/
 #define T		1	/*ステップサイズ*/
-#define END_STEP	1000	/*終わるタイミング*/
+#define END_STEP	500	/*終わるタイミング*/
 #define WINDOW_X	800	/*定義域*/
 #define WINDOW_Y	800	/*地域*/
 #define PROT_X		600	/*定義域*/
 #define PROT_Y		600	/*地域*/
 #define K		6	/*ニッチの集団数*/
 #define DELETE		100
-#define Optimal_N	2
+#define Optimal_N	4
 
 double center[2] = {WINDOW_X/2,WINDOW_Y/2};
 typedef struct{
@@ -233,7 +233,7 @@ main(){
 		Pop_Prot(pop,window);
 		Prot_Frame(window);
 		SDL_Flip(window);
-		if(end_count%20 == 0){
+		if(end_count%100 == 0){
 			sprintf(name,"./picture/nitch/10/opponent0%d.bmp",end_count);
 			SDL_SaveBMP(window,name);
 		}
@@ -243,11 +243,9 @@ main(){
 		Init_Indiv(child,Nc);
 		/*試行回数を数える*/
 		end_count++;
-		/*
 		if(end_count > END_STEP){
 			end_flag = 0;
 		}
-		*/
 	}
 	SDL_Quit();
 	return 0;
@@ -283,6 +281,7 @@ void Init_Indiv(Indiv pare[],int N){
 		for(j=0;j<DEM;j++){
 			pare[i].n[j] = 0; /*実数値乱数*/
 		}
+
 		pare[i].flag = 0;
 		pare[i].win = 0;
 		pare[i].nitch = 0;
@@ -333,7 +332,6 @@ void Init_Optimal(void)
 {
 	double tmp_n = -100;
 	int i,j;
-	/*
 	Optimal[0].n[0] = -50;
 	Optimal[0].n[1] = -50;
 	
@@ -345,12 +343,13 @@ void Init_Optimal(void)
 	
 	Optimal[3].n[0] =  50;
 	Optimal[3].n[1] =  50;
-	*/
+	/*
 	for(i=0;i<Optimal_N;i++){
 		for(j=0;j<DEM;j++){
 			Optimal[i].n[j] = GetRand_Real(INIT_OPTIMAL);
 		}
 	}
+	*/
 }
 /*****************
 再帰的にニッチを割り当てていく
