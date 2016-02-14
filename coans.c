@@ -23,7 +23,7 @@
 #define PROT_Y		600	/*地域*/
 #define K		6	/*ニッチの集団数*/
 #define DELETE		100
-#define Optimal_N	4
+#define Optimal_N	1
 
 double center[2] = {WINDOW_X/2,WINDOW_Y/2};
 typedef struct{
@@ -196,8 +196,8 @@ main(){
 		}
 		/*評価の良い順にソート*/
 		sort_win(child,Nc);
-		printf("child[0].win = %d\n",child[0].win);
-		printf("MainPare.win = %d\n",MainPare.win);
+		//printf("child[0].win = %d\n",child[0].win);
+		//printf("MainPare.win = %d\n",MainPare.win);
 		/*主親より評価値のいい子個体がいたら入れ替える*/
 		if(MainPare.win < child[0].win){
 			MainPare = child[0];
@@ -229,7 +229,7 @@ main(){
 		/*主親を集団に戻す*/
 		pop[MainPare_n] = MainPare;
 		Unit_Optimal(window);
-		Opponent_Prot(window);
+		//Opponent_Prot(window);
 		Pop_Prot(pop,window);
 		Prot_Frame(window);
 		SDL_Flip(window);
@@ -332,9 +332,9 @@ void Init_Optimal(void)
 {
 	double tmp_n = -100;
 	int i,j;
-	Optimal[0].n[0] = -50;
-	Optimal[0].n[1] = -50;
-	
+	Optimal[0].n[0] = 0;
+	Optimal[0].n[1] = 0;
+	/*	
 	Optimal[1].n[0] = -50;
 	Optimal[1].n[1] =  50;
 	
@@ -343,6 +343,7 @@ void Init_Optimal(void)
 	
 	Optimal[3].n[0] =  50;
 	Optimal[3].n[1] =  50;
+	*/
 	/*
 	for(i=0;i<Optimal_N;i++){
 		for(j=0;j<DEM;j++){
