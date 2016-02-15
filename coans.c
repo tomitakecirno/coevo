@@ -16,19 +16,20 @@
 #define Nc		10	/*子個体数*/
 #define DEM		2	/*次元数*/
 #define T		1	/*ステップサイズ*/
-#define END_STEP	500	/*終わるタイミング*/
+#define END_STEP	1000	/*終わるタイミング*/
 #define WINDOW_X	800	/*定義域*/
 #define WINDOW_Y	800	/*地域*/
 #define PROT_X		600	/*定義域*/
 #define PROT_Y		600	/*地域*/
 #define K		6	/*ニッチの集団数*/
 #define DELETE		100
-#define Optimal_N	1
+#define Optimal_N	4
 
 double center[2] = {WINDOW_X/2,WINDOW_Y/2};
 typedef struct{
 	double n[DEM];
 	int flag; /*1...主親　2...副親*/
+	double eval;
 	int win;
 	int nitch; /*0...所属ニッチなし 1~...所属しているニッチ番号*/
 	int comp_flag;
@@ -42,6 +43,7 @@ Indiv Opponent[No];
 
 typedef struct{
 	double n[DEM];
+	double hosei_n;
 }Xy_str;
 Xy_str Gra_Nitch[No];
 Xy_str Optimal[Optimal_N];
@@ -332,18 +334,18 @@ void Init_Optimal(void)
 {
 	double tmp_n = -100;
 	int i,j;
-	Optimal[0].n[0] = 0;
-	Optimal[0].n[1] = 0;
-	/*	
+	Optimal[0].n[0] = -50;
+	Optimal[0].n[1] = -50;
+	Optimal[0].hosei_n = 10.00;
 	Optimal[1].n[0] = -50;
 	Optimal[1].n[1] =  50;
-	
+	Optimal[1].hosei_n = 15.00;
 	Optimal[2].n[0] =  50;
 	Optimal[2].n[1] = -50;
-	
+	Optimal[2].hosei_n = 5.00;
 	Optimal[3].n[0] =  50;
 	Optimal[3].n[1] =  50;
-	*/
+	Optimal[3].hosei_n = 0.50;
 	/*
 	for(i=0;i<Optimal_N;i++){
 		for(j=0;j<DEM;j++){
@@ -468,12 +470,14 @@ void AnsList3(Indiv pop[])
 		/*近い順に並べ替え*/
 		sort_distance(&pop[i],Ns);
 	}
+	/*
 	for(i=0;i<Ns;i++){
 		for(j=0;j<Ns;j++){
 			printf("pop[%d].obj[%d] = %d\n",i,j,pop[i].obj[j]);
 			printf("pop[%d].dis[%d] = %.2f\n",i,j,pop[i].dis[j]);
 		}
 	}
+	*/
 	for(i=0;i<Ns;i++){
 		for(j=0;j<K;j++){
 			pop[i].Neigh_List2[j] = pop[i].obj[j];
@@ -692,14 +696,23 @@ int Numbers(Indiv *one,Indiv *another)
 	int min_one = 0,min_another = 0;
 	double dis_one = cal_coord_distance(one,&Optimal[0]);
 	double dis_another = cal_coord_distance(another,&Optimal[0]);
+	double save_one;
+	double save_another;
 
 	for(i=1;i<Optimal_N;i++){
-		if(cal_coord_distance(one,&Optimal[i]) < dis_one){
-			dis_one = cal_coord_distance(one,&Optimal[i]);
+		if(i == 3){
+			save_one = cal_coord_distance(one,&Optimal[i]);
+			save_another = cal_coord_distance(another,&Optimal[i]);
+		}else if(i != 3){
+			save_one = cal_coord_distance(one,&Optimal[i])+Optimal[i].hosei_n;
+			save_another = cal_coord_distance(another,&Optimal[i])+Optimal[i].hosei_n;
+		}
+		if(save_one < dis_one){
+			dis_one = save_one;
 			min_one = i;
 		}
-		if(cal_coord_distance(another,&Optimal[i]) < dis_another){
-			dis_one = cal_coord_distance(another,&Optimal[i]);
+		if(save_another < dis_another){
+			dis_another = save_another;
 			min_another = i;
 		}
 	}
@@ -710,9 +723,13 @@ int Numbers(Indiv *one,Indiv *another)
 	/*最適値に対して絶対値が一番小さい方が勝ち*/
 	distance_one = cal_coord_distance(one,&Optimal[min_one]);
 	distance_another = cal_coord_distance(another,&Optimal[min_another]);
-	if(distance_one < distance_another){
+
+	one->eval = distance_one;
+	another->eval = distance_another;
+	/*元：距離が近いほうが勝ち*/
+	if(one->eval < another->eval){
 		one->win++;
-	}else if(distance_one > distance_another){
+	}else if(one->eval > another->eval){
 		another->win++;
 	}
 }
