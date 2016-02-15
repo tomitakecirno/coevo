@@ -13,7 +13,7 @@
 #define Ns		30	/*初期集団数*/
 #define No		30	/*敵集団数*/
 #define Np		4	/*親個体数*/
-#define Nc		10	/*子個体数*/
+#define Nc		20	/*子個体数*/
 #define DEM		2	/*次元数*/
 #define T		1	/*ステップサイズ*/
 #define END_STEP	1000	/*終わるタイミング*/
@@ -235,10 +235,8 @@ main(){
 		Pop_Prot(pop,window);
 		Prot_Frame(window);
 		SDL_Flip(window);
-		if(end_count%100 == 0){
 			sprintf(name,"./picture/nitch/10/opponent0%d.bmp",end_count);
 			SDL_SaveBMP(window,name);
-		}
 		//SDL_Delay(500);
 
 		/*構造体初期化*/
@@ -336,16 +334,23 @@ void Init_Optimal(void)
 	int i,j;
 	Optimal[0].n[0] = -50;
 	Optimal[0].n[1] = -50;
-	Optimal[0].hosei_n = 10.00;
+	
+	Optimal[0].hosei_n = pow(10,-20);
+	
 	Optimal[1].n[0] = -50;
 	Optimal[1].n[1] =  50;
-	Optimal[1].hosei_n = 15.00;
+	
+	Optimal[1].hosei_n = pow(10,-10);
+	
 	Optimal[2].n[0] =  50;
 	Optimal[2].n[1] = -50;
-	Optimal[2].hosei_n = 5.00;
+	
+	Optimal[2].hosei_n = pow(10,-30);
+	
 	Optimal[3].n[0] =  50;
 	Optimal[3].n[1] =  50;
-	Optimal[3].hosei_n = 0.50;
+	
+	Optimal[3].hosei_n = 0;
 	/*
 	for(i=0;i<Optimal_N;i++){
 		for(j=0;j<DEM;j++){
@@ -701,8 +706,8 @@ int Numbers(Indiv *one,Indiv *another)
 
 	for(i=1;i<Optimal_N;i++){
 		if(i == 3){
-			save_one = cal_coord_distance(one,&Optimal[i]);
-			save_another = cal_coord_distance(another,&Optimal[i]);
+			save_one = cal_coord_distance(one,&Optimal[i])+Optimal[i].hosei_n;
+			save_another = cal_coord_distance(another,&Optimal[i])+Optimal[i].hosei_n;
 		}else if(i != 3){
 			save_one = cal_coord_distance(one,&Optimal[i])+Optimal[i].hosei_n;
 			save_another = cal_coord_distance(another,&Optimal[i])+Optimal[i].hosei_n;
