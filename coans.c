@@ -16,12 +16,13 @@
 #define Nc		20	/*子個体数*/
 #define DEM		2	/*次元数*/
 #define T		1	/*ステップサイズ*/
-#define END_STEP	1000	/*終わるタイミング*/
+#define END_STEP	500	/*終わるタイミング*/
 #define WINDOW_X	800	/*定義域*/
 #define WINDOW_Y	800	/*地域*/
 #define PROT_X		600	/*定義域*/
 #define PROT_Y		600	/*地域*/
-#define K		6	/*ニッチの集団数*/
+#define Kp		5	/*ニッチの集団数*/
+#define Ko		3	/*ニッチの集団数*/
 #define DELETE		100
 #define Optimal_N	4
 
@@ -37,7 +38,7 @@ typedef struct{
 	int delete_flag;
 	int obj[No];
 	double dis[No];
-	int Neigh_List2[K];
+	int Neigh_List2[Kp];
 }Indiv;
 Indiv Opponent[No];
 
@@ -145,7 +146,7 @@ main(){
 		pare_count = 0;
 		while(while_flag){
 			MainPare_n = genrand_int32() % Ns; /*主親の番号取得*/
-			for(i=0;pop[MainPare_n].Neigh_List2[i] != -1 && i<K;i++){}
+			for(i=0;pop[MainPare_n].Neigh_List2[i] != -1 && i<Kp;i++){}
 			pare_count = i;
 			/*近傍リストに個体があれば主親にして、ループを抜ける*/
 			if(pare_count  >= Np){
@@ -231,12 +232,14 @@ main(){
 		/*主親を集団に戻す*/
 		pop[MainPare_n] = MainPare;
 		Unit_Optimal(window);
-		//Opponent_Prot(window);
+		Opponent_Prot(window);
 		Pop_Prot(pop,window);
 		Prot_Frame(window);
 		SDL_Flip(window);
-			sprintf(name,"./picture/nitch/10/opponent0%d.bmp",end_count);
+		if(end_count % 50 == 0){
+			sprintf(name,"./picture/coans/optimal1/pop_oppo0%d.bmp",end_count);
 			SDL_SaveBMP(window,name);
+		}
 		//SDL_Delay(500);
 
 		/*構造体初期化*/
@@ -247,6 +250,33 @@ main(){
 			end_flag = 0;
 		}
 	}
+	/*最適解の座標表示*/
+	for(i=0;i<Optimal_N;i++){
+		printf("Optimal[%d] = (",i);
+		for(j=0;j<DEM;j++){
+			printf("%.2f, ",Optimal[i].n[j]);
+		}
+		printf("\n");
+	}
+			printf("end_count = %d\n",end_count);
+			/*集団の最適な個体を表示*/
+			for(i=0;i<Ns;i++){
+				for(j=0;j<Ns;j++){
+					Numbers(&pop[i],&pop[j]);
+				}
+			}
+			sort_win(pop,Ns);
+			for(i=0;i<Ns;i++){
+				printf("pop[%d].n = (",i);
+				for(j=0;j<DEM;j++){
+					printf("%.2f, ",pop[i].n[j]);
+				}
+				printf("\n");
+			}
+			for(i=0;i<Ns;i++){
+				printf("pop[%d].eval = %.2f\n",i,pop[i].eval);
+			}
+
 	SDL_Quit();
 	return 0;
 }
@@ -320,7 +350,7 @@ void Init_Opponent_BattleData(void)
 		Opponent[i].flag = 0;
 		Opponent[i].win = 0;
 		Opponent[i].nitch = 0;
-		for(j=0;j<K;j++){
+		for(j=0;j<Kp;j++){
 			Opponent[i].Neigh_List2[j] = -1;
 		}
 	}
@@ -334,23 +364,22 @@ void Init_Optimal(void)
 	int i,j;
 	Optimal[0].n[0] = -50;
 	Optimal[0].n[1] = -50;
-	
-	Optimal[0].hosei_n = pow(10,-20);
+	//Optimal[0].hosei_n = pow(10,-20);
 	
 	Optimal[1].n[0] = -50;
 	Optimal[1].n[1] =  50;
 	
-	Optimal[1].hosei_n = pow(10,-10);
+	//Optimal[1].hosei_n = pow(10,-10);
 	
 	Optimal[2].n[0] =  50;
 	Optimal[2].n[1] = -50;
 	
-	Optimal[2].hosei_n = pow(10,-30);
+	//Optimal[2].hosei_n = pow(10,-30);
 	
 	Optimal[3].n[0] =  50;
 	Optimal[3].n[1] =  50;
 	
-	Optimal[3].hosei_n = 0;
+	//Optimal[3].hosei_n = 0;
 	/*
 	for(i=0;i<Optimal_N;i++){
 		for(j=0;j<DEM;j++){
@@ -370,7 +399,7 @@ void Set_Nitch(int i){
 		Opponent[i].nitch = count_nitch;
 		Opponent[i].flag = 1;
 			/*近傍リストを見ていく*/
-		for(j=0;j<K;j++){
+		for(j=0;j<Ko;j++){
 			tmp_NeighList2 = Opponent[i].Neigh_List2[j];
 			Set_Nitch(tmp_NeighList2);
 		}
@@ -391,7 +420,7 @@ void NeighList_Opponent(void)
 		Opponent[No].flag = -1;
 		Opponent[i].win = 0;
 		Opponent[i].nitch = 0;
-		for(j=0;j<K;j++){
+		for(j=0;j<Ko;j++){
 			Opponent[i].Neigh_List2[j] = -1; /*実数値乱数*/
 		}
 	}
@@ -409,10 +438,10 @@ void NeighList_Opponent(void)
 	for(i=0;i<No;i++){
 		obj_count=0; /*近傍リストをカウント*/
 		/*近傍リストを作る個体の近傍をＫ番目まで見る*/
-		for(j=0;j<K;j++){
+		for(j=0;j<Ko;j++){
 			save_obj = Opponent[i].obj[j];
 			/*近傍Ｋ番目までの個体の近傍にiが存在すればリストに加える*/
-			for(k=0;k<K;k++){
+			for(k=0;k<Ko;k++){
 				if(i == Opponent[save_obj].obj[k]){
 						Opponent[i].Neigh_List2[obj_count] = Opponent[i].obj[j];
 					obj_count++;
@@ -459,9 +488,9 @@ void AnsList3(Indiv pop[])
 	int kotai_count;
 	int tmp_obj;
 	int tmp_dis;
-	int tmp_anslist3[K];
+	int tmp_anslist3[Kp];
 	for(i=0;i<Ns;i++){
-		for(j=0;j<K;j++){
+		for(j=0;j<Kp;j++){
 			pop[i].Neigh_List2[j] = -1; /*実数値乱数*/
 		}
 	}
@@ -484,7 +513,7 @@ void AnsList3(Indiv pop[])
 	}
 	*/
 	for(i=0;i<Ns;i++){
-		for(j=0;j<K;j++){
+		for(j=0;j<Kp;j++){
 			pop[i].Neigh_List2[j] = pop[i].obj[j];
 			//printf("pop[%d].AnsList[%d] = %d\n",i,j,pop[i].Neigh_List2[j]);
 		}
@@ -601,6 +630,7 @@ void sort_distance(Indiv *unit,int N)
 				unit->obj[j] = unit->obj[j-1];
 				unit->obj[j-1] = save_obj;
 				/* 個体番号を交換する */
+
 				save_dis = unit->dis[j]; /* 交換する */
 				unit->dis[j] = unit->dis[j-1];
 				unit->dis[j-1] = save_dis;
