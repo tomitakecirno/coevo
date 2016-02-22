@@ -17,10 +17,10 @@
 #define DEM		2	/*次元数*/
 #define T		1	/*ステップサイズ*/
 #define END_STEP	500	/*終わるタイミング*/
-#define WINDOW_X	800	/*定義域*/
-#define WINDOW_Y	800	/*地域*/
-#define PROT_X		600	/*定義域*/
-#define PROT_Y		600	/*地域*/
+#define WINDOW_X	400	/*定義域*/
+#define WINDOW_Y	400	/*地域*/
+#define PROT_X		200	/*定義域*/
+#define PROT_Y		200	/*地域*/
 #define Kp		5	/*ニッチの集団数*/
 #define Ko		3	/*ニッチの集団数*/
 #define DELETE		100
@@ -236,7 +236,7 @@ main(){
 		Pop_Prot(pop,window);
 		Prot_Frame(window);
 		SDL_Flip(window);
-		if(end_count % 50 == 0){
+		if(end_count % 20 == 0){
 			sprintf(name,"./picture/coans/optimal1/pop_oppo0%d.bmp",end_count);
 			SDL_SaveBMP(window,name);
 		}
@@ -847,45 +847,46 @@ void Prot_Frame(SDL_Surface *window)
 		0x000000ff);
 	/*Y軸*/
 	lineColor(window,
+		1,
+		1,
+		1,
+		WINDOW_Y,
+		0x000000ff);
+	/*内枠X軸上側*/
+	lineColor(window,
+		1,
+		1,
+		WINDOW_X,
+		1,
+		0x000000ff);
+	/*Y軸*/
+	lineColor(window,
+		WINDOW_X-1,
+		1,
+		WINDOW_X-1,
+		WINDOW_Y-1,
+		0x000000ff);
+	/*内枠X軸上側*/
+	lineColor(window,
+		1,
+		WINDOW_Y-1,
+		WINDOW_X-1,
+		WINDOW_Y-1,
+		0x000000ff);
+	lineColor(window,
 		WINDOW_X/2,
 		0,
 		WINDOW_X/2,
 		WINDOW_Y,
 		0x000000ff);
-	/*内枠X軸上側*/
-	lineColor(window,
-		WINDOW_X-PROT_X,
-		WINDOW_Y-PROT_Y,
-		PROT_X,
-		WINDOW_Y-PROT_Y,
-		0x000000ff);
-	/*内枠X軸下側*/
-	lineColor(window, 
-		WINDOW_X-PROT_X,
-		PROT_Y,
-		PROT_X,
-		PROT_Y,
-		0x000000ff);
-	/*内枠Y軸左側*/
-	lineColor(window,
-		WINDOW_X-PROT_X,
-		WINDOW_Y-PROT_Y,
-		WINDOW_X-PROT_X,
-		PROT_Y,
-		0x000000ff);
-	/*内枠Y軸右側*/
-	lineColor(window, 
-		PROT_X,
-		WINDOW_Y-PROT_Y,
-		PROT_X,
-		PROT_Y,
-		0x000000ff);
 	sprintf(num,"0");
 	sprintf(num2,"-100");
 	sprintf(num3,"100");
 	stringColor(window, center[0],center[1], num, 0x000000ff);
-	stringColor(window, WINDOW_X-PROT_X-30,WINDOW_Y/2, num2, 0x000000ff);
-	stringColor(window, PROT_X,WINDOW_Y/2, num3, 0x000000ff);
+	stringColor(window, 0,WINDOW_Y/2, num2, 0x000000ff);
+	stringColor(window, WINDOW_X-25,WINDOW_Y/2, num3, 0x000000ff);
+	stringColor(window, WINDOW_X/2,0, num3, 0x000000ff);
+	stringColor(window, WINDOW_X/2,WINDOW_Y-10, num2, 0x000000ff);
 
 	char num4[10];
 	sprintf(num4,"%d",end_count);
