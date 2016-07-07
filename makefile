@@ -7,7 +7,7 @@ CC = gcc
 FILE = jgg
 FILE2 = prot
 FILE3 = bfs
-FILE4 = coans
+FILE4 = coansv2
 LINK = -lm -lSDL -lSDL_image -lSDL_mixer -lSDL_ttf -lSDL_gfx -L/usr/lib
 LINK2 = -lm -lSDL2 -L/usr/lib
 
