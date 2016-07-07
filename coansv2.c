@@ -8,6 +8,7 @@
 #include"./header/MT.h"
 
 
+
 #define INIT		100	/*解集団の初期化範囲*/
 #define INIT_OPPOMEMT	100	/*敵集団の初期化範囲*/
 #define INIT_OPTIMAL	100	/*敵集団の初期化範囲*/
