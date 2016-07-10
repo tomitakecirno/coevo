@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
-#include<stdio.h>
+#include <time.h>
 #include<SDL/SDL.h>
 #include<SDL/SDL_video.h>
 #include <SDL/SDL_gfxPrimitives.h>
@@ -9,24 +9,24 @@
 
 
 
-#define INIT		100	/*解集団の初期化範囲*/
+#define INIT		      100	/*解集団の初期化範囲*/
 #define INIT_OPPOMEMT	100	/*敵集団の初期化範囲*/
 #define INIT_OPTIMAL	100	/*敵集団の初期化範囲*/
-#define Ns		30	/*初期集団数*/
-#define No		30	/*敵集団数*/
-#define Np		4	/*親個体数*/
-#define Nc		5	/*子個体数*/
-#define DEM		2	/*次元数*/
-#define T		1	/*ステップサイズ*/
-#define END_STEP	500	/*終わるタイミング*/
-#define WINDOW_X	400	/*定義域*/
-#define WINDOW_Y	400	/*地域*/
-#define PROT_X		200	/*定義域*/
-#define PROT_Y		200	/*地域*/
-#define Kp		5	/*ニッチの集団数*/
-#define Ko		3	/*ニッチの集団数*/
-#define DELETE		100
-#define Optimal_N	4
+#define Ns		        30	/*初期集団数*/
+#define No		        30	/*敵集団数*/
+#define Np		        4	  /*親個体数*/
+#define Nc		        5	  /*子個体数*/
+#define DEM		        2	  /*次元数*/
+#define T		          1	  /*ステップサイズ*/
+#define END_STEP	    500	/*終わるタイミング*/
+#define WINDOW_X	    400	/*定義域*/
+#define WINDOW_Y	    400	/*地域*/
+#define PROT_X		    200	/*定義域*/
+#define PROT_Y		    200	/*地域*/
+#define Kp		        5	  /*ニッチの集団数*/
+#define Ko		        3	  /*ニッチの集団数*/
+#define DELETE		    100
+#define Optimal_N	    4
 
 double center[2] = {WINDOW_X/2,WINDOW_Y/2};
 typedef struct{
@@ -53,6 +53,7 @@ int true_flag = 1;
 int while_flag = 1;
 int count_nitch=1;
 int end_count = 0;
+int battle_n=0;
 
 
 void Init_Indiv(Indiv pare[],int N);
@@ -102,16 +103,20 @@ main(){
 	Init_Indiv(pare,Np); /*親集団構造体初期化*/
 	Init_Indiv(child,Nc); /*子集団構造体初期化*/
 	Init_Optimal();
+
+	clock_t start,end;
+	double time_count;
+	double battle_count;
 	
 	/*SDL初期化*/
 	SDL_Surface *window; // ウィンドウ（画像）データ、及び、文字列（画像）へのポインタ
 	
 	/*SDLの全ての機能を初期化*/
 	if ( SDL_Init(SDL_INIT_VIDEO)  < 0 ){
-	        printf("failed to initialize SDL.\n");
-	        fprintf(stderr,"%s\n",SDL_GetError());
-	        SDL_GetError();
-	        exit(-1); 
+	  printf("failed to initialize SDL.\n");
+	  fprintf(stderr,"%s\n",SDL_GetError());
+	  SDL_GetError();
+	  exit(-1); 
 	}
 	/* ウィンドウ生成（800*600、1677万色）*/
 	if((window = SDL_SetVideoMode(WINDOW_X, WINDOW_Y, 32, SDL_SWSURFACE)) == NULL) {
@@ -188,20 +193,24 @@ main(){
 
     /*子個体作れたから自分の集団と対戦させる*/
 		/*対戦？*/
+		start = clock();
 		for(i=0;i<Ns;i++){
 			for(j=0;j<Nc;j++){
-				Numbers(&child[j],&pop[i]);
+				Numbers(&pop[i],&child[j]);
 			}
 			Numbers(&pop[i],&MainPare);
 		}
+		end = clock();
+		time_count += (double)(end - start);
 		/*デバッグ用*/
 		/*評価の良い順にソート*/
 		sort_win(child,Nc);
-
+    /*
 		for(i=0;i<Nc;i++){
 		  printf("child[%d].win = %d\n",i,child[i].win);
 		}
 		printf("MainPare.win = %d\n",MainPare.win);
+		*/
 		//printf("child[0].win = %d\n",child[0].win);
 		//printf("MainPare.win = %d\n",MainPare.win);
 		
@@ -230,6 +239,7 @@ main(){
 		}
 	}
 	/*最適解の座標表示*/
+	/*
 	for(i=0;i<Optimal_N;i++){
 		printf("Optimal[%d] = (",i);
 		for(j=0;j<DEM;j++){
@@ -237,25 +247,38 @@ main(){
 		}
 		printf("\n");
 	}
-			printf("end_count = %d\n",end_count);
-			/*集団の最適な個体を表示*/
-			for(i=0;i<Ns;i++){
-				for(j=0;j<Ns;j++){
-					Numbers(&pop[i],&pop[j]);
-				}
-			}
-			sort_win(pop,Ns);
-			for(i=0;i<Ns;i++){
-				printf("pop[%d].n = (",i);
-				for(j=0;j<DEM;j++){
-					printf("%.2f, ",pop[i].n[j]);
-				}
-				printf("\n");
-			}
-			for(i=0;i<Ns;i++){
-				printf("pop[%d].eval = %.2f\n",i,pop[i].eval);
-			}
-
+	*/
+	//printf("end_count = %d\n",end_count);
+	/*集団の最適な個体を表示*/
+	/*
+	for(i=0;i<Ns;i++){
+	  for(j=0;j<Ns;j++){
+		  Numbers(&pop[i],&pop[j]);
+		}
+	}
+	sort_win(pop,Ns);
+	for(i=0;i<Ns;i++){
+	  printf("pop[%d].n = (",i);
+	  for(j=0;j<DEM;j++){
+			printf("%.2f, ",pop[i].n[j]);
+		}
+	  printf("\n");
+	}
+	for(i=0;i<Ns;i++){
+		printf("pop[%d].eval = %.2f\n",i,pop[i].eval);
+	}
+  */
+  /*対戦回数と秒数*/
+  int eval_n=0;
+  for(i=0;i<Ns;i++){
+    if(pop[i].eval <= 0.5){
+      eval_n++;
+    }
+  }
+  printf("%d\n",eval_n);
+  double eval_ave = eval_n/Ns;
+  printf("%f\n",eval_ave);
+  printf("ave:%f battle:%d  time:%f\n",eval_ave,battle_n/END_STEP,time_count/END_STEP);
 	SDL_Quit();
 	return 0;
 }
@@ -389,7 +412,6 @@ void AnsList3(Indiv pop[])
 	}
 	*/
 }
-
 /**********************
 拡張XLM
 **********************/
@@ -603,8 +625,27 @@ int Numbers(Indiv *one,Indiv *another)
 	}else if(one->eval > another->eval){
 		another->win++;
 	}
+	battle_n++;
 }
-
+/*****************
+再帰的にニッチを割り当てていく
+*****************/
+void Set_Nitch(int i){
+	int tmp_NeighList2; /*近傍リスト内の個体の番号を一時的に保存しておく*/
+	int j;
+  count_nitch=0;
+	if(Opponent[i].flag != 1){
+		/*ニッチに属していなければニッチ番号を割り振る*/
+		Opponent[i].nitch = count_nitch;
+		Opponent[i].flag = 1;
+			/*近傍リストを見ていく*/
+		for(j=0;j<Kp;j++){
+			tmp_NeighList2 = Opponent[i].Neigh_List2[j];
+			Set_Nitch(tmp_NeighList2);
+			count_nitch++;
+		}
+	}
+}
 /**********
 枠を描画
 ***********/
