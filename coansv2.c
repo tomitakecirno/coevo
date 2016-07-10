@@ -271,14 +271,11 @@ main(){
   /*対戦回数と秒数*/
   int eval_n=0;
   for(i=0;i<Ns;i++){
-    if(pop[i].eval <= 0.5){
+    if(pop[i].eval < 1){
       eval_n++;
     }
   }
-  printf("%d\n",eval_n);
-  double eval_ave = eval_n/Ns;
-  printf("%f\n",eval_ave);
-  printf("ave:%f battle:%d  time:%f\n",eval_ave,battle_n/END_STEP,time_count/END_STEP);
+  printf("n:%d battle:%d  time:%f\n",eval_n,battle_n/END_STEP,time_count/END_STEP);
 	SDL_Quit();
 	return 0;
 }
@@ -774,3 +771,4 @@ void Unit_Optimal(SDL_Surface *window)
 			0x000000ff);
 	}
 }
+
