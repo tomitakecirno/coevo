@@ -54,6 +54,7 @@ int true_flag = 1;
 int while_flag = 1;
 int count_nitch=1;
 int end_count = 0;
+int battle_n=0;
 
 
 void Init_Indiv(Indiv pare[],int N);
@@ -107,6 +108,10 @@ main(){
 	Init_Indiv(child,Nc); /*子集団構造体初期化*/
 	Init_Opponent(); /*相手集団構造体初期化*/
 	Init_Optimal();
+
+clock_t start,end;
+	double time_count[END_STEP];
+	double battle_count[END_STEP];
 	
 	/*SDL初期化*/
 	SDL_Surface *window; // ウィンドウ（画像）データ、及び、文字列（画像）へのポインタ
@@ -190,13 +195,17 @@ main(){
 			/*主親と副親で拡張XLM*/
 			ExtensionXLM(MainPare,SubPare,pare_count,child);
 		}
-		
+
+	  start = clock();
 		for(i=0;i<Nc;i++){
 			for(j=i+1;j<Nc;j++){
 				Numbers(&child[i],&child[j]);
 			}
 			Numbers(&child[i],&MainPare);
 		}
+		end = clock();
+		battle_count[end_count] = battle_n;
+		time_count[end_count] = (double)(end - start);
 		/*評価の良い順にソート*/
 		sort_win(child,Nc);
 		//printf("child[0].win = %d\n",child[0].win);
