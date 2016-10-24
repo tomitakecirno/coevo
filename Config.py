@@ -1,5 +1,4 @@
 from enum import IntEnum
-import random
 
 CountNitch = 0
 
@@ -8,7 +7,7 @@ class Define(IntEnum):
   No = 30    #敵集団数
   Np = 3     #親個体数
   Nc = 3     #子個体数
-  DEM = 2    #次元数
+  DEM = 1    #次元数
   Kp = 3
   Ko = 3
   T = 1      #ステップサイズ

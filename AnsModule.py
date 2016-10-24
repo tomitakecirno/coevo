@@ -1,25 +1,25 @@
-import config
+import Config
 import math
 import random
 
 def EuclidDis(one,ano):
-	cal_sum = 0;
-	for i in range(config.Define.DEM):
-		cal_sum += (one[i] - ano[i])*(one[i] - ano[i]);
-		
-	return round(math.sqrt(cal_sum),1);
+  cal_sum = 0;
+  for i in range(Config.Define.DEM):
+    cal_sum += (one[i] - ano[i])*(one[i] - ano[i])
+  return round(math.sqrt(cal_sum),1)
 
 def List1(Pop):
   TmpDis = [[] for i in range(len(Pop))]
   
   for i in range(len(Pop)):
+    app = TmpDis[i].append
     for j in range(len(Pop)):
       if i != j:
-      	TmpDis[i].append(EuclidDis(Pop[i][0],Pop[j][0]))
+        app(EuclidDis(Pop[i][0],Pop[j][0]))
       else:
-      	TmpDis[i].append(50)
+        app(50)
     #print(TmpDis[i])
-    for k in range(config.Define.Kp):
+    for k in range(Config.Define.Kp):
       TmpIndex = TmpDis[i].index(min(TmpDis[i]))
       Pop[i][3].append(TmpIndex)
       TmpDis[i][TmpIndex] = 50
@@ -32,11 +32,11 @@ def List2(Pop):
   for i in range(len(Pop)):
     for j in range(len(Pop)):
       if i != j:
-      	TmpDis[i].append(EuclidDis(Pop[i][0],Pop[j][0]))
+        TmpDis[i].append(EuclidDis(Pop[i][0],Pop[j][0]))
       else:
-      	TmpDis[i].append(50)
+        TmpDis[i].append(50)
     #print(TmpDis[i])
-    for k in range(config.Define.Kp):
+    for k in range(Config.Define.Kp):
       TmpIndex = TmpDis[i].index(min(TmpDis[i]))
       TmpList[i].append(TmpIndex)
       TmpDis[i][TmpIndex] = 50
@@ -63,23 +63,26 @@ def SetNitch(kn,Pop,n):
   else :
     return 0
 
-def ExtensionXLM():
-  pass
-  #TmpChild = [[[] for i in range(2)] for j in range(config.Define.Nc)]
-  #return TmpChild
-
-def KousaOf2Point(MainPare_n,SubPare_n,Pop):
-  pass
-  #TmpChild = [[[] for i in range(2)] for j in range(config.Define.Nc)]
-  #return TmpChild
-
-def test():
-  print(config.Pop)
-
-
-
-
-
-
+#2点交叉の関数。subpare_nはリスト
+def KousaOf2Point(Pop,Main,Sub):
+  TmpChild = [[[] for i in range(2)] for j in range(Config.Define.Nc+1)]
+  for i in range(Config.Define.Nc):
+    TmpSub = random.choice(Sub)
+    app = TmpChild[i][0].append
+    for j in range(Config.Define.DEM):
+      app((Pop[Main][0][j]+Pop[TmpSub][0][j])/2)
+      
+  TmpChild[Config.Define.Nc][0] = [x for x in Pop[Main][0]]
+  return TmpChild
   
-
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
