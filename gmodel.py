@@ -2,7 +2,8 @@ import AnsModule
 import Config
 
 #戦わせる
-def Battle(Pop,Child,Main):
+def Battle(Pop,Child,Main,NimStatus):
+  """
   for i in Pop:
     if i != Main:
       appi = i[1].append
@@ -10,6 +11,11 @@ def Battle(Pop,Child,Main):
         appj = j[1].append
         for x,y in zip(i[0],j[0]):
           appi(int(y<x));appj(int(x<y))
+  """
+  for i in Pop:
+    if i != Main:
+      for j in Child:
+        pass
   """
   for i in Pop:
     print("Pop = ",i)
@@ -20,7 +26,7 @@ def coans(Pop,Main,Sub):
   pass
   
 #今の共進化ANS（集団1個）
-def coans2(Pop,Main,Sub):
+def coans2(Pop,Main,Sub,NimStatus):
   """
   print("\n")
   for i in Pop:
@@ -31,7 +37,7 @@ def coans2(Pop,Main,Sub):
   #子個体取得
   Child = AnsModule.KousaOf2Point(Pop,Main,Sub)
   #バトル
-  Battle(Pop,Child,Main)
+  Battle(Pop,Child,Main,NimStatus)
   TmpSum = [sum(i[1]) for i in Child]
   #勝ち数取得
   TmpIndex = TmpSum.index(max(TmpSum))

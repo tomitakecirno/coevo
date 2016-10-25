@@ -18,7 +18,7 @@ def DataSet(NimData):
 
     
 NimData = Config.Nim() #山生成
-DataSet(NimData) #評価用配列に01を代入
+DataSet(NimData) #評価用配列に01を代入 これが多分最適解となる
 
 Pop = [[0 if i==1 or i==2 else [] for i in range(5)] for j in range(5)]
 for i in range(len(Pop)):

@@ -1,40 +1,39 @@
-#ニム
-#2人で行う/山は4つ
 import Config
-import random
-import AnsModule
-import gmodel
+
+def NimInit():
+  #ニムの石の個数や状態を格納するリスト生成
+  TmpNimStatus = [[] for j in range(2)]
+  TmpNimStatus[0].append(Config.Define.Poll1)
+  TmpNimStatus[0].append(Config.Define.Poll2)
+  TmpNimStatus[0].append(Config.Define.Poll3)
+  #遷移可能な状態を0or1で設定する
+  TmpNimStatus[1] = DataSet(TmpNimStatus[0])
+  return TmpNimStatus
+
+#ニムのポールリストから遷移可能な状態を0or1で格納
+def DataSet(NimPoll):
+  #print(NimPoll)
+  TmpNimData = []
+  #0で初期化
+  app = TmpNimData.append
+  for z in range(Config.Define.Poll3+1): #2
+    for y in range(Config.Define.Poll2+1): #1
+      for x in range(Config.Define.Poll1+1): #0
+        if (x == NimPoll[0] and y == NimPoll[1]) or (y == NimPoll[1] and z == NimPoll[2]) or (x == NimPoll[0] and z == NimPoll[2]):
+          app(1)
+        else :
+          app(0)
+  return TmpNimData
   
-
-if __name__ == '__main__':
-  NimData = Config.Nim() #山生成
-  Config.Nim.DataSet(NimData) #評価用配列に01を代入
-
-  #集団生成 [戦略/各個体に対する勝ちポイント/ニッチ番号/リスト１/リスト２]
-  Pop = [[0 if i==2 else [] for i in range(5)] for j in range(Config.Define.Ns)]
-          
-  #仮の座標設定
-  for i in range(len(Pop)):
-    Pop[i][0].append(random.randint(0,10))
-    
-  for e in range(Config.Define.END):
-    #リスト生成
-    AnsModule.List1(Pop)
-    AnsModule.List2(Pop)
-    #ニッチ割り振り
-    Config.CountNitch = 1
-    for i in range(len(Pop)):
-      if AnsModule.SetNitch(i,Pop,Config.CountNitch) == 1:
-        Config.CountNitch += 1
-    #主親と副親を選ぶ
-    MainPare_n = random.randint(0,len(Pop)-1) #主親を選ぶ
-    SubPare_n = []
-    for i in range(Config.Define.Np):
-      TmpRand = random.randint(0,len(Pop[MainPare_n][3])-1)
-      SubPare_n.append(Pop[MainPare_n][3].pop(TmpRand))
-      #print(SubPare_n)
-    
-    #手法切り替え
-    #gmodel.coans(Pop,MainPare_n,SubPare_n) #卒論のANS（集団2個）
-    gmodel.coans2(Pop,MainPare_n,SubPare_n)  #今のANS（集団1個）
-    
+#遷移可能か
+def CheckNim(Select):
+  pass
+  #Stone  
+def NimGame(Pop,Child,NimStatus):
+  pass
+  """
+  while(sum(NimStatus[0]):
+  NimStatus = NimInit()
+  while(sum(NimStatus[0]):
+  NimStatus = NimInit()
+  """

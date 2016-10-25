@@ -12,24 +12,14 @@ class Define(IntEnum):
   Ko = 3
   T = 1      #ステップサイズ
   END = 1  #終了時間
+  Poll1 = 1
+  Poll2 = 1
+  Poll3 = 1
 
 #Nimの山に関するクラス
 class Nim:
   _MtNumber = 4
   Stone = list([3]*_MtNumber)
-  Eval = []
-  
-  def DataSet(NimData):
-    for x in range(NimData.Stone[0]+1):
-      for y in range(NimData.Stone[1]+1):
-        for z in range(NimData.Stone[2]+1):
-          for a in range(NimData.Stone[3]+1):
-            if bin(x^y^z^a)!='0b0':
-              NimData.Eval.append(1)
-            else :
-              NimData.Eval.append(0)
-  def test():
-    print(_MtNumber) 
   #print(len(NimData.Eval))
 
 class Kotai:
