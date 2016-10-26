@@ -6,7 +6,8 @@ import AnsModule
 import gmodel
 import nim
 
-if __name__ == '__main__':
+for h in range(5):
+  Config.BattleCount = 0
   NimStatus = nim.NimInit()
   save = NimStatus[1]
   #集団生成 [戦略/各個体に対する勝ちポイント/ニッチ番号/リスト１/リスト２]
@@ -15,7 +16,7 @@ if __name__ == '__main__':
   for i in Pop:
     i[0] = [random.randint(0,1) for j in range(len(NimStatus[1]))]
   for e in range(Config.Define.END):
-    print("世代数:",e)
+    #print("世代数:",e)
     #リスト生成
     AnsModule.List1(Pop)
     AnsModule.List2(Pop)
@@ -33,8 +34,8 @@ if __name__ == '__main__':
       SubPare_n.append(Pop[MainPare_n][3].pop(TmpRand))
       
     #手法切り替え
-    #gmodel.coans(Pop,MainPare_n,SubPare_n,NimStatus) #卒論のANS（集団2個）
-    gmodel.coans2(Pop,MainPare_n,SubPare_n,NimStatus)  #今のANS（集団1個）
+    gmodel.coans(Pop,MainPare_n,SubPare_n,NimStatus) #卒論のANS（集団2個）
+    #gmodel.coans2(Pop,MainPare_n,SubPare_n,NimStatus)  #今のANS（集団1個）
     #初期化
     if e != Config.Define.END-1:
       gmodel.InitPop(Pop)
