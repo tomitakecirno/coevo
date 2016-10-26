@@ -60,6 +60,38 @@ def Battle(Pop,Child,Main,NimStatus):
         appChild(ChildWin)
         appPop(PopWin)
     #print(PopWin,ChildWin)
+    
+def BattleCOANS(Pop,Child,Main,NimStatus):
+  #主親以外の相手集団全員と対戦
+  PopWin = 0
+  ChildWin = 0
+  #対戦相手集団を設定（インデックスのみ）
+  for i in Pop:
+    if i!=Pop[Main]:
+      appPop = i[1].append
+      for j in Child:
+        PopWin = 0
+        ChildWin = 0
+        appChild = j[1].append
+        #1戦目
+        NimStatus = nim.NimInit()
+        if nim.NimGame(i,j,NimStatus) == 0:
+          PopWin+=1
+        else :
+          ChildWin+=1
+        #2戦目
+        NimStatus = nim.NimInit()
+        if nim.NimGame(j,i,NimStatus) == 0:
+          ChildWin+=1
+        else :
+          PopWin+=1
+        if PopWin == 2:
+          PopWin+=1
+        if ChildWin == 2:
+          ChildWin+=1
+        appChild(ChildWin)
+        appPop(PopWin)
+    #print(PopWin,ChildWin)
 
 def GetData(Child):
   TmpSum = []
@@ -71,17 +103,19 @@ def GetData(Child):
 
     
 #集団1個、全数対戦させる手法
-def coans(Pop,Main,Sub):
+def coans(Pop,Main,Sub,NimStatus):
   #子個体取得
   Child = AnsModule.TwoPointCrossover(Pop,Main,Sub)
   #バトル
-  Battle(Pop,Child,Main,NimStatus)
+  BattleCOANS(Pop,Child,Main,NimStatus)
   TmpSum = [sum(i[1]) for i in Child]
   #勝ち数取得
   TmpIndex = TmpSum.index(max(TmpSum))
   #もし主親よりも得点が高い個体がいた場合、主親と入れ替える
   if(TmpIndex != Config.Define.Nc):
     Pop[Main][0] =  Child[TmpIndex][0]
+
+
 #今の共進化ANS（集団1個）
 def coans2(Pop,Main,Sub,NimStatus):
   #子個体取得
@@ -93,8 +127,8 @@ def coans2(Pop,Main,Sub,NimStatus):
   #勝ち数取得
   TmpIndex = TmpSum.index(max(TmpSum))
   #もし主親よりも得点が高い個体がいた場合、主親と入れ替える
-  print("ChildData")
-  GetData(Child)
+  #print("ChildData")
+  #GetData(Child)
   if(TmpIndex != Config.Define.Nc):
     Pop[Main][0] =  Child[TmpIndex][0]
 

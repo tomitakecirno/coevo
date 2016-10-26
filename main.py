@@ -15,6 +15,7 @@ if __name__ == '__main__':
   for i in Pop:
     i[0] = [random.randint(0,1) for j in range(len(NimStatus[1]))]
   for e in range(Config.Define.END):
+    print("世代数:",e)
     #リスト生成
     AnsModule.List1(Pop)
     AnsModule.List2(Pop)
@@ -37,31 +38,42 @@ if __name__ == '__main__':
     #初期化
     if e != Config.Define.END-1:
       gmodel.InitPop(Pop)
-  print("PopData:")
-  gmodel.GetData(Pop)
+  #print("PopData:")
+  #gmodel.GetData(Pop)
   Result = [[[] for i in range(3) ] for j in range(Config.CountNitch)]
+  """
+  Result[0]：戦略
+  Result[1]：勝ちポイント
+  Result[2]：勝率
+  """
   Count = [0 for i in range(1,Config.CountNitch+1)]
   TmpSum = [[[] for i in range(2)] for j in range(Config.CountNitch)]
   Opt = nim.Optimaze()
+  #ニッチ毎に振り分け
   for i in Pop:
     Count[i[2]-1]+=1
-
-    #TmpSum[i[2]-1][0].append(i[0])
-    #TmpSum[i[2]-1][1].append(sum(i[1]))
-  """
+    TmpSum[i[2]-1][0].append(i[0])
+    TmpSum[i[2]-1][1].append(sum(i[1]))
+  #各ニッチで勝ちポイントが一番高い個体を結果リストに格納
   for i in range(len(TmpSum)):
     TmpIndex = TmpSum[i][1].index(max(TmpSum[i][1]))
     Result[i][0] = TmpSum[i][0][TmpIndex]
     Result[i][1] = TmpSum[i][1][TmpIndex]
-  #print(AnsModule.HammingDis(Result[1][0],Opt))
+  #戦略の評価
+  
+  print("\n")
+  print("Result")
+  WinPercent = []
+  appWin = WinPercent.append
   for i in Result:
-    print("戦略:",i[0])
-    print("最適:",Opt)
-    print("得点:",i[1])
-    print("\n")
-  """
+    appWin(nim.CheckIndiv(i[0],Pop,NimStatus))
+    #print("勝率:",i[2])
+  print(WinPercent)
+  print("最大:",max(WinPercent))
+  print("最小:",min(WinPercent))
+  print("平均:",round(sum(WinPercent)/len(WinPercent),2))
+    
   print("ニッチの個数",Config.CountNitch)
   print("ニッチ毎の個体数",Count)
   print("総対戦数",Config.BattleCount)
-
   

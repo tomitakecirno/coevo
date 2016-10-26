@@ -12,7 +12,7 @@ class Define(IntEnum):
   Kp = 3
   Ko = 3
   T = 1      #ステップサイズ
-  END = 50  #終了時間
+  END = 10  #終了時間
   Poll1 = 2
   Poll2 = 2
   Poll3 = 2

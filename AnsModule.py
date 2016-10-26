@@ -85,13 +85,3 @@ def TwoPointCrossover(Pop,Main,Sub):
   return TmpChild
   
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
