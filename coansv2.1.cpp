@@ -14,7 +14,7 @@ using namespace std;
 #define INIT		      100	/*解集団の初期化範囲*/
 #define INIT_OPPOMEMT	100	/*敵集団の初期化範囲*/
 #define INIT_OPTIMAL	100	/*敵集団の初期化範囲*/
-#define Ns		        5	/*初期集団数*/
+#define Ns		        10	/*初期集団数*/
 #define No		        30	/*敵集団数*/
 #define Np		        4	  /*親個体数*/
 #define Nc		        5	  /*子個体数*/
@@ -34,20 +34,19 @@ double center[2] = {WINDOW_X/2,WINDOW_Y/2};
 
 struct Indiv{
   vector<double>  n; //解
-	vector<int>     result; //対戦結果
-	vector<int>     List2;
-	int             nitch; /*0...所属ニッチなし 1~...所属しているニッチ番号*/
+	vector<int> result; //対戦結果
+	vector<int> List1;	
+	vector<int> List2;
+	int nitch; /*0...所属ニッチなし 1~...所属しているニッチ番号*/
 public:
-	vector<int> tmp;
-	void Init(); //解集団初期化
-	void SetNitch();
+	void Init();
 };
 
 /*対戦結果と近傍リストとニッチ番号を初期化*/
 void Indiv::Init()
 {
-  result.erase(result.begin(),result.end()-1);
-  List2.erase(List2.begin(),List2.end()-1);
+  result.clear();
+  List2.clear();
   nitch = 0;
 }
 
@@ -82,13 +81,15 @@ double cal_coord_distance(Indiv *one,Xy_str *coord);
 double cal_kotai_distance(Indiv one, Indiv another);
 
 void NeighList_Opponent(void);
-void AnsList3(Indiv pop[]);
-void Set_Nitch(int i);
-void ExtensionXLM(Indiv MainPare, Indiv SubPare[], int pare_count, Indiv child[]);
-
+void MakeList(Indiv pop[]);
+void AnsList1(vector<vector<int> > IndexSave,Indiv pop[]);
+void AnsList2(vector<vector<int> > IndexSave,Indiv pop[]);
+int SetNitch(int nitch_number,int kotai,Indiv pop[]);
+void ExtensionXLM(int MainPare,vector<int> SubPare,Indiv child[],Indiv pop[]);
 static int thread_keyboad(void *data);
 static int thread_window(void *data);
 double GetRand_Real(double pGetMax);
+int GetRand_Int(int pGetMax);
 double rand_normal( double mu, double sigma );
 double Uniform( void );
 void Prot_Frame(SDL_Surface *window);
@@ -96,44 +97,90 @@ void Pop_Prot(Indiv pop[],SDL_Surface *window);
 void Unit_Prot(Indiv pop[],SDL_Surface *window,int N);
 void Unit_Optimal(SDL_Surface *window);
 /***********
-メインルーチンmain
+メインルーチン
 ***********/
 main(){
 	/*個体を格納する配列定義*/
 	Indiv pop[Ns];
-	
+
+	init_genrand((unsigned)time(NULL)); /*乱数初期化*/
 	clock_t start,end;
 	double time_count;
-	int i,j,k;
 
-	/*SDL初期化*/
-	//SDL_Surface *window; // ウィンドウ（画像）データ、及び、文字列（画像）へのポインタ
-	
-	/*SDLの全ての機能を初期化*/
-	/*
+  /*
+	//SDL初期化
+	SDL_Surface *window; // ウィンドウ（画像）データ、及び、文字列（画像）へのポインタ
+	//SDLの全ての機能を初期化
 	if ( SDL_Init(SDL_INIT_VIDEO)  < 0 ){
 	  printf("failed to initialize SDL.\n");
 	  fprintf(stderr,"%s\n",SDL_GetError());
 	  SDL_GetError();
 	  exit(-1); 
 	}
-	*/
-	/* ウィンドウ生成（800*600、1677万色）*/
-	/*
+	//ウィンドウ生成（800*600、1677万色）
 	if((window = SDL_SetVideoMode(WINDOW_X, WINDOW_Y, 32, SDL_SWSURFACE)) == NULL) {
 		printf("failed to initialize videomode.\n");
 		exit(-1);
 	}
-	*/
 	//SDL_Thread *thr_keyboad,*thr_window;
 	//thr_keyboad = SDL_CreateThread(thread_keyboad,NULL);
+	*/
 	/*初期解生成*/
-	for(i=0;i<Ns;i++){
-		for(j=0;j<DEM;j++){
+	for(int i=0;i<Ns;i++){
+    pop[i].Init(); //初期化
+		for(int j=0;j<DEM;j++){
 			pop[i].n.push_back( GetRand_Real(INIT) ); //実数値乱数
 		}
 	}
-	AnsList3(pop);
+	//近傍リスト生成
+	MakeList(pop);
+	//ニッチ番号振り分け
+	int count_nitch = 1;
+	int tmp;
+	for(int i=0;i<Ns;i++){
+    if(SetNitch(count_nitch,i,pop) == 1){
+      count_nitch++;
+    }
+  }
+  for(int i=0;i<Ns;i++){
+    cout << i << ":" << pop[i].nitch << endl;
+  }
+  int MainPare;
+  int tmpIndex;
+  int tmpSub;
+  vector<int> SubPare;
+	//主親、副親を選ぶ
+	MainPare = GetRand_Int(Ns);
+	for(int i=0;i<DEM;i++){
+	  if(pop[MainPare].List1.empty()){
+      break;
+    }
+  	tmpIndex = GetRand_Int(pop[MainPare].List1.size());
+  	tmpSub = pop[MainPare].List1[tmpIndex];
+	  SubPare.push_back(tmpSub); //要素を追加
+	  pop[MainPare].List1.erase(pop[MainPare].List1.begin()+tmpIndex); //追加した要素を削除
+	}
+	//確認用
+	cout << "MainPare:" << MainPare << endl;
+	cout << "SubPare:";
+	for(int i=0;i<SubPare.size();i++){
+	  cout << SubPare[i] << " ";
+	}
+	cout << endl;
+	Indiv child[Nc];
+	//拡張XLM
+  if(!SubPare.empty())
+  	ExtensionXLM(MainPare,SubPare,child,pop);
+  //確認用
+	for(int i=0;i<Nc;i++){
+    cout << i << ":";
+	  for(int j=0;j<child[i].n.size();j++){
+      cout << child[i].n[j] << " ";
+	  }
+    cout << endl;
+	}
+	//対戦
+	
 	//SDL_Quit();
 	return 0;
 }
@@ -195,53 +242,161 @@ void Init_Optimal(void)
 /********************
 近傍リスト3を作る
 ********************/
-void AnsList3(Indiv pop[])
+void MakeList(Indiv pop[])
 {
-	int i,j,k;
-	int kotai_count;
-	int tmp_anslist3[Kp];
+  vector<vector<double> > DisSave(Ns); //K番目以内の個体を記録しておく
+  vector<vector<int> >    IndexSave(Ns);
   vector<double>::iterator min;
   size_t index;
-	
-  vector<vector<double> > DisSave(Ns);
-  vector<vector<int> >    IndexSave(Ns);
   
 	/*自身以外の個体との距離を総当たりで計測.自身も含む.*/
 	/*ついでに近い順に個体の番号も取得*/
-	for(i=0;i<Ns;i++){
-		for(j=0;j<Ns;j++){
+	for(int i=0;i<Ns;i++){
+		for(int j=0;j<Ns;j++){
 		  if(i != j)
 	  		DisSave[i].push_back(cal_kotai_distance(pop[i],pop[j]));
 	  	else
 	  	  DisSave[i].push_back(10000);
 		}
-	  for(j=0;j<DEM;j++){
+	  for(int j=0;j<DEM;j++){
       min = min_element(DisSave[i].begin(),DisSave[i].end());
       index = distance(DisSave[i].begin(),min);
+      IndexSave[i].push_back(index);
       DisSave[i][index] = 10000;
     }
 	}
-	//ベクター確認用
+	//AnsList1
+	AnsList1(IndexSave,pop);
+	//AnsList2
+	AnsList2(IndexSave,pop);
 	/*
-  for(i=0;i<DisSave.size();i++){
-    for(j=0;j<DisSave[i].size();j++){
-      cout << j << ":" << DisSave[i][j] << endl;
+  //近傍リスト確認用
+  for(i=0;i<Ns;i++){
+    cout << i << ":";
+    for(j=0;j<pop[i].List2.size();j++){
+      cout << pop[i].List2[j] << " ";
     }
 		cout << endl;
   }
   */
-	/*
-	for(i=0;i<Ns;i++){
-		for(j=0;j<Kp;j++){
-			pop[i].Neigh_List2[j] = pop[i].obj[j];
-			//printf("pop[%d].AnsList[%d] = %d\n",i,j,pop[i].Neigh_List2[j]);
-		}
-		//putchar('\n')
-	}
+  /*
+	//ベクター確認用
+  for(i=0;i<DisSave.size();i++){
+    cout << i << ":";
+    for(j=0;j<DisSave[i].size();j++){
+      cout << DisSave[i][j] << " ";
+    }
+		cout << endl;
+  }
+	cout << endl;
 	*/
+	//ベクター確認用
+	/*
+  for(int i=0;i<IndexSave.size();i++){
+    cout << i << ":";
+    for(int j=0;j<IndexSave[i].size();j++){
+      cout << IndexSave[i][j] << " ";
+    }
+		cout << endl;
+  }
+  cout << endl;
+  */
 }
+/******************
+List1
+******************/
+void AnsList1(vector<vector<int> > IndexSave,Indiv pop[])
+{
+	//近傍リスト2
+	int Tmp;
+	for(int i=0;i<Ns;i++){
+	  if(IndexSave[i].empty()){} //空だったら何もしない
+	  else {
+	    for(int j=0;j<IndexSave[i].size();j++){
+        pop[i].List1.push_back(IndexSave[i][j]);
+      }
+    }
+	}
+}
+
+/******************
+List2
+******************/
+void AnsList2(vector<vector<int> > IndexSave,Indiv pop[])
+{
+	//近傍リスト2
+	int Tmp;
+	for(int i=0;i<Ns;i++){
+	  if(IndexSave[i].empty()){} //空だったら何もしない
+	  else {
+	    for(int j=0;j<IndexSave[i].size();j++){
+        Tmp = IndexSave[i][j]; //一旦インデックスを保存
+        if(count(IndexSave[Tmp].begin(),IndexSave[Tmp].end(),i) != 0)
+          pop[i].List2.push_back(Tmp); //相手にも存在すれば近傍リストへ加える
+      }
+    }
+	}
+}
+/******************
+List3
+******************/
+/******************
+  拡張XLM
+******************/
+void ExtensionXLM(int MainPare,vector<int> SubPare,Indiv child[],Indiv pop[])
+{
+	double SubPare_Gra[DEM] = {0}; /*基準となる重心*/
+	double sum_n[DEM] = {0}; /*x,yそれぞれの和を一時的に保存しておく配列*/
+	
+	//親の解のそれぞれのベクトルを足す
+	for(int i=0;i<SubPare.size();i++){
+		for(int j=0;j<DEM;j++){
+			sum_n[j] += pop[ SubPare[i] ].n[j];
+		}
+	}
+	//ベクトルの重心を求める
+	for(int i=0;i<DEM;i++){
+		SubPare_Gra[i] = sum_n[i]/SubPare.size();
+	}
+	//重心から親に対するベクトルを求める
+	double vector[SubPare.size()][DEM];
+	for(int i=0;i<SubPare.size();i++){
+		for(int j=0;j<DEM;j++){
+			vector[i][j] = pop[ SubPare[i] ].n[j] - SubPare_Gra[j];
+		}
+	}
+	//子個体生成
+	double sum_coe[DEM]={0},coe; //親のベクトル*乱数の総和
+	double child_save[DEM];
+	for(int k=0;k<Nc;k++){
+		true_flag = 1;
+		while(true_flag){
+			for(int i=0;i<DEM;i++){
+				sum_coe[i] = 0;
+			}
+			for(int i=0;i<SubPare.size();i++){
+				coe = rand_normal(0,1/sqrt(SubPare.size()));
+				for(int j=0;j<DEM;j++){
+					sum_coe[j] += coe * vector[i][j];
+				}
+			}
+			for(int i=0;i<DEM;i++){
+				child_save[i] = pop[MainPare].n[i]+sum_coe[i];
+				if(fabs(child_save[i]) > 100.00){
+				  break;
+				}else if(i==DEM-1){
+      		for(int j=0;j<DEM;j++){
+      			child[k].n.push_back(child_save[j]);
+      		}
+      		true_flag = 0;
+        }
+		  }
+	  }
+	}
+}
+
 /*****************
-乱数生成
+実数乱数生成
 *****************/
 double GetRand_Real(double pGetMax)
 {
@@ -250,6 +405,15 @@ double GetRand_Real(double pGetMax)
 	get_save = getrand_int32Max/2;
  
   return ((double)genrand_int32()-get_save)/get_save*pGetMax;
+}
+
+/*****************
+自然数乱数生成
+*****************/
+int GetRand_Int(int pGetMax)
+{
+  const double getrand_int32Max = 4294967295; // genrand_int32() の最大値。除算のためdouble
+  return int(genrand_int32() / getrand_int32Max * pGetMax);
 }
 /*****************
 正規分布
@@ -357,22 +521,19 @@ int Numbers(Indiv *one,Indiv *another)
 /*****************
 再帰的にニッチを割り当てていく
 *****************/
-/*
-void Set_Nitch(int i){
-	int tmp_NeighList2; 
-	int j;
-  count_nitch=0;
-	if(Opponent[i].flag != 1){
-		Opponent[i].nitch = count_nitch;
-		Opponent[i].flag = 1;
-		for(j=0;j<Kp;j++){
-			tmp_NeighList2 = Opponent[i].Neigh_List2[j];
-			Set_Nitch(tmp_NeighList2);
-			count_nitch++;
+int SetNitch(int nitch_number,int kotai,Indiv pop[])
+{
+	int tmp;
+	if(pop[kotai].nitch == 0){
+		pop[kotai].nitch = nitch_number;
+		for(int i=0;i<pop[kotai].List2.size();i++){
+			tmp = pop[kotai].List2[i];
+			SetNitch(nitch_number,tmp,pop);
 		}
+		return 1;
 	}
+	return 0;
 }
-*/
 /**********
 枠を描画
 ***********/
