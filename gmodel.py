@@ -1,3 +1,10 @@
+"""
+雑感
+今は純粋に勝数をカウントして個体を残している.
+せっかく相手個体毎に勝数をカウントできてるんだからそれを統計学的なものを利用してどうにかしたい
+先攻後攻で特定の少数の相手に全部勝てている個体よりも,先攻後攻のどちらかの勝利でもたくさんの相手に
+勝てている個体の方が評価値は高くなると思われる.
+"""
 import AnsModule
 import Config
 import nim
@@ -29,13 +36,14 @@ def SelectOpponent(Pop,Main):
   return TmpOpponent
   
 #戦わせる
-def Battle(Pop,Child,Main,NimStatus):
+def Battle(Pop,Child,NimStatus):
   #主親以外の相手集団全員と対戦
   PopWin = 0
   ChildWin = 0
+  BattleCount = 0
   #対戦相手集団を設定（インデックスのみ）
   for i in Pop:
-    if len(Pop[0])!=0:
+    if len(i[0])!=0:
       appPop = i[1].append
       for j in Child:
         PopWin = 0
@@ -53,46 +61,40 @@ def Battle(Pop,Child,Main,NimStatus):
           ChildWin+=1
         else :
           PopWin+=1
+        """
         if PopWin == 2:
           PopWin+=1
         if ChildWin == 2:
           ChildWin+=1
+        """
         appChild(ChildWin)
         appPop(PopWin)
+        BattleCount+=2
     #print(PopWin,ChildWin)
-    
-def BattleCOANS(Pop,Child,Main,NimStatus):
-  #主親以外の相手集団全員と対戦
-  PopWin = 0
-  ChildWin = 0
-  #対戦相手集団を設定（インデックスのみ）
-  for i in Pop:
-    if i!=Pop[Main]:
-      appPop = i[1].append
-      for j in Child:
-        PopWin = 0
-        ChildWin = 0
-        appChild = j[1].append
-        #1戦目
-        NimStatus = nim.NimInit()
-        if nim.NimGame(i,j,NimStatus) == 0:
-          PopWin+=1
-        else :
-          ChildWin+=1
-        #2戦目
-        NimStatus = nim.NimInit()
-        if nim.NimGame(j,i,NimStatus) == 0:
-          ChildWin+=1
-        else :
-          PopWin+=1
-        if PopWin == 2:
-          PopWin+=1
-        if ChildWin == 2:
-          ChildWin+=1
-        appChild(ChildWin)
-        appPop(PopWin)
-    #print(PopWin,ChildWin)
+    return BattleCount
 
+def Setting(Pop):
+  #リスト生成
+  AnsModule.List1(Pop)
+  AnsModule.List2(Pop)
+  #ニッチ割り振り
+  Config.CountNitch = 1
+  for i in range(len(Pop)):
+    if AnsModule.SetNitch(i,Pop,Config.CountNitch) == 1:
+      Config.CountNitch += 1
+  Config.CountNitch-=1
+  #主親を選ぶ
+  MainPare_n = random.randint(0,len(Pop)-1) #主親を選ぶ
+  #副親を選ぶ
+  SubPare_n = []
+  appSub = SubPare_n.append
+  for i in range(Config.Define.Np):
+    TmpRand = random.randint(0,len(Pop[MainPare_n][3])-1)
+    #追加と同時に要素を削除する
+    appSub(Pop[MainPare_n][3].pop(TmpRand))
+  #print(SubPare_n)
+  return MainPare_n,SubPare_n
+  
 def GetData(Child):
   TmpSum = []
   for i in Child:
@@ -102,27 +104,33 @@ def GetData(Child):
   print("最小",min(TmpSum))
 
     
-#集団1個、全数対戦させる手法
+#集団1個、全数対戦させる手法（1個前の手法）
 def coans(Pop,Main,Sub,NimStatus):
   #子個体取得
   Child = AnsModule.TwoPointCrossover(Pop,Main,Sub)
+  #主親を一旦取り除いておく(tmpPopに主親を除いた集団を入れる)
+  tmpPop = []
+  appPop = tmpPop.append
+  for i in Pop:
+    if i!=Pop[Main]:
+      appPop(i)
   #バトル
-  BattleCOANS(Pop,Child,Main,NimStatus)
-  TmpSum = [sum(i[1]) for i in Child]
+  Config.BattleCountBef+=Battle(tmpPop,Child,NimStatus)
   #勝ち数取得
+  TmpSum = [sum(i[1]) for i in Child]
   TmpIndex = TmpSum.index(max(TmpSum))
   #もし主親よりも得点が高い個体がいた場合、主親と入れ替える
   if(TmpIndex != Config.Define.Nc):
-    Pop[Main][0] =  Child[TmpIndex][0]
+    Pop[Main][0] = Child[TmpIndex][0]
 
-
-#今の共進化ANS（集団1個）
+#今の共進化ANS（集団1個, 各クラスタからランダムに1個体ランダムに選んで対戦させる方法）
 def coans2(Pop,Main,Sub,NimStatus):
   #子個体取得
   Child = AnsModule.TwoPointCrossover(Pop,Main,Sub)
-  #バトル
+  #対戦相手集団生成
   Opponent = SelectOpponent(Pop,Main)
-  Battle(Opponent,Child,Main,NimStatus)
+  #バトル
+  Config.BattleCountNow+=Battle(Opponent,Child,NimStatus)
   TmpSum = [sum(i[1]) for i in Child]
   #勝ち数取得
   TmpIndex = TmpSum.index(max(TmpSum))

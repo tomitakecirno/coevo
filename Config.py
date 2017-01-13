@@ -2,6 +2,8 @@ from enum import IntEnum
 
 CountNitch = 0
 BattleCount = 0
+BattleCountBef = 0
+BattleCountNow = 0
 
 class Define(IntEnum):
   Ns = 50    #初期集団数

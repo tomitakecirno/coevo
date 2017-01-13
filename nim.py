@@ -75,12 +75,11 @@ def NimGetout(n,NimStatus):
 #先攻は2点,後攻は1.5点
 def NimGame(Pop,Child,NimStatus):
   #解集団が先攻、子個体集団が後攻
-  Config.BattleCount+=1
   winflag = 0
   while sum(NimStatus[0]):
     #評価用配列をスキャン、両方1になる部分ところを選ぶ
     check = 0
-    #先攻のターン
+    #先攻パターン
     for i in range(len(NimStatus[1])):
       if Pop[0][i] == 1 and NimStatus[1][i] == 1:
         #遷移可能な状態が戦略内にあればチェック
@@ -97,7 +96,7 @@ def NimGame(Pop,Child,NimStatus):
           NimGetout(i,NimStatus)
           if sum(NimStatus[0]) == 0:
             winflag = 0 #先攻が勝利
-    #後攻のターン
+    #後攻のパターン
     if(sum(NimStatus[0]) == 0):
       break;
     check = 0
@@ -119,6 +118,7 @@ def NimGame(Pop,Child,NimStatus):
             winflag = 1 #後攻が勝利
     if(sum(NimStatus[0]) == 0):
       break;
+  #勝った方と対戦数
   return winflag
 
   
@@ -240,3 +240,51 @@ def CheckIndiv(Indiv,Pop,NimStatus):
     #print("WinCount",WinCount)
     #print("DeadFlag",DeadFlag)
   return round(WinCount/BattleCount,2)
+
+def CreateResult(Pop):
+  tmpIndex = [i[2] for i in Pop]
+  maxNitchN = max(tmpIndex)
+  Result = [[[] for i in range(2) ] for j in range(maxNitchN)]
+  """
+  Result[0]：戦略
+  Result[1]：勝ちポイント
+  Result[2]：勝率
+  """
+  #Count = [0 for i in range(maxNitchN)]
+  TmpSum = [[[] for i in range(2)] for j in range(maxNitchN)]
+  Opt = Optimaze()
+  #ニッチ毎に振り分け
+  for i in Pop:
+    #Count[i[2]-1]+=1
+    TmpSum[i[2]-1][0].append(i[0])
+    TmpSum[i[2]-1][1].append(sum(i[1]))
+  #各ニッチで勝ちポイントが一番高い個体を結果リストに格納
+  for i in range(len(TmpSum)):
+    TmpIndex = TmpSum[i][1].index(max(TmpSum[i][1]))
+    Result[i][0] = TmpSum[i][0][TmpIndex]
+    Result[i][1] = TmpSum[i][1][TmpIndex]
+  return Result
+
+def ShowResult(Result,Opponent,NimStatus):
+  #Resultの勝数初期化
+  for i in Result:
+    i[1] = 0
+  #戦略の評価
+  print("Result")
+  #print(Result)
+  WinPercent = []
+  appWin = WinPercent.append
+  for i in Result:
+    appWin(CheckIndiv(i[0],Opponent,NimStatus))
+    #print("勝率:",i[2])
+  #print(WinPercent)
+  print("最大:",max(WinPercent))
+  print("最小:",min(WinPercent))
+  print("平均:",round(sum(WinPercent)/len(WinPercent),2))
+    
+  print("ニッチの個数",len(Result))
+  #print("ニッチ毎の個体数",Count)
+  #print("総対戦数",Config.BattleCount)
+  print("\n")
+
+
