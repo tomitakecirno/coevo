@@ -7,6 +7,11 @@ popの仕様
 [2]ニッチ番号
 [3]リスト1
 [4]リスト2
+[5]適応度（評価値）
+childの仕様
+[0]解のベクトル(0or1)
+[1]勝ちポイント
+[2]適応度（評価値）
 """
 import Config
 import random
@@ -20,8 +25,8 @@ for h in range(1):
   NimStatus = nim.NimInit()
   save = NimStatus[1]
   #集団生成
-  PopBef = [[0 if i==2 else [] for i in range(5)] for j in range(Config.Define.Ns)]
-  PopNow = [[0 if i==2 else [] for i in range(5)] for j in range(Config.Define.Ns)]
+  PopBef = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(Config.Define.Ns)]
+  PopNow = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(Config.Define.Ns)]
   #戦略設定
   for i in PopBef:
     i[0] = [random.randint(0,1) for j in range(len(NimStatus[1]))]
@@ -39,26 +44,40 @@ for h in range(1):
     #初期化
     if e != Config.Define.END-1:
       gmodel.InitPop(PopNow)
-      gmodel.InitPop(PopBef)
-  #print("PopData:")
-  #gmodel.GetData(Pop)
-  """
+      #gmodel.InitPop(PopBef)
+
+
+  NitchBef = []
+  appNitchBef = NitchBef.append
+  NitchNow = []
+  appNitchNow = NitchNow.append
+  for i in PopBef:
+    appNitchBef(i[2])
+  for i in PopNow:
+    appNitchNow(i[2])
+
   ResultBef = nim.CreateResult(PopBef)
   ResultNow = nim.CreateResult(PopNow)
-  """
+  #複製
   subPopBef = PopBef
   subPopNow = PopNow
   #一旦リセット
   gmodel.InitPop(PopBef)
   gmodel.InitPop(PopNow)
   print("前手法vs前手法")
-  nim.ShowResult(subPopBef,PopBef,NimStatus)  
+  nim.ShowResult(subPopBef,PopBef,NimStatus)
   print("現手法vs前手法")
   nim.ShowResult(subPopNow,PopBef,NimStatus)  
   print("前手法vs現手法")
-  nim.ShowResult(subPopBef,PopNow,NimStatus)  
+  nim.ShowResult(subPopBef,PopNow,NimStatus)
   print("現手法vs現手法")
-  nim.ShowResult(subPopNow,PopNow,NimStatus)  
+  nim.ShowResult(subPopNow,PopNow,NimStatus)
+
+  print("前手法対戦数:",Config.BattleCountBef)
+  print("現手法対戦数:",Config.BattleCountNow)
+  print("前手法ニッチ数:",max(NitchBef))
+  print("現手法ニッチ数:",max(NitchNow))
+  NitchBef
   """
   #前手法,現手法それぞれで獲得した集団をそれぞれの集団と戦わせる
   #一旦リセット

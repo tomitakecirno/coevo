@@ -281,10 +281,3 @@ def ShowResult(Result,Opponent,NimStatus):
   print("最大:",max(WinPercent))
   print("最小:",min(WinPercent))
   print("平均:",round(sum(WinPercent)/len(WinPercent),2))
-    
-  print("ニッチの個数",len(Result))
-  #print("ニッチ毎の個体数",Count)
-  #print("総対戦数",Config.BattleCount)
-  print("\n")
-
-

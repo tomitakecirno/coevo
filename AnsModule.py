@@ -66,7 +66,7 @@ def SetNitch(kn,Pop,n):
 
 #2点交叉の関数。subpare_nはリスト
 def TwoPointCrossover(Pop,Main,Sub):
-  TmpChild = [[[] for i in range(2)] for j in range(Config.Define.Nc+1)]
+  TmpChild = [[0 if i==2 else [] for i in range(3)] for j in range(Config.Define.Nc+1)]
   #print(TmpChild[0])
   for i in range(Config.Define.Nc):
     #交叉を行う副親を決定
