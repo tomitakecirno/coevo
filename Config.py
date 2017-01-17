@@ -2,22 +2,23 @@ from enum import IntEnum
 
 CountNitch = 0
 BattleCount = 0
-BattleCountBef = 0
+#BattleCountBef = 0
 BattleCountNow = 0
+BattleCountSotsu = 0
 
 class Define(IntEnum):
   Ns = 50    #初期集団数
-  No = 10    #敵集団数
-  Np = 2     #親個体数
-  Nc = 10     #子個体数
+  No = 30    #敵集団数
+  Np = 3     #親個体数
+  Nc = 10    #子個体数
   DEM = 2    #次元数
-  Kp = 3
+  Kp = 4
   Ko = 3
   T = 1      #ステップサイズ
-  END = 100  #終了時間
-  Poll1 = 2
-  Poll2 = 2
-  Poll3 = 2
+  END = 500   #終了時間
+  Poll1 = 3
+  Poll2 = 3
+  Poll3 = 3
 
 #Nimの山に関するクラス
 """

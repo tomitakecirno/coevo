@@ -66,6 +66,14 @@ def Optimaze():
           app2(0)
   return TmpOpt
 
+#集団のある要素リストのmax値のインデックスを返す
+def GetBestIndex(Pop,n):
+  tmp = []
+  apptmp = tmp.append
+  for i in Pop:
+    apptmp(i[n])
+  return tmp.index(max(tmp))
+
 #Nimの石の数の操作 n:配列のインデント Nimの状態
 def NimGetout(n,NimStatus):
   #次の石の数を取得

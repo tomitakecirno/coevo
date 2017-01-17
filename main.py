@@ -19,42 +19,99 @@ import AnsModule
 import gmodel
 import nim
 
-for h in range(1):
-  Config.BattleCountBef = 0
+for h in range(10):
+  #Config.BattleCountBef = 0
   Config.BattleCountNow = 0
+  Config.BattleCountSotsu = 0
   NimStatus = nim.NimInit()
   save = NimStatus[1]
   #集団生成
-  PopBef = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(Config.Define.Ns)]
-  PopNow = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(Config.Define.Ns)]
-  #戦略設定
-  for i in PopBef:
-    i[0] = [random.randint(0,1) for j in range(len(NimStatus[1]))]
+  #PopBef = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(Config.Define.Ns)]
+  PopNow = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(Config.Define.Ns)] #現手法
+  PopSotsu = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(Config.Define.Ns)] #卒論手法
+  OpoSotsu = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(Config.Define.No)] #卒論手法
+
+  #for i in PopBef:
+    #i[0] = [random.randint(0,1) for j in range(len(NimStatus[1]))]
   for i in PopNow:
     i[0] = [random.randint(0,1) for j in range(len(NimStatus[1]))]
+  for i in PopSotsu:
+    i[0] = [random.randint(0,1) for j in range(len(NimStatus[1]))]
+  for i in OpoSotsu:
+    i[0] = [random.randint(0,1) for j in range(len(NimStatus[1]))]
   for e in range(Config.Define.END):
-    #print("世代数:",e)
-    MainBef,SubBef = gmodel.Setting(PopBef)
+    if e%100 == 0:
+      print("世代数:",e)
+    #卒論
+    MainSotsu,SubSotsu = gmodel.Setting(PopSotsu)
+    damy,damy2 = gmodel.Setting(OpoSotsu)
+    #前手法
+    #MainBef,SubBef = gmodel.Setting(PopBef)
+    #現手法
     MainNow,SubNow = gmodel.Setting(PopNow)
-    #print(MainBef,SubBef)
-    #print(MainNow,SubNow)
     #手法切り替え
-    gmodel.coans(PopBef,MainBef,SubBef,NimStatus) #卒論のANS（集団2個）
-    gmodel.coans2(PopNow,MainNow,SubNow,NimStatus)  #今のANS（集団1個）
+    gmodel.coansSotsu(PopSotsu,OpoSotsu,MainSotsu,SubSotsu,NimStatus) #卒論のCOANS（集団2個）
+    #gmodel.coans(PopBef,MainBef,SubBef,NimStatus)  #一個前のCOANS
+    gmodel.coans2(PopNow,MainNow,SubNow,NimStatus)  #今のCOANS（集団1個）
     #初期化
     if e != Config.Define.END-1:
       gmodel.InitPop(PopNow)
       #gmodel.InitPop(PopBef)
+      gmodel.InitPop(PopSotsu)
+      gmodel.InitPop(OpoSotsu)
 
+  
+  #複製
+  subPopSotsu = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(Config.Define.Ns)]
+  subPopNow = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(Config.Define.Ns)]
+  for i in range(Config.Define.Ns):
+    subPopSotsu[i][0] = PopSotsu[i][0]
+    subPopNow[i][0] = PopNow[i][0]
+    
+  #一旦リセットしてベスト個体を求める
+  gmodel.InitPop(PopNow)
+  gmodel.InitPop(subPopNow)
+  gmodel.Battle(PopNow,subPopNow,NimStatus)
+  gmodel.FitnessValuePop(PopNow,subPopNow)
+  BestIndexPopNow = nim.GetBestIndex(PopNow,5) #ベスト個体のインデックス
+  #print("Best:",PopNow[BestIndexPop][5])
+  #卒論
+  gmodel.InitPop(PopSotsu)
+  gmodel.InitPop(subPopSotsu)
+  gmodel.Battle(PopSotsu,subPopSotsu,NimStatus)
+  gmodel.FitnessValuePop(PopSotsu,subPopSotsu)
+  BestIndexPopSotsu = nim.GetBestIndex(PopSotsu,5) #ベスト個体のインデックス
 
+  #卒論が前,現手法が後
+  BestIndiv = []
+  appBestIndiv = BestIndiv.append
+  appBestIndiv(PopSotsu[BestIndexPopSotsu])
+  appBestIndiv(PopNow[BestIndexPopNow])
+
+  f = open('Result.dat','a')
+  f.write('試行回数,' + str(h) + '\n')
+  f.write('卒論の集団と比較:' + '\n')
+  gmodel.InitPop(BestIndiv)
+  gmodel.InitPop(subPopSotsu)
+  gmodel.Battle(BestIndiv,subPopSotsu,NimStatus)
+  f.write('卒論手法,'+str(BestIndiv[0][1].count(2)/len(subPopSotsu))+','+str(BestIndiv[0][1].count(2))+'\n')
+  f.write('現手法,'+str(BestIndiv[1][1].count(2)/len(subPopSotsu))+','+str(BestIndiv[1][1].count(2))+'\n')
+
+  f.write('現手法の集団と比較,' + '\n')
+  gmodel.InitPop(BestIndiv)
+  gmodel.InitPop(subPopNow)
+  gmodel.Battle(BestIndiv,subPopNow,NimStatus)
+  f.write('卒論手法,'+str(BestIndiv[0][1].count(2)/len(subPopNow))+','+str(BestIndiv[0][1].count(2))+'\n')
+  f.write('現手法,'+str(BestIndiv[1][1].count(2)/len(subPopNow))+','+str(BestIndiv[1][1].count(2))+'\n')
+
+  f.write('卒論手法対戦数,' + str(Config.BattleCountSotsu) + '\n')
+  f.write('現手法対戦数,' + str(Config.BattleCountNow) + '\n')
+  f.close
+  """
   NitchBef = []
   appNitchBef = NitchBef.append
-  NitchNow = []
-  appNitchNow = NitchNow.append
   for i in PopBef:
     appNitchBef(i[2])
-  for i in PopNow:
-    appNitchNow(i[2])
 
   ResultBef = nim.CreateResult(PopBef)
   ResultNow = nim.CreateResult(PopNow)
@@ -77,29 +134,7 @@ for h in range(1):
   print("現手法対戦数:",Config.BattleCountNow)
   print("前手法ニッチ数:",max(NitchBef))
   print("現手法ニッチ数:",max(NitchNow))
-  NitchBef
   """
-  #前手法,現手法それぞれで獲得した集団をそれぞれの集団と戦わせる
-  #一旦リセット
-  gmodel.InitPop(PopBef)
-  gmodel.InitPop(PopNow)
-  #一旦集団退避
-  subPopBef = PopBef
-  subPopNow = PopNow
-  nim.ShowResult(PopNow,subPopBef,NimStatus)
-  #一戦目
-  #Battle(PopBef,subPopBef,NimStatus)
-  #Battle(PopBef,subPopNow,NimStatus)
-
-  #2セット目
-  #Battle(PopNow,subPopBef,NimStatus)
-  #Battle(PopNow,subPopNow,NimStatus)
-  """
-
-
-
-
-
 
 
 

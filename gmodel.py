@@ -71,33 +71,97 @@ def Battle(Pop,Child,NimStatus):
     if len(i[0])!=0:
       appPop = i[1].append
       for j in Child:
-        PopWin = 0
-        ChildWin = 0
-        appChild = j[1].append
-        #1戦目
-        NimStatus = nim.NimInit()
-        if nim.NimGame(i,j,NimStatus) == 0:
-          PopWin+=1
-        else :
-          ChildWin+=1
-        #2戦目
-        NimStatus = nim.NimInit()
-        if nim.NimGame(j,i,NimStatus) == 0:
-          ChildWin+=1
-        else :
-          PopWin+=1
-        """
-        if PopWin == 2:
-          PopWin+=1
-        if ChildWin == 2:
-          ChildWin+=1
-        """
-        appChild(ChildWin)
-        appPop(PopWin)
-        BattleCount+=2
-    #print(PopWin,ChildWin)
+        if len(j[0])!=0:
+         PopWin = 0
+         ChildWin = 0
+         appChild = j[1].append
+         #1戦目
+         NimStatus = nim.NimInit()
+         if nim.NimGame(i,j,NimStatus) == 0:
+           PopWin+=1
+         else :
+           ChildWin+=1
+         #2戦目
+         NimStatus = nim.NimInit()
+         if nim.NimGame(j,i,NimStatus) == 0:
+           ChildWin+=1
+         else :
+           PopWin+=1
+         appChild(ChildWin)
+         appPop(PopWin)
+         BattleCount+=2
+     #print(PopWin,ChildWin)
+  return BattleCount
+  
+#集団内で戦う用
+def BattleSub(Pop,Pop2,NimStatus):
+  #主親以外の相手集団全員と対戦
+  PopWin = 0
+  Pop2Win = 0
+  BattleCount = 0
+  #対戦相手集団を設定（インデックスのみ）
+  if len(Pop[0])!=0:
+    appPop = Pop[1].append
+    if len(Pop2[0])!=0:
+      PopWin = 0
+      Pop2Win = 0
+      appPop2 = Pop2[1].append
+      #1戦目
+      NimStatus = nim.NimInit()
+      if nim.NimGame(Pop,Pop2,NimStatus) == 0:
+        PopWin+=1
+      else :
+        Pop2Win+=1
+      #2戦目
+      NimStatus = nim.NimInit()
+      if nim.NimGame(Pop2,Pop,NimStatus) == 0:
+        Pop2Win+=1
+      else :
+        PopWin+=1
+      appPop(PopWin)
+      BattleCount+=2
   return BattleCount
 
+#相手集団更新
+def OpponentUpdate(Opo,Child,NimStatus):
+  #最も近い個体のインデックス
+  tmpDis = []
+  appDis = tmpDis.append
+  for i in Opo:
+    appDis(AnsModule.HammingDis(i[0],Child[0]))
+  tmpNitch = Opo[tmpDis.index(min(tmpDis))][2]
+  #サブの集団へ
+  tmpIndex = []
+  tmpOpo = []
+  appOpo = tmpOpo.append
+  appIndex = tmpIndex.append
+  for i in range(len(Opo)):
+    if Opo[i][2] == tmpNitch:
+      appIndex(i)
+      Opo[i][1] = []
+      Opo[i][5] = 0
+      appOpo(Opo[i])
+  tmpChild = [0 if i==2 or i==5 else [] for i in range(6)]
+  tmpChild[0] = Child[0]
+  appOpo(tmpChild)
+  tmpOpo2 = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(len(tmpOpo))]
+  for i in range(len(tmpOpo2)):
+    tmpOpo2[i][0] = tmpOpo[i][0]
+  #クラスタ内対戦
+  for i in range(len(tmpOpo)):
+    for j in range(len(tmpOpo2)):
+      if i!=j:
+        Config.BattleCountSotsu+=BattleSub(tmpOpo[i],tmpOpo2[j],NimStatus)
+  FitnessValueOpo(tmpOpo)
+  #評価値最小の個体を削除
+  tmpFitness = []
+  appFit = tmpFitness.append
+  for i in tmpOpo:
+    appFit(i[5])
+  del tmpOpo[tmpFitness.index(min(tmpFitness))]
+  for i in range(len(tmpIndex)):
+    Opo[tmpIndex[i]] = tmpOpo[i]
+  
 def FitnessValueChild(Child,Opponent):
   #勝ちポイントの合計を入れておく
   tmpWin = [0 for i in range(len(Opponent))]
@@ -121,6 +185,18 @@ def FitnessValuePop(Pop,Opponent):
     for j in range(len(i[1])):
       tmpFitness+=i[1][j]*tmpWin[j]
     i[5] = tmpFitness
+
+def FitnessValueOpo(Opponent):
+  #勝ちポイントの合計を入れておく
+  #評価値に付け加えていく
+  for i in Opponent:
+    tmpFitness = 0
+    count = 0
+    for j in Opponent:
+      if i!= j:
+        tmpFitness+=i[1][count]*sum(j[1])
+        count+=1
+    i[5] = tmpFitness
         
 def GetData(Child):
   TmpSum = []
@@ -130,7 +206,21 @@ def GetData(Child):
   print("平均",round(sum(TmpSum)/len(TmpSum),1))
   print("最小",min(TmpSum))
 
-    
+
+#卒論の手法
+def coansSotsu(Pop,Opo,Main,Sub,NimStatus):
+  Child = AnsModule.TwoPointCrossover(Pop,Main,Sub)
+  Config.BattleCountSotsu+=Battle(Opo,Child,NimStatus)
+  FitnessValueChild(Child,Opo)
+  #主親と子個体入れ替え
+  TmpFit = [i[2] for i in Child]
+  TmpIndex = TmpFit.index(max(TmpFit))
+  #もし主親よりも得点が高い個体がいた場合、主親と入れ替える
+  if(TmpIndex != Config.Define.Nc):
+    Pop[Main][0] = Child[TmpIndex][0]
+  #相手集団の更新
+  OpponentUpdate(Opo,Child[TmpIndex],NimStatus)
+
 #集団1個、全数対戦させる手法（1個前の手法）
 def coans(Pop,Main,Sub,NimStatus):
   #子個体取得

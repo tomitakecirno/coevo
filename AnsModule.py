@@ -37,7 +37,7 @@ def List2(Pop):
       else:
         TmpDis[i].append(1000)
     #print(TmpDis[i])
-    for k in range(Config.Define.Kp):
+    for k in range(Config.Define.Ko):
       TmpIndex = TmpDis[i].index(min(TmpDis[i]))
       TmpList[i].append(TmpIndex)
       TmpDis[i][TmpIndex] = 1000
