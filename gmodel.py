@@ -6,6 +6,9 @@
 勝てている個体の方が評価値は高くなると思われる.
 
 じゃあ次は,勝数×相手の勝利数にしてみる.
+
+多数対多数
+1対多数（未実装）
 """
 import AnsModule
 import Config
@@ -105,7 +108,6 @@ def BattleSub(Pop,Pop2,NimStatus):
     if len(Pop2[0])!=0:
       PopWin = 0
       Pop2Win = 0
-      appPop2 = Pop2[1].append
       #1戦目
       NimStatus = nim.NimInit()
       if nim.NimGame(Pop,Pop2,NimStatus) == 0:

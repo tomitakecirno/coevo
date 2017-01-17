@@ -1,5 +1,4 @@
 import Config
-import math
 import random
 
 def HammingDis(one,ano):
@@ -50,7 +49,24 @@ def List2(Pop):
       else :
         pass
     #print(Pop[i][4])
-
+"""
+def MakeList(Pop):
+  TmpDis = [[] for i in range(len(Pop))]
+  TmpList = [[] for i in range(len(Pop))]
+  #総当たりで距離を保持する
+  #自身のところには10000を代入
+  #ついでに
+  for i in range(len(Pop)):
+    for j in range(len(Pop)):
+      if i != j:
+        TmpDis[i].append(HammingDis(Pop[i][0],Pop[j][0]))
+      else:
+        TmpDis[i].append(10000)
+    for k in range(len(TmpDis[i])):
+      TmpIndex = TmpDis[i].index(min(TmpDis[i]))
+      TmpList[i].append(TmpIndex)
+      TmpDis[i][TmpIndex] = 1000
+"""
 #ニッチ番号を割り当てる　未完成
 def SetNitch(kn,Pop,n):
   #ニッチに属していなければニッチ番号を割り振る
@@ -64,6 +80,13 @@ def SetNitch(kn,Pop,n):
   else :
     return 0
 
+def SetNitchKai(Pop_n,Pop,n,Kn):
+  if Pop[Pop_n][2] == 0:
+    Pop[Pop_n][2] = n
+    for i in Pop[Pop_n][4]:
+      i[2] = n
+      Kn+=1
+    for i in 
 #2点交叉の関数。subpare_nはリスト
 def TwoPointCrossover(Pop,Main,Sub):
   TmpChild = [[0 if i==2 else [] for i in range(3)] for j in range(Config.Define.Nc+1)]
