@@ -1,5 +1,6 @@
 import Config
 import random
+import math
 
 def HammingDis(one,ano):
   cal_sum = 0;
@@ -7,6 +8,12 @@ def HammingDis(one,ano):
     if a!=b:
       cal_sum += 1
   return cal_sum
+
+def EuclidDis(one,ano):
+  cal_sum = 0;
+  for (a,b) in zip(one,ano):
+    cal_sum += (a-b)*(a-b)
+  return math.sqrt(cal_sum)
 
 def List1(Pop):
   TmpDis = [[] for i in range(len(Pop))]
@@ -26,31 +33,16 @@ def List1(Pop):
     #print(Pop[i][3])
 
 def List2(Pop):
-  TmpDis = [[] for i in range(len(Pop))]
-  TmpList = [[] for i in range(len(Pop))]
-
-  for i in range(len(Pop)):
-    for j in range(len(Pop)):
-      if i != j:
-        TmpDis[i].append(HammingDis(Pop[i][0],Pop[j][0]))
-      else:
-        TmpDis[i].append(1000)
-    #print(TmpDis[i])
-    for k in range(Config.Define.Ko):
-      TmpIndex = TmpDis[i].index(min(TmpDis[i]))
-      TmpList[i].append(TmpIndex)
-      TmpDis[i][TmpIndex] = 1000
-    #print(TmpList[i])
+  TmpList = MakeListDouble(Pop,Config.Define.Ko)
   for i in range(len(Pop)):
     for j in range(len(TmpList[i])):
       TmpIndex = TmpList[i][j]
       if i in TmpList[TmpIndex]:
         Pop[i][4].append(TmpIndex)
-      else :
-        pass
-    #print(Pop[i][4])
-"""
-def MakeList(Pop):
+  for i in Pop:
+    print(i[4])
+
+def MakeListbit(Pop):
   TmpDis = [[] for i in range(len(Pop))]
   TmpList = [[] for i in range(len(Pop))]
   #総当たりで距離を保持する
@@ -66,7 +58,26 @@ def MakeList(Pop):
       TmpIndex = TmpDis[i].index(min(TmpDis[i]))
       TmpList[i].append(TmpIndex)
       TmpDis[i][TmpIndex] = 1000
-"""
+  return TmpList
+
+def MakeListDouble(Pop,k):
+  TmpDis = [[] for i in range(len(Pop))]
+  TmpList = [[] for i in range(len(Pop))]
+  #総当たりで距離を保持する
+  #自身のところには10000を代入
+  #ついでに
+  for i in range(len(Pop)):
+    for j in range(len(Pop)):
+      if i != j:
+        TmpDis[i].append(EuclidDis(Pop[i][0],Pop[j][0]))
+      else:
+        TmpDis[i].append(10000)
+    for j in range(k):
+      TmpIndex = TmpDis[i].index(min(TmpDis[i]))
+      TmpList[i].append(TmpIndex)
+      TmpDis[i][TmpIndex] = 10000
+  return TmpList
+  
 #ニッチ番号を割り当てる　未完成
 def SetNitch(kn,Pop,n):
   #ニッチに属していなければニッチ番号を割り振る
@@ -79,14 +90,28 @@ def SetNitch(kn,Pop,n):
     return 1
   else :
     return 0
-
-def SetNitchKai(Pop_n,Pop,n,Kn):
-  if Pop[Pop_n][2] == 0:
-    Pop[Pop_n][2] = n
-    for i in Pop[Pop_n][4]:
-      i[2] = n
-      Kn+=1
-    for i in 
+    
+def SetNitchKai(Pop):
+  count=1
+  for i in range(len(Pop)):
+    if Pop[i][2] == 0:
+      tmpIndiv = []
+      appIndiv = tmpIndiv.append
+      appIndiv(i)
+      for j in range(Config.Define.K2):
+        for k in tmpIndiv:
+          if len(Pop[k][4])!=0:
+            for l in Pop[k][4]:
+              #ニッチ番号が1,リスト内にないなら追加
+              if Pop[l][2]==0 and l not in tmpIndiv:
+                appIndiv(l)
+                print("今のリスト:",tmpIndiv)
+      for j in tmpIndiv:
+        Pop[j][2] = count
+      count+=1
+  #for i in Pop:
+  #  print(i[2])
+  
 #2点交叉の関数。subpare_nはリスト
 def TwoPointCrossover(Pop,Main,Sub):
   TmpChild = [[0 if i==2 else [] for i in range(3)] for j in range(Config.Define.Nc+1)]

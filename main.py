@@ -15,35 +15,22 @@ childの仕様
 """
 import Config
 import random
-import AnsModule
 import gmodel
 import nim
 import image
-#680×480イメージの生成
-img = image.CreateWhite(480,640)
-image.DrawType(img)
-image.ShowImage(img)
 for h in range(Config.Define.TRY):
+  random.seed()
   #Config.BattleCountBef = 0
   Config.BattleCountNow = 0
   #Config.BattleCountSotsu = 0
   NimStatus = nim.NimInit()
   save = NimStatus[1]
   #集団生成
-  #PopBef = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(Config.Define.Ns)]
-  PopNow = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(Config.Define.Ns)] #現手法
-  #PopSotsu = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(Config.Define.Ns)] #卒論手法
-  #OpoSotsu = [[0 if i==2 or i==5 else [] for i in range(6)] for j in range(Config.Define.No)] #卒論手法
-  #for i in PopBef:
-    #i[0] = [random.randint(0,1) for j in range(len(NimStatus[1]))]
-  for i in PopNow:
-    i[0] = [random.randint(0,1) for j in range(len(NimStatus[1]))]
-  """
-  for i in PopSotsu:
-    i[0] = [random.randint(0,1) for j in range(len(NimStatus[1]))]
-  for i in OpoSotsu:
-    i[0] = [random.randint(0,1) for j in range(len(NimStatus[1]))]
-  """
+  PopNow = gmodel.InitNumbers(Config.Define.Ns) #現手法
+  #PopBef = gmodel.Init26(Config.Define.Ns)
+  #PopNow = gmodel.Init26(Config.Define.Ns,NimStatus[1]) #現手法
+  #PopSotsu = gmodel.Init26(Config.Define.Ns) #卒論手法
+  #OpoSotsu = gmodel.Init26(Config.Define.No) #卒論手法
   for e in range(Config.Define.END):
     #if e%100 == 0:
       #print("世代数:",e)
@@ -53,7 +40,8 @@ for h in range(Config.Define.TRY):
     #前手法
     #MainBef,SubBef = gmodel.Setting(PopBef)
     #現手法
-    MainNow,SubNow = gmodel.Setting(PopNow)
+    gmodel.Setting(PopNow)
+    image.ShowNitch(PopNow)
     #手法切り替え
     #gmodel.coansSotsu(PopSotsu,OpoSotsu,MainSotsu,SubSotsu,NimStatus) #卒論のCOANS（集団2個）
     #gmodel.coans(PopBef,MainBef,SubBef,NimStatus)  #一個前のCOANS
