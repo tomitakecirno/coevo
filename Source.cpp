@@ -32,20 +32,20 @@
 #define J1 30//中間層
 #define I2 30//        
 #define J2 13//出力層
-#define KO 50//個体数
+#define KO 30//個体数
 #define KOT 50//対戦相手数
-#define KU 500//世代数
+#define KU 50//世代数
 #define K 2//クラスタ数
 #define PARENT 5   //親の数
 #define CHILD 10 //子供の数
 #define LLL 1
 #define KL1 4 //List1で使う変数
-#define KL2 2 //List1で使う変数
+#define KL2 2 //List2で使う変数
 #define RIVAL 1 //対戦相手の対戦回数
 #define COUNT 0//
 #define COUNT_T 0//
 
-#define AICOUNT 14
+#define AICOUNT 30
 //1:プレイ 2:学習 3:対戦結果
 //0?	   1?	  2?
 #define DE 2
@@ -306,45 +306,29 @@ double rand_normal(double mu, double sigma);
 double Uniform(void);
 void QSort(double x[], int y[], int left, int right);
 void Swap(double x[], int y[], int i, int j);
-void ALL(void);
+void ALL(bool bef);
 void playeraa(void);
 
 /*****************
 富田手法で使う関数
 *****************/
-void coans();
-vector<playerTK> MakeList(vector<playerTK> &pop);
-vector<playerTK> AnsList1(vector<vector<int> > &IndexSave, vector<playerTK> &pop);
-vector<playerTK> AnsList2(vector<vector<int> > &IndexSave, vector<playerTK> &pop);
 int SetNitch(int nitch_number, int kotai, vector<playerTK> &pop);
-void ExtensionXLM(int MainPare, vector<int> &SubPare, vector<playerTK> &child, vector<playerTK> &pop);
-vector<playerTK> FitnessChild(vector<playerTK> &child, vector<playerTK> &pop);
-double cal_kotai_distance(playerTK one, playerTK another);
-vector<playerTK> MakeList(vector<playerTK> &pop);
-vector<playerTK> AnsList1(vector<vector<int> > &IndexSave, vector<playerTK> &pop);
-vector<playerTK> AnsList2(vector<vector<int> > &IndexSave, vector<playerTK> &pop);
-int SetNitch(int nitch_number, int kotai, vector<playerTK> &pop);
-vector<playerTK> ExtensionXLM(int MainPare, vector<int> &SubPare, vector<playerTK> &pop);
-void show_w(playerTK one);
-vector<playerTK> choice_oppoment(vector<playerTK> &pop, int count_nitch);
 int FitnessChild(playerTK &child, vector<playerTK> &oppoment);
-void FileWrite(vector<playerTK> &pop);
+double cal_kotai_distance(playerTK one, playerTK another);
+void show_w(playerTK one);
+void FileWrite(vector<playerTK> &pop,bool bef);
+void coans(bool bef);
+vector<playerTK> choice_oppoment(vector<playerTK> &pop, int count_nitch);
+vector<playerTK> ExtensionXLM(int MainPare, vector<int> &SubPare, vector<playerTK> &pop);
+vector<playerTK> MakeList(vector<playerTK> &pop);
+vector<playerTK> AnsList1(vector<vector<int> > &IndexSave, vector<playerTK> &pop);
+vector<playerTK> AnsList2(vector<vector<int> > &IndexSave, vector<playerTK> &pop);
 
 /****************************
       メインルーチン
 ***************************/
-int main(){
-	coans();
-
-	return 0;
-}
-/*
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	if (DxLib_Init() == -1)		// ＤＸライブラリ初期化処理
-	{
-		exit(0);			// エラーが起きたら直ちに終了
-	}
   //プレイ
 	if (DE == 1) {
 		gamemode();
@@ -356,16 +340,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//学習
 	else if(DE == 2){
 		//n_learn();
-		coans();
+		coans(true);
+		ALL(true);
+		coans(false);
+		ALL(false);
 	}
-	else {
-		ALL();
+	else if (DE == 3) {
+		//n_learn();
 	}
-	WaitKey();				// キー入力待ち
-	DxLib_End();				// ＤＸライブラリ使用の終了処理
+	WaitKey();		// キー入力待ち
+	DxLib_End();			// ＤＸライブラリ使用の終了処理
 	return 0;				// ソフトの終了 
 }
-*/
 /********************
   ゲームモード
 ********************/
@@ -375,7 +361,7 @@ void gamemode(void) {
 		printf("file open error!!\n");
 		exit(EXIT_FAILURE);	/* (3)エラーの場合は通常、異常終了する */
 	}
-	if ((fp = fopen("AI/test_T.dat", "rb")) == NULL) {
+	if ((fp = fopen("AIC/test.dat", "rb")) == NULL) {
 		printf("file open error!!\n");
 		exit(EXIT_FAILURE);	/* (3)エラーの場合は通常、異常終了する */
 	}
@@ -389,7 +375,6 @@ void gamemode(void) {
 	int c = 0;
 	int i = 0;
 	int j = 0;
-
 
 	fread(w1, sizeof(double), I1 * J1, file);
 	fread(w2, sizeof(double), I2 * J2, file);
@@ -4362,13 +4347,23 @@ void Swap(double x[],int y[], int i, int j)
 	y[i] = y[j];
 	y[j] = temp_n;
 }
-void ALL(void) {
+void ALL(bool bef) {
 	int ai1, ai2;
+	/*
 	int ai_w[AICOUNT] = { 0 }, ai_l[AICOUNT] = { 0 }, ai_d[AICOUNT] = {0};
 	int dre[AICOUNT] = { 0 };
+	*/
+	vector<playerTK> pop(KO);
+	vector<playerTK> popsub(KO);
+	vector<int> tmpEval;
 
-	for (ai1 = 0; ai1 < AICOUNT; ai1++) {
-		sprintf(filename, "AI/%d.dat", ai1);
+	for (int i = 0; i < KO; i++) {
+		pop[i].Init();
+		popsub[i].Init();
+	}
+	for (ai1 = 0; ai1 < KO; ai1++) {
+		cout << ai1 << " ";
+		sprintf(filename, (bef ? "AI/%d.dat" : "AIC/%d.dat"), ai1);
 		if ((file = fopen(filename, "rb")) == NULL) {
 			printf("file open error!!\n");
 			exit(0);
@@ -4381,8 +4376,8 @@ void ALL(void) {
 	
 		fclose(file);
 
-		for (ai2 = 0; ai2 < AICOUNT; ai2++) {
-			sprintf(filename, "AI/%d.dat", ai2);
+		for (ai2 = 0; ai2 < KO; ai2++) {
+			sprintf(filename, (bef ? "AI/%d.dat" : "AIC/%d.dat"), ai2);
 			if ((fp = fopen(filename, "rb")) == NULL) {
 				printf("file open error!!\n");
 				exit(0);
@@ -4394,42 +4389,112 @@ void ALL(void) {
 			fclose(fp);
 
 			Competition();
-
-			if (player1.win == 1) {
-				ai_w[ai1]++;
-				//ai_l[ai2]++;
-			}
-			else if (player2.win == 1) {
-				ai_l[ai1]++;
-				//ai_w[ai2]++;
-				dre[ai1] = ai2;
+			if (bef) {
+				if (player1.win == 1) {
+					//ai_w[ai1]++;
+					//ai_l[ai2]++;
+					pop[ai1].Result.push_back(1);
+					popsub[ai2].Result.push_back(0);
+				}
+				else if (player2.win == 1) {
+					//ai_l[ai1]++;
+					//ai_w[ai2]++;
+					//dre[ai1] = ai2;
+					pop[ai1].Result.push_back(0);
+					popsub[ai2].Result.push_back(1);
+				}
+				else {
+					//ai_d[ai1]++;
+					//ai_d[ai2]++;
+					pop[ai1].Result.push_back(0);
+					popsub[ai2].Result.push_back(0);
+				}
 			}
 			else {
-				ai_d[ai1]++;
-				//ai_d[ai2]++;
+				if (player1.win == 1) {
+					//ai_w[ai1]++;
+					//ai_l[ai2]++;
+					pop[ai1].Result.push_back(2);
+					popsub[ai2].Result.push_back(0);
+				}
+				else if (player2.win == 1) {
+					//ai_l[ai1]++;
+					//ai_w[ai2]++;
+					//dre[ai1] = ai2;
+					pop[ai1].Result.push_back(0);
+					popsub[ai2].Result.push_back(2);
+				}
+				else {
+					//ai_d[ai1]++;
+					//ai_d[ai2]++;
+					pop[ai1].Result.push_back(1);
+					popsub[ai2].Result.push_back(1);
+				}
 			}
 		}
+		/*
 		char str12[128] = { 0 };
 		sprintf_s(str12, "%d", ai1);
 		OutputDebugString(str12);
 		OutputDebugString("\n");
+		*/
 	}
+	vector<int> win_count(KO,0);
+	//適応度の一番高い個体を取得.test.datへ記録.ついでに勝率記録.
+	for (int i = 0; i < pop.size(); i++) {
+		tmpEval.push_back(FitnessChild(pop[i], popsub));
+		for (int j = 0; j < pop[i].Result.size(); j++){
+			if (pop[i].Result[j] == 1){
+				win_count[i]++;
+			}
+		}
+	}
+	size_t index;
+	vector<int>::iterator max;
+	max = max_element(tmpEval.begin(), tmpEval.end());
+	index = distance(tmpEval.begin(), max);
+
+	sprintf(filename, (bef? "AI/%d.dat" : "AIC/%d.dat"), index);
+	if ((file = fopen(filename, "rb")) == NULL) {
+		printf("file open error!!\n");
+		exit(0);
+	}
+	fread(w1, sizeof(double), I1 * J1, file);
+	fread(w2, sizeof(double), I2 * J2, file);
+	fread(w3, sizeof(double), I2 * J1, file);
+
+	sprintf(filename, (bef? "AI/test.dat" : "AIC/test.dat"));
+	if ((fp = fopen(filename, "wb+")) == NULL) {
+		fprintf(stderr, "%s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	fwrite(w1, sizeof(double), I1*J1, fp);
+	fwrite(w2, sizeof(double), I2*J2, fp);
+	fwrite(w3, sizeof(double), I2*J1, fp);
+
+	fclose(file);
+	fclose(fp);
+	/*
 	for (ai1 = 0; ai1 < AICOUNT; ai1++) {
 		char str12[128] = { 0 };
 		sprintf_s(str12, "%d:%d勝,%d敗,%d引き分け:率%2f:%d",ai1,ai_w[ai1],ai_l[ai1],ai_d[ai1],(double)ai_w[ai1]/(double)(ai_w[ai1]+ ai_l[ai1]+ ai_d[ai1])*100,dre[ai1]);
 		OutputDebugString(str12);
 		OutputDebugString("\n");
 	}
-	exit(0);
+	*/
+	if (!bef) {
+		exit(0);
+	}
 }
 void playeraa(void) {
 	//GetHitKeyStateAll(Buf);
 }
 
 /*****************
-共進化ANS
+共進化ANS 1で今のやつ。2で前のやつ
 *****************/
-void coans()
+void coans(bool bef)
 {
 	//集団宣言
 	vector<playerTK> pop(KO);
@@ -4440,7 +4505,7 @@ void coans()
 		pop[i].Init();
 		pop[i].Init_w();
 	}
-	for (int e = 0; e < 10; e++){
+	for (int e = 0; e < KU; e++){
 		cout << "世代数:" << e << endl;
 		pop = MakeList(pop);
 		//クラスタ番号割り振り
@@ -4474,12 +4539,15 @@ void coans()
 			child = ExtensionXLM(MainPare, SubPare, pop);
 			child.push_back(pop[MainPare]);
 			//対戦相手の個体を選ぶ
-			oppoment = choice_oppoment(pop, count_nitch);
-
+			if (bef) {
+				oppoment = choice_oppoment(pop, count_nitch);
+			}else {
+				oppoment = pop;
+			}
 			//w1,w2,w3:子個体の戦略，w1_T,w2_T,w3_T:対戦相手の戦略
-			//player1:子個体，player2:対戦相手
+			//player1:子個体，player2:対戦相手0
 			for (int r = 0; r < oppoment.size(); r++) {//相手ループ
-				cout << r << ":";
+				//cout << r << ":";
 				for (int i = 0; i < I1; i++) {
 					for (int j = 0; j < J1; j++) {
 						w1_T[i][j] = oppoment[r].w1_CO[i][j];
@@ -4498,7 +4566,7 @@ void coans()
 				//number:(子個体＋親個体)数
 				//対戦用配列に格納
 				for (int c = 0; c < child.size(); c++) {//集団ループ
-					cout << c << " ";
+					//cout << c << " ";
 					for (int i = 0; i < I1; i++) {
 						for (int j = 0; j < J1; j++) {
 							w1[i][j] = child[c].w1_CO[i][j];
@@ -4517,19 +4585,19 @@ void coans()
 
 					Competition();//対戦 player1 = 子個体 palyer2 = 対戦相手？
 					if (player1.win == 1) {
-						child[c].Result.push_back(2);
+						child[c].Result.push_back(1);
 						oppoment[r].Result.push_back(0);
 					}
 					else if (player2.win == 1) {
 						child[c].Result.push_back(0);
-						oppoment[r].Result.push_back(2);
-					}
-					else {
-						child[c].Result.push_back(1);
 						oppoment[r].Result.push_back(1);
 					}
+					else {
+						child[c].Result.push_back(0);
+						oppoment[r].Result.push_back(0);
+					}
 				}
-				cout << endl;
+				//cout << endl;
 			}
 			//
 			//適応度計算
@@ -4570,7 +4638,7 @@ void coans()
 		}
 	}
 	//個体の戦略書き込み
-	FileWrite(pop);
+	FileWrite(pop, bef);
 }
 
 /*****************
@@ -4608,9 +4676,9 @@ void show_w(playerTK one)
 }
 
 /*****************
-集団書き込み
+メイン集団書き込み
 *****************/
-void FileWrite(vector<playerTK> &pop)
+void FileWrite(vector<playerTK> &pop,bool bef)
 {
 	//様式を合わせる
 	for (int i = 0; i < pop.size(); i++){
@@ -4630,8 +4698,10 @@ void FileWrite(vector<playerTK> &pop)
 			}
 		}
 	}
-	for (int i = 0; i < pop.size(); i++){
-		sprintf(filename, "LearnResult/%05d.dat", i);
+	
+	//bef = trueの時AI，falseの時AIC
+	for (int i = 0; i < pop.size(); i++) {
+		sprintf(filename, (bef ? "AI/%d.dat" : "AIC/%d.dat"), i);
 		if ((fp = fopen(filename, "wb+")) == NULL) {
 			fprintf(stderr, "%s\n", strerror(errno));
 			exit(EXIT_FAILURE);
@@ -4642,7 +4712,6 @@ void FileWrite(vector<playerTK> &pop)
 		fclose(fp);
 	}
 }
-
 /********************
 近傍リストを作る
 ********************/
@@ -4777,9 +4846,9 @@ double cal_kotai_distance(playerTK one, playerTK another)
 	return sqrt(cal_sum);
 }
 
-/*****************
+/*****************************
 再帰的にニッチを割り当てていく
-*****************/
+*****************************/
 int SetNitch(int nitch_number, int kotai, vector<playerTK> &pop)
 {
 	int tmp;
