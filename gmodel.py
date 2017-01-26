@@ -39,7 +39,7 @@ def InitNumbers(size):
 #近傍リスト生成してニッチ割り振って主親と副親を決める
 def Setting(Pop):
   #リスト生成
-  #AnsModule.List1(Pop)
+  AnsModule.List1(Pop)
   AnsModule.List2(Pop)
   AnsModule.SetNitchKai(Pop)
   """
@@ -49,9 +49,8 @@ def Setting(Pop):
     if AnsModule.SetNitch(i,Pop,Config.CountNitch) == 1:
       Config.CountNitch += 1
   Config.CountNitch-=1
-  """
-  """
   #主親を選ぶ
+  """
   MainPare_n = random.randint(0,len(Pop)-1) #主親を選ぶ
   #副親を選ぶ
   SubPare_n = []
@@ -62,7 +61,6 @@ def Setting(Pop):
     appSub(Pop[MainPare_n][3].pop(TmpRand))
   #print(SubPare_n)
   return MainPare_n,SubPare_n
-  """
   
 #各クラスタの中から個体を1個選んで対戦相手とする
 def SelectOpponent(Pop,Main):

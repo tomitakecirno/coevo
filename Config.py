@@ -13,7 +13,7 @@ class Define(IntEnum):
   Nc = 10    #子個体数
   DEM = 2    #次元数
   Kp = 5
-  Ko = 3
+  Ko = 2
   K2 = 2
   T = 1      #ステップサイズ
   TRY = 1   #終了時間

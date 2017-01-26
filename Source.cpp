@@ -35,23 +35,23 @@
 #define J2 13//出力層
 #define KO 30//個体数
 #define KOT 50//対戦相手数
-#define KU 100//世代数
+#define KU 600//世代数
 #define K 2//クラスタ数
 #define PARENT 5   //親の数
 #define CHILD 10 //子供の数
 #define LLL 1
-#define KL1 4 //List1で使う変数
+#define KL1 3 //List1で使う変数
 #define KL2 2 //List2で使う変数
 #define RIVAL 1 //対戦相手の対戦回数
 #define COUNT 0//
 #define COUNT_T 0//
-#define TRIAL 3	//試行回数
+#define TRIAL 10	//試行回数
 #define FLORET 5
 
 #define AICOUNT 30
 //1:プレイ 2:学習 3:対戦結果
 //0?	   1?	  2?
-#define DE 1
+#define DE 2
 
 using namespace std;
 
@@ -351,13 +351,17 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	//学習
 	else if(DE == 2){
 		for (int t = 0; t < TRIAL; t++) {
+			for (int m = 0; m < 4; m++) {
+				battle_count[m][t] = coans(m, t);
+			}
 			//mode:0 現手法：現評価方法(引き分けでポイントを与えない)
 			//mode:1 現手法：前評価方法(引き分けでポイントを与える)
 			//mode:2 前手法：現評価方法
 			//mode:3 前手法：前評価方法
+			/*
 			for (int m = 1; m < 2; m++) {
-				battle_count[m][t] = coans(m, t);
 			}
+			*/
 		}
 		for (int i = 0; i<4; i++) {
 			cout << "mode:" << i;
@@ -373,8 +377,9 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		exit(0);
 	}
 	else if (DE == 4) {
-		for (int t = 0; t < TRIAL; t++) {
-			for (int m = 1; m < 2; m++) {
+		for (int t = 0; t < 3; t++) {
+			cout << "試行回数:" << t << endl;
+			for (int m = 0; m < 4; m++) {
 				ALL(m, 4, t);
 			}
 		}
@@ -399,13 +404,12 @@ void gamemode(void) {
 		printf("file open error!!\n");
 		exit(EXIT_FAILURE);	/* (3)エラーの場合は通常、異常終了する */
 	}
-	if ((fp = fopen("AI/2/2/test.dat", "rb")) == NULL) {
+	if ((fp = fopen("AI/1/0/test.dat", "rb")) == NULL) {
 		printf("file open error!!\n");
 		exit(EXIT_FAILURE);	/* (3)エラーの場合は通常、異常終了する */
 	}
 	srand((unsigned int)time(NULL));
 	char Buf[256];
-	cout << "koko" << endl;
 	player1.x = 200;
 	player1.y = 400;
 	player2.x = 800;
@@ -3073,7 +3077,7 @@ void FloreanoEval(void) {
 		tmpN.erase(tmpN.begin() + tmprand);
 	}
 	//以下ループ
-	for (int e = 0; e < 100; e++) {
+	for (int e = 0; e < KU; e++) {
 		cout << e << endl;
 		/*対戦*/
 		for (int i = 0; i < KO; i++) {
@@ -4535,7 +4539,7 @@ void ALL(int mode,int oppoment,int trial) {
 		case 1:
 			cout << "現在の手法/前の評価vsFloreano" << endl;
 			s1 = true;
-			s2 = true;
+			s2 = false;
 			break;
 		case 2:
 			cout << "前の手法/現在の評価vsFloreano" << endl;
@@ -4594,8 +4598,24 @@ void ALL(int mode,int oppoment,int trial) {
 			if (player1.win == 1) {
 				win_count[ai1]++;
 			}
-			pop[ai1].Result.push_back((player1.hp - player2.hp) / 300.0);
-			popsub[ai2].Result.push_back((player2.hp - player1.hp) / 300.0);
+			if (s2) {
+				if (player1.win == 1) {
+					popsub[ai2].Result.push_back(0);
+					pop[ai1].Result.push_back(1);
+				}
+				else if (player2.win == 1) {
+					popsub[ai2].Result.push_back(1);
+					pop[ai1].Result.push_back(0);
+				}
+				else {
+					popsub[ai2].Result.push_back(0);
+					pop[ai1].Result.push_back(0);
+				}
+			}
+			else {
+				popsub[ai2].Result.push_back((player2.hp - player1.hp) / 300.0);
+				pop[ai1].Result.push_back((player1.hp - player2.hp) / 300.0);
+			}
 		}
 		/*
 		char str12[128] = { 0 };
@@ -4643,7 +4663,7 @@ void ALLWatch(int mode, int trial)
 	case 1:
 		cout << "現在の手法/前の評価vsFloreano" << endl;
 		s1 = true;
-		s2 = true;
+		s2 = false;
 		break;
 	case 2:
 		cout << "前の手法/現在の評価vsFloreano" << endl;
@@ -4702,8 +4722,24 @@ void ALLWatch(int mode, int trial)
 			if (player1.win == 1) {
 				win_count[ai1]++;
 			}
-			pop[ai1].Result.push_back((player1.hp - player2.hp) / 300.0);
-			popsub[ai2].Result.push_back((player2.hp - player1.hp) / 300.0);
+			if (s2) {
+				if (player1.win == 1) {
+					popsub[ai2].Result.push_back(0);
+					pop[ai1].Result.push_back(1);
+				}
+				else if (player2.win == 1) {
+					popsub[ai2].Result.push_back(1);
+					pop[ai1].Result.push_back(0);
+				}
+				else {
+					popsub[ai2].Result.push_back(0);
+					pop[ai1].Result.push_back(0);
+				}
+			}
+			else {
+				popsub[ai2].Result.push_back((player2.hp - player1.hp) / 300.0);
+				pop[ai1].Result.push_back((player1.hp - player2.hp) / 300.0);
+			}
 		}
 		/*
 		char str12[128] = { 0 };
@@ -4917,15 +4953,31 @@ int coans(int mode,int trial)
 					}
 					battle++;
 					Competition();//対戦 player1 = 子個体 palyer2 = 対戦相手？
-					oppoment[r].Result.push_back((player2.hp - player1.hp) / 300.0);
-					child[c].Result.push_back((player1.hp - player2.hp) / 300.0);
+					if (s2) {
+						if (player1.win == 1) {
+							oppoment[r].Result.push_back(0);
+							child[c].Result.push_back(1);
+						}
+						else if (player2.win == 1) {
+							oppoment[r].Result.push_back(1);
+							child[c].Result.push_back(0);
+						}
+						else {
+							oppoment[r].Result.push_back(0);
+							child[c].Result.push_back(0);
+						}
+					}
+					else {
+						oppoment[r].Result.push_back((player2.hp - player1.hp) / 300.0);
+						child[c].Result.push_back((player1.hp - player2.hp) / 300.0);
+					}
 				}
 				//cout << endl;
 			}
 			//
 			//適応度計算
 			for (int i = 0; i < child.size(); i++){
-				FitnessChild(child[i], oppoment,s2);
+				FitnessChild(child[i], oppoment,false);
 			}
 			//表示
 			/*
@@ -4944,6 +4996,7 @@ int coans(int mode,int trial)
 			}
 			*/
 			//一番いい個体をメインの集団へ
+
 			size_t index;
 			vector<int> tmpEval;
 			vector<int>::iterator max;
@@ -4956,7 +5009,7 @@ int coans(int mode,int trial)
 			cout << "index:" << index << endl;
 			cout << "eval:" << child[index].eval << endl;
 			cout << endl;
-			if (child[index].eval == 0.00) {
+			if (child[index].eval == 0) {
 				pop[MainPare] = child[10];
 			}
 			else {

@@ -18,6 +18,8 @@ import random
 import gmodel
 import nim
 import image
+import time
+
 for h in range(Config.Define.TRY):
   random.seed()
   #Config.BattleCountBef = 0
@@ -40,12 +42,16 @@ for h in range(Config.Define.TRY):
     #前手法
     #MainBef,SubBef = gmodel.Setting(PopBef)
     #現手法
-    gmodel.Setting(PopNow)
+    MainNow,SubNow = gmodel.Setting(PopNow)
     image.ShowNitch(PopNow)
     #手法切り替え
+    #startSotsu = time.time()
     #gmodel.coansSotsu(PopSotsu,OpoSotsu,MainSotsu,SubSotsu,NimStatus) #卒論のCOANS（集団2個）
+    #print("卒論1試行:",time.time() -startSotsu)
     #gmodel.coans(PopBef,MainBef,SubBef,NimStatus)  #一個前のCOANS
+    #startNow = time.time()
     #gmodel.coans2(PopNow,MainNow,SubNow,NimStatus)  #今のCOANS（集団1個）
+    #print("現法1試行:",time.time() -startNow)
     #初期化
     #if e != Config.Define.END-1:
      # gmodel.InitPop(PopNow)
