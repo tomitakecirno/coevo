@@ -51,7 +51,7 @@
 #define AICOUNT 30
 //1:プレイ 2:学習 3:対戦結果
 //0?	   1?	  2?
-#define DE 2
+#define DE 5
 
 using namespace std;
 
@@ -327,7 +327,7 @@ void FileWrite(vector<playerTK> &pop, int mode, int trial);
 int coans(int mode, int trial);
 void FitnessChild(playerTK &child, vector<playerTK> &oppoment, bool s2);
 vector<playerTK> choice_oppoment(vector<playerTK> &pop, int count_nitch);
-vector<playerTK> ExtensionXLM(int MainPare, vector<int> &SubPare, vector<playerTK> &pop);
+void ExtensionXLM(int MainPare, vector<int> &SubPare, vector<playerTK> &pop, vector<playerTK> &child);
 vector<playerTK> MakeList(vector<playerTK> &pop);
 vector<playerTK> AnsList1(vector<vector<int> > &IndexSave, vector<playerTK> &pop);
 vector<playerTK> AnsList2(vector<vector<int> > &IndexSave, vector<playerTK> &pop);
@@ -377,7 +377,7 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		exit(0);
 	}
 	else if (DE == 4) {
-		for (int t = 0; t < 3; t++) {
+		for (int t = 0; t < TRIAL; t++) {
 			cout << "試行回数:" << t << endl;
 			for (int m = 0; m < 4; m++) {
 				ALL(m, 4, t);
@@ -685,7 +685,6 @@ void gmode(void) {
 	}
 	fp = fopen("gp/test2.txt", "w");
 	srand((unsigned int)time(NULL));
-	char Buf[256];
 	player1.x = 200;
 	player1.y = 400;
 	player2.x = 800;
@@ -3209,7 +3208,6 @@ void n_learn(void) {
 		printf("file open error!!\n");
 		exit(EXIT_FAILURE);	/* (3)エラーの場合は通常、異常終了する */
 	}
-	char Buf[256];
 	player1.x = 200; player1.y = 400; player2.x = 800; player2.y = 400;
 	int c = 0, i = 0, j = 0, k = 0;
 	int number = 0, rival_number = 0;
@@ -3783,7 +3781,7 @@ void n_learn(void) {
 			}
 			int ccc = 0;
 			for (i = 0; i < KO; i++) {
-				ccc += win_count[i];
+				ccc += int( win_count[i] );
 			}
 			//if ((double)wincount1 / (double)(wincount1 + losecount1+drawcount) > 0.70||flag_s == 1) {
 			if (ccc >= KO / 2) {
@@ -4167,7 +4165,7 @@ void n_learn(void) {
 			//if ((par/K > 0.50)||flag_s >= K*4/aaa) {
 			int ccca = 0;
 			for (i = 0; i < KOT; i++) {
-				ccca += win_count_T[i];
+				ccca += int(win_count_T[i]);
 			}
 			if (ccca>=KOT/2) {
 				for (k = 0; k < K; k++) {
@@ -4561,7 +4559,6 @@ void ALL(int mode,int oppoment,int trial) {
 	*/
 	vector<playerTK> pop(KO);
 	vector<playerTK> popsub(KO);
-	vector<int> tmpEval;
 	vector<int> win_count(KO);
 	for (int i = 0; i < KO; i++) {
 		pop[i].Init();
@@ -4625,18 +4622,28 @@ void ALL(int mode,int oppoment,int trial) {
 		*/
 	}
 	//適応度の一番高い個体を取得.test.datへ記録.ついでに勝率記録.
-	for (int i = 0; i < pop.size(); i++) {
-		FitnessChild(pop[i], popsub, s2);
-		tmpEval.push_back(pop[i].eval);
-	}
 	size_t index;
-	vector<int>::iterator max;
-	max = max_element(tmpEval.begin(), tmpEval.end());
-	index = distance(tmpEval.begin(), max);
-
+	if (s2) {
+		vector<int> tmpEval(KO);
+		vector<int>::iterator max;
+		for (int i = 0; i < KO; i++) {
+			FitnessChild(pop[i], popsub, s2);
+			tmpEval[i] = int(pop[i].eval);
+		}
+		max = max_element(tmpEval.begin(), tmpEval.end());
+		index = distance(tmpEval.begin(), max);
+	}
+	else {
+		vector<double> tmpEval(KO);
+		vector<double>::iterator max;
+		for (int i = 0; i < KO; i++) {
+			FitnessChild(pop[i], popsub, s2);
+			tmpEval[i] = pop[i].eval;
+		}
+		max = max_element(tmpEval.begin(), tmpEval.end());
+		index = distance(tmpEval.begin(), max);
+	}
 	//平均勝率と最高勝率
-	max = max_element(win_count.begin(), win_count.end());
-	index = distance(win_count.begin(), max);
 	int winlength = win_count.size();
 	cout << "win:";
 	for (int i = 0; i < winlength; i++) {
@@ -4685,7 +4692,6 @@ void ALLWatch(int mode, int trial)
 	*/
 	vector<playerTK> pop(KO);
 	vector<playerTK> popsub(KO);
-	vector<int> tmpEval;
 	vector<int> win_count(KO);
 	for (int i = 0; i < KO; i++) {
 		pop[i].Init();
@@ -4749,15 +4755,27 @@ void ALLWatch(int mode, int trial)
 		*/
 	}
 	//適応度の一番高い個体を取得.test.datへ記録.ついでに勝率記録.
-	for (int i = 0; i < pop.size(); i++) {
-		FitnessChild(pop[i], popsub, s2);
-		tmpEval.push_back(pop[i].eval);
-	}
 	size_t index;
-	vector<int>::iterator max;
-	max = max_element(tmpEval.begin(), tmpEval.end());
-	index = distance(tmpEval.begin(), max);
-
+	if (s2) {
+		vector<int> tmpEval(KO);
+		vector<int>::iterator max;
+		for (int i = 0; i < KO; i++) {
+			FitnessChild(pop[i], popsub, s2);
+			tmpEval[i] = int(pop[i].eval);
+		}
+		max = max_element(tmpEval.begin(), tmpEval.end());
+		index = distance(tmpEval.begin(), max);
+	}
+	else {
+		vector<double> tmpEval(KO);
+		vector<double>::iterator max;
+		for (int i = 0; i < KO; i++) {
+			FitnessChild(pop[i], popsub, s2);
+			tmpEval[i] = pop[i].eval;
+		}
+		max = max_element(tmpEval.begin(), tmpEval.end());
+		index = distance(tmpEval.begin(), max);
+	}
 	//一番いい個体の書き込み
 	sprintf(filename, ("AI/%d/%d/%d.dat"), mode, trial, index);
 	if ((file = fopen(filename, "rb")) == NULL) {
@@ -4782,8 +4800,6 @@ void ALLWatch(int mode, int trial)
 	fclose(fp);
 
 	//平均勝率と最高勝率
-	max = max_element(win_count.begin(), win_count.end());
-	index = distance(win_count.begin(), max);
 	int winlength = win_count.size();
 	cout << "win:";
 	for (int i = 0; i < winlength; i++) {
@@ -4869,7 +4885,7 @@ int coans(int mode,int trial)
 	init_genrand((unsigned)time(NULL)); /*乱数初期化*/
 	int battle = 0;
 	//集団初期化
-	for (int i = 0; i < pop.size(); i++){
+	for (int i = 0; i < KO; i++){
 		pop[i].Init();
 		pop[i].Init_w();
 	}
@@ -4878,7 +4894,6 @@ int coans(int mode,int trial)
 		pop = MakeList(pop);
 		//クラスタ番号割り振り
 		int count_nitch = 1;
-		int tmp;
 		for (int i = 0; i < KO; i++){
 			if (SetNitch(count_nitch, i, pop) == 1){
 				count_nitch++;
@@ -4887,7 +4902,6 @@ int coans(int mode,int trial)
 		int MainPare;
 		int tmpIndex;
 		int tmpSub;
-		double tmpValue;
 		vector<int> SubPare;
 		//主親、副親を選ぶ
 		MainPare = GetRand_Int(KO);
@@ -4902,11 +4916,11 @@ int coans(int mode,int trial)
 		}
 		if (!SubPare.empty()){
 			//子個体生成
-			vector<playerTK> child;
+			vector<playerTK> child(CHILD+1);
 			vector<playerTK> oppoment;
 			//拡張XLM
-			child = ExtensionXLM(MainPare, SubPare, pop);
-			child.push_back(pop[MainPare]);
+			child[0] = pop[MainPare];
+			ExtensionXLM(MainPare, SubPare, pop,child);
 			//対戦相手の個体を選ぶ
 			if (s1) {
 				oppoment = choice_oppoment(pop, count_nitch);
@@ -4915,7 +4929,8 @@ int coans(int mode,int trial)
 			}
 			//w1,w2,w3:子個体の戦略，w1_T,w2_T,w3_T:対戦相手の戦略
 			//player1:子個体，player2:対戦相手0
-			for (int r = 0; r < oppoment.size(); r++) {//相手ループ
+			int oppomentLength = oppoment.size();
+			for (int r = 0; r < oppomentLength; r++) {//相手ループ
 				//cout << r << ":";
 				for (int i = 0; i < I1; i++) {
 					for (int j = 0; j < J1; j++) {
@@ -4934,7 +4949,7 @@ int coans(int mode,int trial)
 				}
 				//number:(子個体＋親個体)数
 				//対戦用配列に格納
-				for (int c = 0; c < child.size(); c++) {//集団ループ
+				for (int c = 0; c < CHILD; c++) {//集団ループ
 					//cout << c << " ";
 					for (int i = 0; i < I1; i++) {
 						for (int j = 0; j < J1; j++) {
@@ -4976,7 +4991,7 @@ int coans(int mode,int trial)
 			}
 			//
 			//適応度計算
-			for (int i = 0; i < child.size(); i++){
+			for (int i = 0; i < CHILD; i++){
 				FitnessChild(child[i], oppoment,false);
 			}
 			//表示
@@ -4996,27 +5011,34 @@ int coans(int mode,int trial)
 			}
 			*/
 			//一番いい個体をメインの集団へ
-
+			//s2:true 勝利数評価
+			//s2:false HPの差分の割合評価
 			size_t index;
-			vector<int> tmpEval;
-			vector<int>::iterator max;
-			for (int i = 0; i<child.size(); i++){
-				tmpEval.push_back(child[i].eval);
+			if (s2) {
+				//int
+				vector<int>::iterator max;
+				vector<int> tmpEval(CHILD + 1);
+				for (int i = 0; i<CHILD + 1; i++) {
+					tmpEval[i] = int(child[i].eval);
+				}
+				max = max_element(tmpEval.begin(), tmpEval.end());
+				index = distance(tmpEval.begin(), max);
 			}
-			max = max_element(tmpEval.begin(), tmpEval.end());
-
-			index = distance(tmpEval.begin(), max);
+			else {
+				//double
+				vector<double>::iterator max;
+				vector<double> tmpEval(CHILD + 1);
+				for (int i = 0; i<CHILD + 1; i++) {
+					tmpEval[i] = child[i].eval;
+				}
+				max = max_element(tmpEval.begin(), tmpEval.end());
+				index = distance(tmpEval.begin(), max);
+			}
 			cout << "index:" << index << endl;
 			cout << "eval:" << child[index].eval << endl;
 			cout << endl;
-			if (child[index].eval == 0) {
-				pop[MainPare] = child[10];
-			}
-			else {
-				pop[MainPare] = child[index];
-			}
 			//集団の解以外初期化
-			for (int i = 0; i < pop.size(); i++){
+			for (int i = 0; i < KO; i++){
 				pop[i].Init();
 			}
 		}
@@ -5066,7 +5088,7 @@ void show_w(playerTK one)
 void FileWrite(vector<playerTK> &pop, int mode, int trial)
 {
 	//様式を合わせる
-	for (int i = 0; i < pop.size(); i++){
+	for (int i = 0; i < KO; i++){
 		for (int j = 0; j < I1; j++){
 			for (int k = 0; k < J1; k++){
 				w1_GA[i][j][k] = pop[i].w1_CO[j][k];
@@ -5084,7 +5106,7 @@ void FileWrite(vector<playerTK> &pop, int mode, int trial)
 		}
 	}
 	//bef = trueの時AI，falseの時AIC
-	for (int i = 0; i < pop.size(); i++) {
+	for (int i = 0; i < KO; i++) {
 		if (mode < 4) {
 			sprintf(filename, ("AI/%d/%d/%d.dat"), mode, trial, i);
 			if ((fp = fopen(filename, "wb+")) == NULL) {
@@ -5119,8 +5141,8 @@ vector<playerTK> MakeList(vector<playerTK> &pop)
 
 	/*自身以外の個体との距離を総当たりで計測.自身も含む.*/
 	/*ついでに近い順に個体の番号も取得*/
-	for (int i = 0; i<pop.size(); i++){
-		for (int j = 0; j<pop.size(); j++){
+	for (int i = 0; i<KO; i++){
+		for (int j = 0; j<KO; j++){
 			if (i != j)
 				DisSaveList1[i].push_back(cal_kotai_distance(pop[i], pop[j]));
 			else
@@ -5129,7 +5151,7 @@ vector<playerTK> MakeList(vector<playerTK> &pop)
 	}
 	//一旦移しておく
 	DisSaveList2 = DisSaveList1;
-	for (int i = 0; i < pop.size(); i++){
+	for (int i = 0; i < KO; i++){
 		//IndexSaveList1を作る
 		for (int j = 0; j < KL1; j++){
 			min = min_element(DisSaveList1[i].begin(), DisSaveList1[i].end());
@@ -5158,11 +5180,11 @@ List1
 vector<playerTK> AnsList1(vector<vector<int> > &IndexSave, vector<playerTK> &pop)
 {
 	//近傍リスト1
-	int Tmp;
 	for (int i = 0; i<KO; i++){
 		if (IndexSave[i].empty()){} //空だったら何もしない
 		else {
-			for (int j = 0; j<IndexSave[i].size(); j++){
+			int IndexSaveLength = IndexSave[i].size();
+			for (int j = 0; j<IndexSaveLength; j++){
 				pop[i].List1.push_back(IndexSave[i][j]);
 			}
 		}
@@ -5180,7 +5202,8 @@ vector<playerTK> AnsList2(vector<vector<int> > &IndexSave, vector<playerTK> &pop
 	for (int i = 0; i<KO; i++){
 		if (IndexSave[i].empty()){} //空だったら何もしない
 		else {
-			for (int j = 0; j<IndexSave[i].size(); j++){
+			int IndexSaveLength = IndexSave[i].size();
+			for (int j = 0; j<IndexSaveLength; j++){
 				Tmp = IndexSave[i][j]; //一旦インデックスを保存
 				if (count(IndexSave[Tmp].begin(), IndexSave[Tmp].end(), i) != 0)
 					pop[i].List2.push_back(Tmp); //相手にも存在すれば近傍リストへ加える
@@ -5248,7 +5271,8 @@ int SetNitch(int nitch_number, int kotai, vector<playerTK> &pop)
 	if (pop[kotai].nitch == 0){
 		pop[kotai].nitch = nitch_number;
 		if (!pop[kotai].List2.empty()){
-			for (int i = 0; i < pop[kotai].List2.size(); i++){
+			int List2Length = pop[kotai].List2.size();
+			for (int i = 0; i < List2Length; i++){
 				tmp = pop[kotai].List2[i];
 				SetNitch(nitch_number, tmp, pop);
 			}
@@ -5260,7 +5284,7 @@ int SetNitch(int nitch_number, int kotai, vector<playerTK> &pop)
 /***************************************
 拡散ELM.w1,w2,w3それぞれ分けて生成する.
 ***************************************/
-vector<playerTK> ExtensionXLM(int MainPare, vector<int> &SubPare, vector<playerTK> &pop)
+void ExtensionXLM(int MainPare, vector<int> &SubPare, vector<playerTK> &pop, vector<playerTK> &child)
 {
 	double sum_n_w1[I1][J1] = { 0 };
 	double sum_n_w2[I2][J2] = { 0 };
@@ -5269,7 +5293,8 @@ vector<playerTK> ExtensionXLM(int MainPare, vector<int> &SubPare, vector<playerT
 	//w1,w2,w3それぞれ分けて取得
 
 	//親の解のそれぞれのベクトルを足す
-	for (int i = 0; i<SubPare.size(); i++){
+	int SubPareLength = SubPare.size();
+	for (int i = 0; i<SubPareLength; i++){
 		//w1_CO
 		for (int j = 0; j < I1; j++){
 			for (int k = 0; k < J1; k++){
@@ -5318,7 +5343,7 @@ vector<playerTK> ExtensionXLM(int MainPare, vector<int> &SubPare, vector<playerT
 	double vector_w1[KL1][I1][J1];
 	double vector_w2[KL1][I2][J2];
 	double vector_w3[KL1][J1][I2];
-	for (int i = 0; i<SubPare.size(); i++){
+	for (int i = 0; i<SubPareLength; i++){
 		//w1_CO
 		for (int j = 0; j < I1; j++){
 			for (int k = 0; k < J1; k++){
@@ -5339,7 +5364,6 @@ vector<playerTK> ExtensionXLM(int MainPare, vector<int> &SubPare, vector<playerT
 		}
 	}
 	//子個体の戦略生成
-	vector<playerTK> child(CHILD);
 	double coe_w1;
 	double coe_w2;
 	double coe_w3;
@@ -5347,7 +5371,7 @@ vector<playerTK> ExtensionXLM(int MainPare, vector<int> &SubPare, vector<playerT
 	vector<vector<double> > sum_coe_w2(I2, vector<double>(J2));
 	vector<vector<double> > sum_coe_w3(J1, vector<double>(I2));
 
-	for (int c = 0; c < CHILD; c++){
+	for (int c = 1; c < CHILD+1; c++){
 		//初期化
 		child[c].Init();
 
@@ -5369,7 +5393,7 @@ vector<playerTK> ExtensionXLM(int MainPare, vector<int> &SubPare, vector<playerT
 				sum_coe_w3[j][k] = 0;
 			}
 		}
-		for (int i = 0; i < SubPare.size(); i++){
+		for (int i = 0; i < SubPareLength; i++){
 			coe_w1 = rand_normal(0, 1 / sqrt(KL1));
 			coe_w2 = rand_normal(0, 1 / sqrt(KL1));
 			coe_w3 = rand_normal(0, 1 / sqrt(KL1));
@@ -5396,7 +5420,6 @@ vector<playerTK> ExtensionXLM(int MainPare, vector<int> &SubPare, vector<playerT
 		child[c].w2_CO = sum_coe_w2;
 		child[c].w3_CO = sum_coe_w3;
 	}
-	return child;
 }
 
 /*********************************
@@ -5409,20 +5432,22 @@ vector<playerTK> choice_oppoment(vector<playerTK> &pop, int count_nitch)
 	vector<int> tmpindex; //相手集団へ追加する個体のインデックス入れるやつ
 	int tmprand;
 	//各クラスタに個体のインデックスを振り分ける
-	for (int i = 0; i < tmpCluster.size(); i++){
-		for (int j = 0; j < pop.size(); j++){
+	for (int i = 0; i < count_nitch; i++){
+		for (int j = 0; j < KO; j++){
 			if (pop[j].nitch == i){
 				tmpCluster[i].push_back(j);
 			}
 		}
 	}
-	for (int i = 1; i < tmpCluster.size(); i++){
-		if (tmpCluster[i].size() != 0){
-			tmprand = GetRand_Int(tmpCluster[i].size());
+	for (int i = 1; i < count_nitch; i++){
+		int tmpClusterLength = tmpCluster[i].size();
+		if (tmpClusterLength != 0){
+			tmprand = GetRand_Int(tmpClusterLength);
 			tmpindex.push_back(tmpCluster[i][tmprand]);
 		}
 	}
-	for (int i = 0; i < tmpindex.size(); i++){
+	int tmpindexLength = tmpindex.size();
+	for (int i = 0; i < tmpindexLength; i++){
 		opp.push_back(pop[tmpindex[i]]);
 	}
 	return opp;
@@ -5436,10 +5461,12 @@ void FitnessChild(playerTK &child, vector<playerTK> &oppoment, bool s2)
 	double child_win = 0;
 	double opponent_win = 0;
 
+	int childResultLength =  child.Result.size();
 	if (s2) {
-		for (int i = 0; i<child.Result.size(); i++) {
+		for (int i = 0; i<childResultLength; i++) {
 			opponent_win = 0;
-			for (int j = 0; j<oppoment[i].Result.size(); j++) {
+			int oppomentResultLength = oppoment[i].Result.size();
+			for (int j = 0; j<oppomentResultLength; j++) {
 				opponent_win += oppoment[i].Result[j];
 			}
 			child_win += child.Result[i] * fabs(opponent_win);
@@ -5447,7 +5474,7 @@ void FitnessChild(playerTK &child, vector<playerTK> &oppoment, bool s2)
 	}
 	else
 	{
-		for (int i = 0; i<child.Result.size(); i++) {
+		for (int i = 0; i<childResultLength; i++) {
 			child_win += child.Result[i];
 		}
 	}
@@ -5459,8 +5486,9 @@ void FitnessChild(playerTK &child, vector<playerTK> &oppoment, bool s2)
 *****************/
 void FileFloreanoWrite(vector<playerTK> &pop)
 {
+	int PopLength = pop.size();
 	//様式を合わせる
-	for (int i = 0; i < pop.size(); i++) {
+	for (int i = 0; i < PopLength; i++) {
 		for (int j = 0; j < I1; j++) {
 			for (int k = 0; k < J1; k++) {
 				w1_GA[i][j][k] = pop[i].w1_CO[j][k];
@@ -5478,7 +5506,7 @@ void FileFloreanoWrite(vector<playerTK> &pop)
 		}
 	}
 	//bef = trueの時AI，falseの時AIC
-	for (int i = 0; i < pop.size(); i++) {
+	for (int i = 0; i < PopLength; i++) {
 		sprintf(filename, ("AIT/4/%d.dat"),i);
 		if ((fp = fopen(filename, "wb+")) == NULL) {
 			fprintf(stderr, "%s\n", strerror(errno));
