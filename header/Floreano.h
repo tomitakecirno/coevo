@@ -1,4 +1,5 @@
 #include "config.hpp"
+#include<iostream>
 
 void FileFloreanoWrite(std::vector<playerTK> &pop);
 void FloreanoEval(void);
@@ -86,29 +87,18 @@ void FloreanoEval(void) {
 		cout << e << endl;
 		/*‘Îí*/
 		for (int i = 0; i < KO; i++) {
+			pop[i].Result.resize(FLORET);
+		}
+		for (int i = 0; i < FLORET; i++) {
+			oppoment[i].Result.resize(KO);
+		}
+		for (int i = 0; i < KO; i++) {
 			for (int j = 0; j < FLORET; j++) {
-
-				for (int k = 0; k < I1; k++) {
-					for (int l = 0; l < J1; l++) {
-						w1[k][l] = pop[i].w1_CO[k][l];
-						w1_T[k][l] = oppoment[j].w1_CO[k][l];
-					}
-				}
-				for (int k = 0; k < I2; k++) {
-					for (int l = 0; l < J2; l++) {
-						w2[k][l] = pop[i].w2_CO[k][l];
-						w2_T[k][l] = oppoment[j].w2_CO[k][l];
-					}
-				}
-				for (int k = 0; k < J1; k++) {
-					for (int l = 0; l < I2; l++) {
-						w3[k][l] = pop[i].w3_CO[k][l];
-						w3_T[k][l] = oppoment[j].w3_CO[k][l];
-					}
-				}
+				StrategySet_M(pop[i]);
+				StrategySet_T(oppoment[j]);
 				Competition();
-				pop[i].Result.push_back((player1.hp - player2.hp) / 300);
-				oppoment[j].Result.push_back((player2.hp - player1.hp) / 300);
+				pop[i].Result[j] = (player1.hp - player2.hp) / 300;
+				oppoment[j].Result[i] = (player2.hp - player1.hp) / 300;
 			}
 		}
 		//•]‰¿’lŒvŽZ
