@@ -77,7 +77,7 @@ void FloreanoEval(void) {
 	int tmprand;
 	//相手集団取得
 	for (int i = 0; i<FLORET; i++) {
-		tmprand = GetRand_Int(tmpN.size());
+		tmprand = GetRand_Int( int(tmpN.size()) );
 		//相手集団へ加える
 		oppoment[i] = pop[tmpN[tmprand]];
 		tmpN.erase(tmpN.begin() + tmprand);
@@ -141,7 +141,7 @@ void FloreanoEval(void) {
 /*メイン集団書き込み*/
 void FileFloreanoWrite(std::vector<playerTK> &pop)
 {
-	int PopLength = pop.size();
+	int PopLength = int(pop.size());
 	//様式を合わせる
 	for (int i = 0; i < PopLength; i++) {
 		for (int j = 0; j < I1; j++) {

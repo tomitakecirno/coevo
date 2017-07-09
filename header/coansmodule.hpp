@@ -1,7 +1,7 @@
+#pragma once
 /*-----------------------------------
 自分のANS使った手法の関数まとめ
 -----------------------------------*/
-#include<iostream>
 #include "config.hpp"
 
 int coans(int mode, int trial);
@@ -16,198 +16,6 @@ void show_w(playerTK &one);
 void FileWrite(std::vector<playerTK> &pop, int mode, int trial);
 void ALL(int mode, int oppoment, int trial);
 void ALLWatch(int mode, int trial);
-
-/*****************
-共進化ANS 1で今のやつ。2で前のやつ
-*****************/
-int coans(int mode, int trial)
-{
-	using namespace std;
-	cout << "mode:" << mode << endl;
-	cout << "trial:" << trial << endl;
-	bool s1, s2, s3;
-	//s1:相手集団の切り替え　s2:評価方法の切り替え
-	//mode:0 現手法：現評価方法(評価値に補正を加える)
-	//mode:1 現手法：前評価方法(評価値に補正を加えない)
-	//mode:2 前手法：現評価方法
-	//mode:3 前手法：前評価方法
-	switch (mode) {
-	case 0:
-		s1 = true;
-		s2 = true;
-		s3 = true;
-		break;
-	case 1:
-		s1 = true;
-		s2 = false;
-		s3 = true;
-		break;
-	case 2:
-		s1 = false;
-		s2 = true;
-		s3 = true;
-		break;
-	case 3:
-		s1 = false;
-		s2 = false;
-		s3 = true;
-		break;
-
-	case 4:
-		s1 = true;
-		s2 = true;
-		s3 = false;
-		break;
-	case 5:
-		s1 = true;
-		s2 = true;
-		s3 = false;
-		break;
-	case 6:
-		s1 = false;
-		s2 = true;
-		s3 = false;
-		break;
-	case 7:
-		s1 = false;
-		s2 = false;
-		s3 = false;
-		break;
-	default:
-		break;
-	}
-
-	//集団宣言
-	vector<playerTK> pop(KO);
-	init_genrand((unsigned)time(NULL)); /*乱数初期化*/
-	int battle = 0;
-
-	//集団初期化
-	for (int i = 0; i < KO; i++) {
-		pop[i].Init();
-		pop[i].Init_w();
-	}
-	for (int e = 0; e < KU; e++) {
-		cout << "世代数:" << e << endl;
-		MakeList(pop);
-		//クラスタ番号割り振り
-		int count_nitch = 1;
-		for (int i = 0; i < KO; i++) {
-			if (SetNitch(count_nitch, i, pop) == 1) {
-				count_nitch++;
-			}
-		}
-		int MainPare;
-		int tmpIndex;
-		int tmpSub;
-		vector<int> SubPare;
-		//主親、副親を選ぶ
-		MainPare = GetRand_Int(KO);
-		for (int i = 0; i < KL1; i++) {
-			if (pop[MainPare].List1.empty()) {
-				break;
-			}
-			tmpIndex = GetRand_Int(pop[MainPare].List1.size());
-			tmpSub = pop[MainPare].List1[tmpIndex];
-			SubPare.push_back(tmpSub); //要素を追加
-			pop[MainPare].List1.erase(pop[MainPare].List1.begin() + tmpIndex); //追加した要素を削除
-		}
-		if (!SubPare.empty()) {
-			//子個体生成
-			vector<playerTK> child(CHILD+1);
-			vector<playerTK> oppoment;
-			//拡張XLM
-			child[0] = pop[MainPare];
-			cout << "tes";
-			ExtensionXLM(MainPare, SubPare, pop,child);
-			//対戦相手の個体を選ぶ
-			if (s1) {
-				choice_oppoment(pop, oppoment, count_nitch);
-			}else {
-				oppoment = pop;
-			}
-			//w1,w2,w3:子個体の戦略，w1_T,w2_T,w3_T:対戦相手の戦略
-			//player1:子個体，player2:対戦相手0
-			int oppomentLength = oppoment.size();
-
-			for (int i = 0; i < oppomentLength; i++) {
-				oppoment[i].Result.resize(CHILD);
-			}
-			for (int i = 0; i < CHILD; i++) {
-				child[i].Result.resize(oppomentLength);
-			}
-
-			for (int r = 0; r < oppomentLength; r++) {//相手ループ
-				StrategySet_T(oppoment[r]);
-				for (int c = 0; c < CHILD; c++) {//集団ループ
-					StrategySet_M(child[c]);
-
-					battle++;
-					Competition();//対戦 player1 = 子個体 palyer2 = 対戦相手？
-
-					if (s2) {
-						if (player1.win == 1) {
-							oppoment[r].Result[c] = 0;
-							child[c].Result[r] = 1;
-						}
-						else if (player2.win == 1) {
-							oppoment[r].Result[c] = 1;
-							child[c].Result[r] = 0;
-						}
-						else {
-							oppoment[r].Result[c] = 0;
-							child[c].Result[r] = 0;
-						}
-					}
-					else {
-						oppoment[r].Result[c] = (player2.hp - player1.hp) / 300.0;
-						child[c].Result[r] = (player1.hp - player2.hp) / 300.0;
-					}
-				}
-			}
-			//
-			//適応度計算
-			for (int i = 0; i < CHILD; i++){
-				FitnessChild(child[i], oppoment,false);
-			}
-			//表示
-			//一番いい個体をメインの集団へ
-			//s2:true 勝利数評価
-			//s2:false HPの差分の割合評価
-			size_t index;
-			if (s2) {
-				//int
-				vector<int>::iterator max;
-				vector<int> tmpEval(CHILD + 1);
-				for (int i = 0; i<CHILD + 1; i++) {
-					tmpEval[i] = int(child[i].eval);
-				}
-				max = max_element(tmpEval.begin(), tmpEval.end());
-				index = distance(tmpEval.begin(), max);
-			}
-			else {
-				//double
-				vector<double>::iterator max;
-				vector<double> tmpEval(CHILD + 1);
-				for (int i = 0; i<CHILD + 1; i++) {
-						tmpEval[i] = child[i].eval;
-					}
-				max = max_element(tmpEval.begin(), tmpEval.end());
-				index = distance(tmpEval.begin(), max);
-			}
-			cout << "index:" << index << endl;
-			cout << "eval:" << child[index].eval << endl;
-			cout << endl;
-			//集団の解以外初期化
-			for (int i = 0; i < KO; i++){
-				pop[i].Init();
-			}
-		}
-	}
-	//個体の戦略書き込み
-	//FileWrite(pop,mode,trial);
-	return battle;
-}
 
 /*************
 距離計測
@@ -266,14 +74,14 @@ void MakeList(std::vector<playerTK> &pop)
 		for (int j = 0; j < KL1; j++) {
 			min = min_element(DisSaveList1[i].begin(), DisSaveList1[i].end());
 			index = distance(DisSaveList1[i].begin(), min);
-			IndexSaveList1[i].push_back(index);
+			IndexSaveList1[i].push_back( int(index) );
 			DisSaveList1[i][index] = 100000;
 		}
 		//IndexSaveList2を作る
 		for (int j = 0; j < KL2; j++) {
 			min = min_element(DisSaveList2[i].begin(), DisSaveList2[i].end());
 			index = distance(DisSaveList2[i].begin(), min);
-			IndexSaveList2[i].push_back(index);
+			IndexSaveList2[i].push_back( int(index) );
 			DisSaveList2[i][index] = 100000;
 		}
 	}
@@ -292,7 +100,7 @@ void AnsList1(std::vector< std::vector<int> > &IndexSave, std::vector<playerTK> 
 	for (int i = 0; i<KO; i++) {
 		if (IndexSave[i].empty()) {} //空だったら何もしない
 		else {
-			int IndexSaveLength = IndexSave[i].size();
+			int IndexSaveLength = int(IndexSave[i].size());
 			for (int j = 0; j<IndexSaveLength; j++) {
 				pop[i].List1.push_back(IndexSave[i][j]);
 			}
@@ -310,7 +118,7 @@ void AnsList2(std::vector< std::vector<int> > &IndexSave, std::vector<playerTK> 
 	for (int i = 0; i<KO; i++) {
 		if (IndexSave[i].empty()) {} //空だったら何もしない
 		else {
-			int IndexSaveLength = IndexSave[i].size();
+			int IndexSaveLength = int(IndexSave[i].size());
 			for (int j = 0; j<IndexSaveLength; j++) {
 				Tmp = IndexSave[i][j]; //一旦インデックスを保存
 				if (count(IndexSave[Tmp].begin(), IndexSave[Tmp].end(), i) != 0)
@@ -329,7 +137,7 @@ int SetNitch(int nitch_number, int kotai, std::vector<playerTK> &pop)
 	if (pop[kotai].nitch == 0) {
 		pop[kotai].nitch = nitch_number;
 		if (!pop[kotai].List2.empty()) {
-			int List2Length = pop[kotai].List2.size();
+			int List2Length = int(pop[kotai].List2.size());
 			for (int i = 0; i < List2Length; i++) {
 				tmp = pop[kotai].List2[i];
 				SetNitch(nitch_number, tmp, pop);
@@ -354,7 +162,7 @@ void ExtensionXLM(int MainPare, std::vector<int> &SubPare, std::vector<playerTK>
 					//w1,w2,w3それぞれ分けて取得
 
 					//親の解のそれぞれのベクトルを足す
-	int SubPareLength = SubPare.size();
+	int SubPareLength = int(SubPare.size());
 	for (int i = 0; i<SubPareLength; i++) {
 		//w1_CO
 		for (int j = 0; j < I1; j++) {
@@ -384,19 +192,19 @@ void ExtensionXLM(int MainPare, std::vector<int> &SubPare, std::vector<playerTK>
 	//w1_CO
 	for (int j = 0; j < I1; j++) {
 		for (int k = 0; k < J1; k++) {
-			SubPare_Gra_w1[j][k] = sum_n_w1[j][k] / SubPare.size();
+			SubPare_Gra_w1[j][k] = sum_n_w1[j][k] / SubPareLength;
 		}
 	}
 	//w2_CO
 	for (int j = 0; j < I2; j++) {
 		for (int k = 0; k < J2; k++) {
-			SubPare_Gra_w2[j][k] = sum_n_w2[j][k] / SubPare.size();
+			SubPare_Gra_w2[j][k] = sum_n_w2[j][k] / SubPareLength;
 		}
 	}
 	//w3_CO
 	for (int j = 0; j < J1; j++) {
 		for (int k = 0; k < I2; k++) {
-			SubPare_Gra_w3[j][k] = sum_n_w3[j][k] / SubPare.size();
+			SubPare_Gra_w3[j][k] = sum_n_w3[j][k] / SubPareLength;
 		}
 	}
 
@@ -477,13 +285,13 @@ void choice_oppoment(std::vector<playerTK> &pop, std::vector<playerTK> &oppoment
 	}
 	tmpindex.resize(count_nitch);
 	for (int i = 1; i < count_nitch; i++) {
-		int tmpClusterLength = tmpCluster[i].size();
+		int tmpClusterLength = int(tmpCluster[i].size());
 		if (tmpClusterLength != 0) {
 			tmprand = GetRand_Int(tmpClusterLength);
 			tmpindex[i] = tmpCluster[i][tmprand];
 		}
 	}
-	int tmpindexLength = tmpindex.size();
+	int tmpindexLength = int(tmpindex.size());
 	oppoment.resize(tmpindexLength);
 	for (int i = 0; i < tmpindexLength; i++) {
 		oppoment[i] = pop[ tmpindex[i] ];
@@ -695,7 +503,7 @@ void ALL(int mode, int oppoment, int trial) {
 		index = distance(tmpEval.begin(), max);
 	}
 	//平均勝率と最高勝率
-	int winlength = win_count.size();
+	int winlength = int(win_count.size());
 	cout << "win:";
 	for (int i = 0; i < winlength; i++) {
 		cout << win_count[i] << " ";
@@ -831,7 +639,7 @@ void ALLWatch(int mode, int trial)
 		index = distance(tmpEval.begin(), max);
 	}
 	//一番いい個体の書き込み
-	sprintf(filename, ("AI/%d/%d/%d.dat"), mode, trial, index);
+	sprintf(filename, ("AI/%d/%d/%d.dat"), mode, trial, int(index));
 	if ((file = fopen(filename, "rb")) == NULL) {
 		printf("file open error!!\n");
 		exit(0);
@@ -854,7 +662,7 @@ void ALLWatch(int mode, int trial)
 	fclose(fp);
 
 	//平均勝率と最高勝率
-	int winlength = win_count.size();
+	int winlength = int(win_count.size());
 	cout << "win:";
 	for (int i = 0; i < winlength; i++) {
 		cout << win_count[i] << " ";

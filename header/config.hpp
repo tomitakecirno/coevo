@@ -3,11 +3,13 @@
 下村君のゲームへ適用するときに
 共通して必要になる関数や構造体
 -------------------------*/
-#include<vector>
+#include <iostream>
+#include <vector>
 #include <algorithm>
 #include <numeric>
 #include "getrandcoans.hpp"
 #include "Source.hpp"
+#include <fstream>
 
 //富田手法で使う構造体
 struct playerTK {
@@ -40,9 +42,7 @@ public:
 	void Init_w();
 };
 
-/**************
-解以外を初期化
-**************/
+/* 解を初期化 */
 void playerTK::Init()
 {
 	x = 0;
@@ -67,9 +67,7 @@ void playerTK::Init()
 	List2.clear();
 }
 
-/**************
-解以外を初期化
-**************/
+/* 解以外を初期化 */
 void playerTK::Init_0()
 {
 	using namespace std;
@@ -96,9 +94,7 @@ void playerTK::Init_0()
 	}
 }
 
-/**************
-解を初期化
-**************/
+/* 解を初期化 */
 void playerTK::Init_w()
 {
 	using namespace std;
@@ -128,19 +124,17 @@ void playerTK::Init_w()
 	}
 }
 
-/*********************************
-子個体の評価値．
-**********************************/
+/* 子個体の評価値 */
 void FitnessChild(playerTK &child, std::vector<playerTK> &oppoment, bool s2)
 {
 	double child_win = 0;
 	double opponent_win = 0;
 
-	int childResultLength = child.Result.size();
+	int childResultLength = int(child.Result.size());
 	if (s2) {
 		for (int i = 0; i<childResultLength; i++) {
 			opponent_win = 0;
-			int oppomentResultLength = oppoment[i].Result.size();
+			int oppomentResultLength = int(oppoment[i].Result.size());
 			for (int j = 0; j<oppomentResultLength; j++) {
 				opponent_win += oppoment[i].Result[j];
 			}
@@ -156,9 +150,7 @@ void FitnessChild(playerTK &child, std::vector<playerTK> &oppoment, bool s2)
 	child.eval = child_win;
 }
 
-/*********************************
-自分の戦略の情報を移す関数．
-**********************************/
+/* 自分の戦略の情報を移す関数 */
 void StrategySet_M(const playerTK &pop) {
 	for (int i = 0; i < I1; i++) {
 		for (int j = 0; j < J1; j++) {
@@ -181,9 +173,7 @@ void StrategySet_M(const playerTK &pop) {
 	}
 }
 
-/*********************************
-自分の戦略の情報を移す関数．
-**********************************/
+/* 自分の戦略の情報を移す関数 */
 void StrategySet_T(playerTK &oppoment) {
 	for (int i = 0; i < I1; i++) {
 		for (int j = 0; j < J1; j++) {

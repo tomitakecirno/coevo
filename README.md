@@ -1,2 +1,0 @@
-# coevo
-coevolution source memo
