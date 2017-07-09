@@ -25,8 +25,8 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	//äwèK
 	case 2:
 		for (int t = 0; t < TRIAL; t++) {
-			Mode1.CoansTasks(t);
-			cout << "ëŒêÌâÒêî:" << Mode1.GetMatchUpN() << endl;
+			Mode1.Coans_Tasks(t);
+			cout << "ëŒêÌâÒêî:" << Mode1.Get_MatchUp_Num() << endl;
 		}
 		break;
 	}

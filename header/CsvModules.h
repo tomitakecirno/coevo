@@ -9,80 +9,79 @@ Csvの入出力に関するモジュール置き場
 class CsvModules {
 public:
 	void Init(int Trial, int Gene, int Per);
-	void Csv_SetPopCruster(std::vector<int> &Vector_Cruster);
-	void Csv_SetPopResult(std::vector<int> &Vector_PopResult);
-	void FileWrite_PopCruster();
-	void FileWrite_PopResult();
+	void Set_Cr_P(std::vector<int> &Vector_Cruster);
+	void Set_Re_P(std::vector<int> &Vector_PopResult);
+	void Fwrite_Cr_P();
+	void Fwrite_Re_P();
 	//void FileWrite_OppResult();
 private:
-	int CsvTrial;
-	int CsvGene;
-	int CsvPer;
-	int PopNumber;
-	int VecLeng_PopCruster;
-	int VecLeng_PopResult;
-	std::vector<std::vector<int> > PopCruster;
-	std::vector<std::vector<int> > PopResult;
+	int Csv_Trial;
+	int Csv_Gene;
+	int Csv_Per;
+	int VecLen_Cr_P;
+	int VecLen_Re_P;
+	std::vector<std::vector<int> > Cr_P;
+	std::vector<std::vector<int> > Re_P;
 };
 //パラメーターを初期化
 void CsvModules::Init(int Trial, int Gene, int Per) {
-	CsvTrial = Trial;
-	CsvGene = Gene;
-	CsvPer = Per;
-	VecLeng_PopCruster = 0;
-	VecLeng_PopResult = 0;
+	Csv_Trial = Trial;
+	Csv_Gene = Gene;
+	Csv_Per = Per;
+	VecLen_Cr_P = 0;
+	VecLen_Re_P = 0;
 
-	PopCruster.resize(CsvGene / CsvPer);
-	PopResult.resize(CsvGene / CsvPer);
+	Cr_P.resize(Csv_Gene / Csv_Per);
+	Re_P.resize(Csv_Gene / Csv_Per);
 }
 //世代毎のクラスタ番号を格納
-void CsvModules::Csv_SetPopCruster(std::vector<int> &Vector_Cruster) {
+void CsvModules::Set_Cr_P(std::vector<int> &Vector_Cruster) {
 	int Length = int(Vector_Cruster.size());
 	//リサイズ
-	PopCruster[VecLeng_PopCruster].resize(Length);
+	Cr_P[VecLen_Cr_P].resize(Length);
 	for (int i = 0; i < Length; i++) {
-		PopCruster[VecLeng_PopCruster][i] = Vector_Cruster[i];
+		Cr_P[VecLen_Cr_P][i] = Vector_Cruster[i];
 	}
-	VecLeng_PopCruster++;
+	VecLen_Cr_P++;
 }
 //世代毎の対戦結果を格納
-void CsvModules::Csv_SetPopResult(std::vector<int> &Vector_PopResult){
+void CsvModules::Set_Re_P(std::vector<int> &Vector_PopResult){
 	int Length = int(Vector_PopResult.size());
-	PopResult[VecLeng_PopResult].resize(Length);
-	for (int i = 0; i < VecLeng_PopResult; i++) {
-		PopResult[VecLeng_PopResult][i] = Vector_PopResult[i];
+	Re_P[VecLen_Re_P].resize(Length);
+	for (int i = 0; i < VecLen_Re_P; i++) {
+		Re_P[VecLen_Re_P][i] = Vector_PopResult[i];
 	}
-	VecLeng_PopResult++;
+	VecLen_Re_P++;
 }
 //クラスターをCSVファイルへ出力
-void CsvModules::FileWrite_PopCruster() {
+void CsvModules::Fwrite_Cr_P() {
 	//ファイル名設定
 	char fname[30];
-	sprintf(fname, "./csv/Cruster/Cruster_%d.csv", CsvTrial);
+	sprintf(fname, "./csv/Cruster/Cruster_%d.csv", Csv_Trial);
 	//ファイル出力ストリーム
 	std::ofstream ofs( fname );
 
-	for (int i = 0; i < CsvGene / CsvPer; i++) {
-		ofs << CsvPer*(i + 1) << ',';
-		int Length = int(PopCruster[i].size());
+	for (int i = 0; i < Csv_Gene / Csv_Per; i++) {
+		ofs << Csv_Per*(i + 1) << ',';
+		int Length = int(Cr_P[i].size());
 		for (int j = 0; j < Length; j++) {
-			ofs << PopCruster[i][j] << ',';
+			ofs << Cr_P[i][j] << ',';
 		}
 		ofs << std::endl;
 	}
 }
-void CsvModules::FileWrite_PopResult(){
+void CsvModules::Fwrite_Re_P(){
 	//ファイル名設定
 	char fname[40];
-	sprintf(fname, "./csv/PopResult/PopResult_%d.csv", CsvTrial);
+	sprintf(fname, "./csv/PopResult/PopResult_%d.csv", Csv_Trial);
 	//ファイル出力ストリーム
 	std::ofstream ofs(fname);
 
-	for (int i = 0; i < CsvGene / CsvPer; i++) {
-		ofs << CsvPer*(i + 1) << ',';
-		int Length = int(PopResult[i].size());
+	for (int i = 0; i < Csv_Gene / Csv_Per; i++) {
+		ofs << Csv_Per*(i + 1) << ',';
+		int Length = int(Re_P[i].size());
 		for (int j = 0; j < Length; j++) {
-			ofs << PopResult[i][j] << ',';
+			ofs << Re_P[i][j] << ',';
 		}
 		ofs << std::endl;
 	}

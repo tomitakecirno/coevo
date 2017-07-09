@@ -15,36 +15,36 @@ class Coans{
 //公開メンバ
 public :
 	//手法のメインルーチン
-	void CoansTasks(int Trial);
+	void Coans_Tasks(int Trial);
 	//対戦回数を取得
-	int GetMatchUpN();
+	int Get_MatchUp_Num();
 	//以下実験用
-	void SetData_Cruster(std::vector<playerTK> &Pop);	//クラスタ番号をCSVクラスへ
-	void SetData_PopResult(std::vector<playerTK> &Pop);	//集団の対戦結果を記録
-	void SetData_OppResult(std::vector<playerTK> &Opp);	//相手集団の対戦結果をCSVクラスへ
+	void SetVec_Cr_Pop(std::vector<playerTK> &Pop);	//クラスタ番号をCSVクラスへ
+	void SetVec_Re_Pop(std::vector<playerTK> &Pop);	//集団の対戦結果を記録
+	void SetVec_Re_Opp(std::vector<playerTK> &Opp);	//相手集団の対戦結果をCSVクラスへ
 //非公開メンバ
 private:
 	virtual void Crustering() = 0;
-	virtual void GenerateOpponent() = 0;
-	virtual void ReturnResult(int ChildNumber, int OpponentNumber) = 0;
-	virtual void CalculateFitness() = 0;
+	virtual void Generate_Opp() = 0;
+	virtual void Return_Re(int Child_Num, int Opp_Num) = 0;
+	virtual void Cal_Fitness() = 0;
 //このクラスと派生クラスからアクセス可能
 protected:
-	int BattleNumber;					//対戦回数
-	int CrusterNumber;					//クラスター番号
-	int OpponentNumber;					//対戦回数
+	int Machup_Num;					//対戦回数
+	int Cr_Num;					//クラスター番号
+	int Opp_Num;					//対戦回数
 	int MainParent;						//主親
 	std::vector<int> SubParent;			//副親
 	std::vector<playerTK> Pop;			//進化させる集団
 	std::vector<playerTK> Child;		//子
 	std::vector<playerTK> Opponent;		//対戦相手
 	//以下実験用
-	std::vector<int> PopCruster;
-	std::vector<int> PopResult;
-	std::vector<int> OppResult;
+	std::vector<int> Cr_Pop;
+	std::vector<int> Re_Pop;
+	std::vector<int> Re_Opp;
 };
 /*手法のメインルーチン*/
-void Coans::CoansTasks(int Trial)
+void Coans::Coans_Tasks(int Trial)
 {
 	//集団宣言
 	Pop.resize(KO);
@@ -58,10 +58,10 @@ void Coans::CoansTasks(int Trial)
 
 	CsvModules Csv1;
 	Csv1.Init(Trial, KU, PER);
-	PopCruster.resize(KO);
-	PopResult.resize(KO);
+	Cr_Pop.resize(KO);
+	Re_Pop.resize(KO);
 
-	BattleNumber = 0;
+	Machup_Num = 0;
 	//任意の世代数ループ
 	for (int e = 0; e < KU; e++) {
 		std::cout << "試行回数:" << Trial << "  ";
@@ -71,8 +71,8 @@ void Coans::CoansTasks(int Trial)
 		//実験用
 		/*
 		if (e / PER == 0) {
-			SetData_Cruster(Pop);
-			Csv1.Csv_SetPopCruster(PopCruster);
+			SetVec_Cr_P(Pop);
+			Csv1.Set_Cr_P(PopCruster);
 		}
 		*/
 		int tmpIndex;
@@ -99,7 +99,7 @@ void Coans::CoansTasks(int Trial)
 			Child[0] = Pop[MainParent];
 			ExtensionXLM(MainParent, SubParent, Pop, Child);
 			//対戦相手の個体を選ぶ
-			GenerateOpponent();
+			Generate_Opp();
 
 			//w1,w2,w3:子個体の戦略，w1_T,w2_T,w3_T:対戦相手の戦略
 			//player1:子個体，player2:対戦相手0
@@ -116,15 +116,15 @@ void Coans::CoansTasks(int Trial)
 				StrategySet_T(Opponent[r]);
 				for (int c = 0; c < CHILD; c++) {//集団ループ
 					StrategySet_M(Child[c]);
-					BattleNumber++;
+					Machup_Num++;
 					Competition();//対戦 player1 = 子個体 palyer2 = 対戦相手？
 
-					ReturnResult(c,r);
+					Return_Re(c,r);
 				}
 			}
 
 			//適応度計算
-			CalculateFitness();
+			Cal_Fitness();
 			for (int i = 0; i < CHILD; i++) {
 				FitnessChild(Child[i], Opponent, false);
 			}
@@ -143,7 +143,6 @@ void Coans::CoansTasks(int Trial)
 			Pop[MainParent] = Child[Index];
 
 			//実験用
-			/*
 			if (e / PER == 0) {
 				//解以外を初期化
 				for (int i = 1; i < KO; i++) {
@@ -152,44 +151,43 @@ void Coans::CoansTasks(int Trial)
 				//Floreanoと対戦
 				//MachUpFloreano(Pop);
 				//個体の平均勝率をベクターへ
-				SetData_PopResult(Pop);
-				Csv1.Csv_SetPopResult(PopResult);
+				SetVec_Re_Pop(Pop);
+				Csv1.Set_Re_P(Re_Pop);
 			}
-			*/
 			//集団の解以外初期化
 			for (int i = 0; i < KO; i++) {
 				Pop[i].Init();
 			}
 		}
 	}
-	//Csv1.FileWrite_PopCruster();
-	//Csv1.FileWrite_PopResult();
+	Csv1.Fwrite_Cr_P();
+	Csv1.Fwrite_Re_P();
 }
-void Coans::SetData_Cruster(std::vector<playerTK> &Pop){
+void Coans::SetVec_Cr_Pop(std::vector<playerTK> &Pop){
 	for (int i = 0; i < KO; i++) {
-		PopCruster[i] = Pop[i].nitch;
+		Cr_Pop[i] = Pop[i].nitch;
 	}
 }
-void Coans::SetData_PopResult(std::vector<playerTK> &Pop) {
+void Coans::SetVec_Re_Pop(std::vector<playerTK> &Pop) {
 	for (int i = 0; i < KO; i++) {
 		//対戦結果のベクターの和を格納する
-		PopResult[i] = int(std::accumulate(Pop[i].Result.begin(), Pop[i].Result.end(), 0.0));
+		Re_Pop[i] = int(std::accumulate(Pop[i].Result.begin(), Pop[i].Result.end(), 0.0));
 	}
 	std::cout << "SetData_PopResult内:" << std::endl;
 	for (int i = 0; i < KO; i++) {
-		std::cout << PopResult[i] << ',';
+		std::cout << Re_Pop[i] << ',';
 	}
 	std::cout << std::endl;
 }
-void Coans::SetData_OppResult(std::vector<playerTK> &Opp) {
-	for (int i = 0; i < OpponentNumber; i++) {
+void Coans::SetVec_Re_Opp(std::vector<playerTK> &Opp) {
+	for (int i = 0; i < Opp_Num; i++) {
 		//対戦結果のベクターの和を格納する
-		OppResult[i] = int(std::accumulate(Opp[i].Result.begin(), Opp[i].Result.end(), 0.0));
+		Re_Opp[i] = int(std::accumulate(Opp[i].Result.begin(), Opp[i].Result.end(), 0.0));
 	}
 }
 /*対戦回数を返す*/
-int Coans::GetMatchUpN() {
-	return BattleNumber;
+int Coans::Get_MatchUp_Num() {
+	return Machup_Num;
 }
 
 /*
@@ -201,39 +199,39 @@ mode1
 class CoansMode1 : public Coans {
 private :
 	virtual void Crustering();
-	virtual void GenerateOpponent();
-	virtual void ReturnResult(int ChildNumber, int OpponentNumber);
-	virtual void CalculateFitness();
+	virtual void Generate_Opp();
+	virtual void Return_Re(int ChildNumber, int Opp_Num);
+	virtual void Cal_Fitness();
 };
 void CoansMode1::Crustering() {
 	//近傍リスト生成＆クラスタ番号割り振り
 	MakeList(Pop);
-	CrusterNumber = 1;
+	Cr_Num = 1;
 	for (int i = 0; i < KO; i++) {
-		if (SetNitch(CrusterNumber, i, Pop) == 1) {
-			CrusterNumber++;
+		if (SetNitch(Cr_Num, i, Pop) == 1) {
+			Cr_Num++;
 		}
 	}
 }
-void CoansMode1::GenerateOpponent() {
-	choice_oppoment(Pop, Opponent, CrusterNumber);
-	OpponentNumber = CrusterNumber;
+void CoansMode1::Generate_Opp() {
+	choice_oppoment(Pop, Opponent, Cr_Num);
+	Opp_Num = Cr_Num;
 }
-void CoansMode1::ReturnResult(int ChildNumber, int OpponentNumber) {
+void CoansMode1::Return_Re(int Child_Num, int Opp_Num) {
 	if (player1.win == 1) {
-		Opponent[OpponentNumber].Result[ChildNumber] = 0;
-		Child[ChildNumber].Result[OpponentNumber] = 1;
+		Opponent[Opp_Num].Result[Child_Num] = 0;
+		Child[Child_Num].Result[Opp_Num] = 1;
 	}
 	else if (player2.win == 1) {
-		Opponent[OpponentNumber].Result[ChildNumber] = 1;
-		Child[ChildNumber].Result[OpponentNumber] = 0;
+		Opponent[Opp_Num].Result[Child_Num] = 1;
+		Child[Child_Num].Result[Opp_Num] = 0;
 	}
 	else {
-		Opponent[OpponentNumber].Result[ChildNumber] = 0;
-		Child[ChildNumber].Result[OpponentNumber] = 0;
+		Opponent[Opp_Num].Result[Child_Num] = 0;
+		Child[Child_Num].Result[Opp_Num] = 0;
 	}
 }
-void CoansMode1::CalculateFitness() {
+void CoansMode1::Cal_Fitness() {
 	int Length = int(Child.size());
 	for (int i = 0; i < Length; i++) {
 		FitnessChild(Child[i], Opponent, false);
