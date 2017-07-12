@@ -1,77 +1,89 @@
+#pragma once
 #include "config.hpp"
-#include<iostream>
+#include <iostream>
 
-void FileFloreanoWrite(std::vector<playerTK> &pop);
-void FloreanoEval(void);
-void BLX(std::vector<playerTK> &tmppop);
+class FloreMethods {
+public :
+	void Main_Tasks();
+	void Fwrite_Floreano();
+private:
+	std::vector<playerTK> Pop;
+	std::vector<playerTK> Opp;
+protected:
+	void BLX(std::vector<playerTK> &Tmp_Pop);
+};
 
 /*交叉BLX*/
-void BLX(std::vector<playerTK> &tmppop)
+void FloreMethods::BLX(std::vector<playerTK> &Tmp_Pop)
 {
 	using namespace std;
 	double dx, min_ca, max_ca;
 	int tmp1, tmp2;
-
 	vector<vector<double> > tmpw1(I1);
 	vector<vector<double> > tmpw2(I2);
 	vector<vector<double> > tmpw3(J1);
 
-	for (int p = 6; p < KO; p++) {
+	if (Tmp_Pop.empty()) {
+		cout << "Tmp_Popが空です" << endl;
+		exit(0);
+	}
+	int Tmp_Pop_Length = int(Tmp_Pop.size());
+	for (int p = Tmp_Pop_Length/5; p < KO; p++) {
 		while (1) {
 			tmp1 = GetRand_Int(KO / 5);
 			tmp2 = GetRand_Int(KO / 5);
-			if (tmp1 != tmp2) {
+			if (tmp1 == tmp2) {
 				break;
 			}
 		}
-		tmppop[p].w1_CO.resize(I1);
+		Tmp_Pop[p].w1_CO.resize(I1);
 		for (int i = 0; i < I1; i++) {
-			tmppop[p].w1_CO[i].resize(J1);
+			Tmp_Pop[p].w1_CO[i].resize(J1);
 			for (int j = 0; j < J1; j++) {
 				//差の絶対値
-				dx = fabs(tmppop[tmp1].w1_CO[i][j] - tmppop[tmp2].w1_CO[i][j]);
-				min_ca = fmin(tmppop[tmp1].w1_CO[i][j], tmppop[tmp2].w1_CO[i][j]) - 0.3*dx;
-				max_ca = fmax(tmppop[tmp1].w1_CO[i][j], tmppop[tmp2].w1_CO[i][j]) + 0.3*dx;
-				tmpw1[i][j] = min_ca + GetRand_Real(max_ca - min_ca);
+				dx = fabs(Tmp_Pop[tmp1].w1_CO[i][j] - Tmp_Pop[tmp2].w1_CO[i][j]);
+				min_ca = fmin(Tmp_Pop[tmp1].w1_CO[i][j], Tmp_Pop[tmp2].w1_CO[i][j]) - 0.3*dx;
+				max_ca = fmax(Tmp_Pop[tmp1].w1_CO[i][j], Tmp_Pop[tmp2].w1_CO[i][j]) + 0.3*dx;
+				Tmp_Pop[p].w1_CO[i][j] = min_ca + GetRand_Real(max_ca - min_ca);
 			}
 		}
-		tmppop[p].w2_CO.resize(I2);
+		Tmp_Pop[p].w2_CO.resize(I2);
 		for (int i = 0; i < I2; i++) {
-			tmppop[p].w2_CO[i].resize(J2);
+			Tmp_Pop[p].w2_CO[i].resize(J2);
 			for (int j = 0; j < J2; j++) {
-				dx = fabs(tmppop[tmp1].w2_CO[i][j] - tmppop[tmp2].w2_CO[i][j]);
-				min_ca = fmin(tmppop[tmp1].w2_CO[i][j], tmppop[tmp2].w2_CO[i][j]) - 0.3*dx;
-				max_ca = fmax(tmppop[tmp1].w2_CO[i][j], tmppop[tmp2].w2_CO[i][j]) + 0.3*dx;
-				tmpw2[i][j] = min_ca + GetRand_Real(max_ca - min_ca);
+				dx = fabs(Tmp_Pop[tmp1].w2_CO[i][j] - Tmp_Pop[tmp2].w2_CO[i][j]);
+				min_ca = fmin(Tmp_Pop[tmp1].w2_CO[i][j], Tmp_Pop[tmp2].w2_CO[i][j]) - 0.3*dx;
+				max_ca = fmax(Tmp_Pop[tmp1].w2_CO[i][j], Tmp_Pop[tmp2].w2_CO[i][j]) + 0.3*dx;
+				Tmp_Pop[p].w2_CO[i][j] = min_ca + GetRand_Real(max_ca - min_ca);
 			}
 		}
-		tmppop[p].w3_CO.resize(J1);
+		Tmp_Pop[p].w3_CO.resize(J1);
 		for (int i = 0; i < J1; i++) {
-			tmppop[p].w3_CO[i].resize(I2);
+			Tmp_Pop[p].w3_CO[i].resize(I2);
 			for (int j = 0; j < I2; j++) {
-				dx = fabs(tmppop[tmp1].w3_CO[i][j] - tmppop[tmp2].w3_CO[i][j]);
-				min_ca = fmin(tmppop[tmp1].w3_CO[i][j], tmppop[tmp2].w3_CO[i][j]) - 0.3*dx;
-				max_ca = fmax(tmppop[tmp1].w3_CO[i][j], tmppop[tmp2].w3_CO[i][j]) + 0.3*dx;
-				tmpw3[i][j] = min_ca + GetRand_Real(max_ca - min_ca);
+				dx = fabs(Tmp_Pop[tmp1].w3_CO[i][j] - Tmp_Pop[tmp2].w3_CO[i][j]);
+				min_ca = fmin(Tmp_Pop[tmp1].w3_CO[i][j], Tmp_Pop[tmp2].w3_CO[i][j]) - 0.3*dx;
+				max_ca = fmax(Tmp_Pop[tmp1].w3_CO[i][j], Tmp_Pop[tmp2].w3_CO[i][j]) + 0.3*dx;
+				Tmp_Pop[p].w3_CO[i][j] = min_ca + GetRand_Real(max_ca - min_ca);
 			}
 		}
 	}
 }
-
 /*Floreanoの手法*/
-void FloreanoEval(void) {
+void FloreMethods::Main_Tasks(void) {
 	using namespace std;
 	//初期集団生成
-	vector<playerTK> pop(KO);
-	vector<playerTK> oppoment(FLORET);
+
+	Pop.resize(KO);
+	Opp.resize(FLORET);
 
 	init_genrand((unsigned)time(NULL));
 	//集団初期化
 
 	vector<int> tmpN(KO);
 	for (int i = 0; i < KO; i++) {
-		pop[i].Init();
-		pop[i].Init_w();
+		Pop[i].Init();
+		Pop[i].Init_w();
 		tmpN[i] = i;
 	}
 	int tmprand;
@@ -79,90 +91,135 @@ void FloreanoEval(void) {
 	for (int i = 0; i<FLORET; i++) {
 		tmprand = GetRand_Int( int(tmpN.size()) );
 		//相手集団へ加える
-		oppoment[i] = pop[tmpN[tmprand]];
+		Opp[i] = Pop[tmpN[tmprand]];
 		tmpN.erase(tmpN.begin() + tmprand);
 	}
 	//以下ループ
 	for (int e = 0; e < KU; e++) {
-		cout << e << endl;
+		cout << "世代数:" << e << endl;
 		/*対戦*/
+
+		cout << "集団数:" << int(Pop.size()) << endl;
 		for (int i = 0; i < KO; i++) {
-			pop[i].Result.resize(FLORET);
+			Pop[i].Result.resize(FLORET);
 		}
 		for (int i = 0; i < FLORET; i++) {
-			oppoment[i].Result.resize(KO);
+			Opp[i].Result.resize(KO);
 		}
 		for (int i = 0; i < KO; i++) {
 			for (int j = 0; j < FLORET; j++) {
-				StrategySet_M(pop[i]);
-				StrategySet_T(oppoment[j]);
+				StrategySet_M(Pop[i]);
+				StrategySet_T(Opp[j]);
 				Competition();
-				pop[i].Result[j] = (player1.hp - player2.hp) / 300;
-				oppoment[j].Result[i] = (player2.hp - player1.hp) / 300;
+				if (player1.win == 1) {
+					Pop[i].Result[j] = 1;
+					Opp[j].Result[i] = 0;
+				}
+				else if(player1.win == 0) {
+					Pop[i].Result[j] = 0;
+					Opp[j].Result[i] = 1;
+				}
+				else {
+					Pop[i].Result[j] = 1;
+					Opp[j].Result[i] = 0;
+				}
+				/*
+				Pop[i].Result[j] = (player1.hp - player2.hp) / 300;
+				Opp[j].Result[i] = (player2.hp - player1.hp) / 300;
+				*/
 			}
 		}
 		//評価値計算
 		for (int i = 0; i < FLORET; i++) {
-			FitnessChild(oppoment[i], pop, true);
+			FitnessChild(Opp[i], Pop, true);
 		}
 		for (int i = 0; i < KO; i++) {
-			FitnessChild(pop[i], oppoment, true);
+			FitnessChild(Pop[i], Opp, true);
 		}
-		vector<double> tmpEval;
-		vector<playerTK> tmppop(KO);
+		
+		//確認用
+		cout << "評価値";
+		for (int i = 0; i < KO; i++) {
+			cout << Pop[i].eval << ',';
+		}
+		cout << endl;
+
+		vector<double> tmpEval(KO);
+		vector<playerTK> Tmp_Pop(KO);
 		//一旦保存
 		for (int i = 0; i < KO; i++) {
-			tmpEval.push_back(pop[i].eval);
+			tmpEval[i] = Pop[i].eval;
 		}
 		//上位1/5を残す
+		int count_Num;
+		int Count_Rand;
+		vector<double>::iterator index;
 		for (int i = 0; i < KO / 5; i++) {
-			vector<double>::iterator max = max_element(tmpEval.begin(), tmpEval.end());
-			size_t index = distance(tmpEval.begin(), max);
-			tmppop[i] = pop[index];
-			tmpEval[index] = 0;
+			double max = *max_element(tmpEval.begin(), tmpEval.end());
+			//同じ評価地の個体が複数ある場合はランダム
+			count_Num = count(tmpEval.begin(), tmpEval.end(), max);
+			cout << "count_Num:" << count_Num << endl;
+			if (count_Num == 1) {
+				//インデックスを取得
+				index = find(tmpEval.begin(), tmpEval.end(), max);
+			}
+			else if(1 < count_Num){
+				Count_Rand = GetRand_Int(count_Num);
+				int Count_Max = 0;
+				int tmpEval_Length = int(tmpEval.size());
+				index = tmpEval.begin();
+				for (int j = 0; j < Count_Rand+1; j++) {
+					if (j != 0) {
+						index++;
+					}
+					index = find(index, tmpEval.end(), max);
+				}
+			}
+			Tmp_Pop[i] = Pop[int(*index)];
+			Pop.erase(Pop.begin() + int(*index)); //要素を削除
+			tmpEval.erase(tmpEval.begin() + int(*index)); //要素を削除
+			//cout << "index:" << int(*index) << endl;
 		}
-		//対戦相手の更新
+		//対戦相手の更新.最古の個体を置き換える
 		//e%FLORETで置き換える個体を取得できる．
-		oppoment[e%FLORET] = tmppop[0];
+		Opp[e%FLORET] = Tmp_Pop[0];
 		//交叉
-		BLX(tmppop);
-		pop = tmppop;
+		BLX(Tmp_Pop);
+		Pop.resize(KO);
+		Pop = Tmp_Pop;
 		for (int i = 0; i < KO; i++) {
-			pop[i].Init();
+			Pop[i].Init();
 		}
 		for (int j = 0; j < FLORET; j++) {
-			oppoment[j].Init();
+			Opp[j].Init();
 		}
 	}
-	FileFloreanoWrite(pop);
-	exit(0);
 }
-
 /*メイン集団書き込み*/
-void FileFloreanoWrite(std::vector<playerTK> &pop)
+void FloreMethods::Fwrite_Floreano()
 {
-	int PopLength = int(pop.size());
+	int PopLength = int(Pop.size());
 	//様式を合わせる
 	for (int i = 0; i < PopLength; i++) {
 		for (int j = 0; j < I1; j++) {
 			for (int k = 0; k < J1; k++) {
-				w1_GA[i][j][k] = pop[i].w1_CO[j][k];
+				w1_GA[i][j][k] = Pop[i].w1_CO[j][k];
 			}
 		}
 		for (int j = 0; j < I2; j++) {
 			for (int k = 0; k < J2; k++) {
-				w2_GA[i][j][k] = pop[i].w2_CO[j][k];
+				w2_GA[i][j][k] = Pop[i].w2_CO[j][k];
 			}
 		}
 		for (int j = 0; j < J1; j++) {
 			for (int k = 0; k < I2; k++) {
-				w3_GA[i][j][k] = pop[i].w3_CO[j][k];
+				w3_GA[i][j][k] = Pop[i].w3_CO[j][k];
 			}
 		}
 	}
-	//bef = trueの時AI，falseの時AIC
+	//datファイルに書き込み
 	for (int i = 0; i < PopLength; i++) {
-		sprintf(filename, ("AIT/4/%d.dat"), i);
+		sprintf(filename, ("AI_Opp/Floreano/%d.dat"), i);
 		if ((fp = fopen(filename, "wb+")) == NULL) {
 			fprintf(stderr, "%s\n", strerror(errno));
 			exit(EXIT_FAILURE);

@@ -14,10 +14,27 @@ DE
 ***************************/
 int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	//実験用対戦相手学習
+	if (DE == 0) {
+		FloreMethods Flore_1;
+		for (int i = 0; i < TRIAL; i++) {
+			Flore_1.Main_Tasks();
+			if (i == TRIAL) {
+				break;
+			}
+		}
+	}
+	//学習で記録したデータをもとに実際に対戦
+	else if (DE == 1) {
+
+	}
+	//メイン集団学習
+	else if (DE == 2) {
+
+	}
 	CoansMode1 Mode1;
 	switch(DE) {
 	case 0:
-		FloreanoEval();
 		break;
 	case 1:
 		gamemode();

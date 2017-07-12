@@ -27,12 +27,12 @@
 #define COUNT_T 0//
 #define FLORET 5
 
-#define KU		1	//世代数
+#define KU		5	//世代数
 #define TRIAL	1	//試行回数
 #define	PER		1	//データを取る間隔
 
 //1:プレイ 2:学習 3:対戦結果
-#define DE 2
+#define DE 0
 
 //#include "stdafx.h"
 //ゲーム関係

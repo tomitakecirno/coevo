@@ -42,7 +42,7 @@ public:
 	void Init_w();
 };
 
-/* ‰ğ‚ğ‰Šú‰» */
+/* ‰ğˆÈŠO‚ğ‰Šú‰» */
 void playerTK::Init()
 {
 	x = 0;
@@ -67,7 +67,7 @@ void playerTK::Init()
 	List2.clear();
 }
 
-/* ‰ğˆÈŠO‚ğ‰Šú‰» */
+/* ‰ğ‚ğ‰Šú‰» */
 void playerTK::Init_0()
 {
 	using namespace std;
@@ -129,6 +129,7 @@ void FitnessChild(playerTK &child, std::vector<playerTK> &oppoment, bool s2)
 {
 	double child_win = 0;
 	double opponent_win = 0;
+	child.eval = 0;
 
 	int childResultLength = int(child.Result.size());
 	if (s2) {
@@ -138,13 +139,13 @@ void FitnessChild(playerTK &child, std::vector<playerTK> &oppoment, bool s2)
 			for (int j = 0; j<oppomentResultLength; j++) {
 				opponent_win += oppoment[i].Result[j];
 			}
-			child_win += child.Result[i] * fabs(opponent_win);
+			child.eval += child.Result[i] * fabs(opponent_win);
 		}
 	}
 	else
 	{
 		for (int i = 0; i<childResultLength; i++) {
-			child_win += child.Result[i];
+			child.eval += child.Result[i];
 		}
 	}
 	child.eval = child_win;
@@ -152,24 +153,30 @@ void FitnessChild(playerTK &child, std::vector<playerTK> &oppoment, bool s2)
 
 /* ©•ª‚Ìí—ª‚Ìî•ñ‚ğˆÚ‚·ŠÖ” */
 void StrategySet_M(const playerTK &pop) {
-	for (int i = 0; i < I1; i++) {
-		for (int j = 0; j < J1; j++) {
-			w1[i][j] = pop.w1_CO[i][j];
-		}
-
+	if (pop.w1_CO.empty() && pop.w2_CO.empty() && pop.w3_CO.empty()) {
+		std::cout << "‰ğ‚ª‘¶İ‚µ‚Ü‚¹‚ñ" << std::endl;
+		exit(0);
 	}
-	for (int i = 0; i < I2; i++) {
-		for (int j = 0; j < J2; j++) {
-			w2[i][j] = pop.w2_CO[i][j];
-			
-		}
+	else {
+		for (int i = 0; i < I1; i++) {
+			for (int j = 0; j < J1; j++) {
+				w1[i][j] = pop.w1_CO[i][j];
+			}
 
-	}
-	for (int i = 0; i < I2; i++) {
-		for (int j = 0; j < J1; j++) {
-			w3[i][j] = pop.w3_CO[i][j];
 		}
+		for (int i = 0; i < I2; i++) {
+			for (int j = 0; j < J2; j++) {
+				w2[i][j] = pop.w2_CO[i][j];
 
+			}
+
+		}
+		for (int i = 0; i < I2; i++) {
+			for (int j = 0; j < J1; j++) {
+				w3[i][j] = pop.w3_CO[i][j];
+			}
+
+		}
 	}
 }
 
