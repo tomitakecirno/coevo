@@ -14,7 +14,7 @@
 
 
 //世代交代モデル
-#define KO	20		//個体数
+#define KO	30		//個体数
 #define KOT 30//対戦相手数
 #define PARENT 5	//親の数
 #define CHILD 10	//子供の数
@@ -27,7 +27,7 @@
 #define COUNT_T 0//
 #define FLORET 5
 
-#define KU		5	//世代数
+#define KU		2000	//世代数
 #define TRIAL	1	//試行回数
 #define	PER		1	//データを取る間隔
 

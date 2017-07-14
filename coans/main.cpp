@@ -19,6 +19,7 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		FloreMethods Flore_1;
 		for (int i = 0; i < TRIAL; i++) {
 			Flore_1.Main_Tasks();
+			Flore_1.Fwrite_Floreano();
 			if (i == TRIAL) {
 				break;
 			}

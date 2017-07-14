@@ -98,8 +98,6 @@ void FloreMethods::Main_Tasks(void) {
 	for (int e = 0; e < KU; e++) {
 		cout << "世代数:" << e << endl;
 		/*対戦*/
-
-		cout << "集団数:" << int(Pop.size()) << endl;
 		for (int i = 0; i < KO; i++) {
 			Pop[i].Result.resize(FLORET);
 		}
@@ -111,6 +109,7 @@ void FloreMethods::Main_Tasks(void) {
 				StrategySet_M(Pop[i]);
 				StrategySet_T(Opp[j]);
 				Competition();
+				/*
 				if (player1.win == 1) {
 					Pop[i].Result[j] = 1;
 					Opp[j].Result[i] = 0;
@@ -123,18 +122,14 @@ void FloreMethods::Main_Tasks(void) {
 					Pop[i].Result[j] = 1;
 					Opp[j].Result[i] = 0;
 				}
-				/*
-				Pop[i].Result[j] = (player1.hp - player2.hp) / 300;
-				Opp[j].Result[i] = (player2.hp - player1.hp) / 300;
 				*/
+				Pop[i].Result[j] = (player1.hp - player2.hp);
+				Opp[j].Result[i] = (player2.hp - player1.hp);
 			}
 		}
 		//評価値計算
-		for (int i = 0; i < FLORET; i++) {
-			FitnessChild(Opp[i], Pop, true);
-		}
 		for (int i = 0; i < KO; i++) {
-			FitnessChild(Pop[i], Opp, true);
+			FitnessChild(Pop[i], Opp, false);
 		}
 		
 		//確認用
@@ -144,45 +139,19 @@ void FloreMethods::Main_Tasks(void) {
 		}
 		cout << endl;
 
-		vector<double> tmpEval(KO);
 		vector<playerTK> Tmp_Pop(KO);
-		//一旦保存
-		for (int i = 0; i < KO; i++) {
-			tmpEval[i] = Pop[i].eval;
-		}
+
 		//上位1/5を残す
-		int count_Num;
-		int Count_Rand;
-		vector<double>::iterator index;
+		//int count_Num;
 		for (int i = 0; i < KO / 5; i++) {
-			double max = *max_element(tmpEval.begin(), tmpEval.end());
-			//同じ評価地の個体が複数ある場合はランダム
-			count_Num = count(tmpEval.begin(), tmpEval.end(), max);
-			cout << "count_Num:" << count_Num << endl;
-			if (count_Num == 1) {
-				//インデックスを取得
-				index = find(tmpEval.begin(), tmpEval.end(), max);
-			}
-			else if(1 < count_Num){
-				Count_Rand = GetRand_Int(count_Num);
-				int Count_Max = 0;
-				int tmpEval_Length = int(tmpEval.size());
-				index = tmpEval.begin();
-				for (int j = 0; j < Count_Rand+1; j++) {
-					if (j != 0) {
-						index++;
-					}
-					index = find(index, tmpEval.end(), max);
-				}
-			}
-			Tmp_Pop[i] = Pop[int(*index)];
-			Pop.erase(Pop.begin() + int(*index)); //要素を削除
-			tmpEval.erase(tmpEval.begin() + int(*index)); //要素を削除
-			//cout << "index:" << int(*index) << endl;
+			int index = Choice_Best_Index(Pop);
+			//cout << "index:" << index << endl;
+			Tmp_Pop[i] = Pop[index];
+			Pop.erase(Pop.begin() + index); //要素を削除
 		}
 		//対戦相手の更新.最古の個体を置き換える
 		//e%FLORETで置き換える個体を取得できる．
-		Opp[e%FLORET] = Tmp_Pop[0];
+		//Opp[e%FLORET] = Tmp_Pop[0];
 		//交叉
 		BLX(Tmp_Pop);
 		Pop.resize(KO);
@@ -219,7 +188,7 @@ void FloreMethods::Fwrite_Floreano()
 	}
 	//datファイルに書き込み
 	for (int i = 0; i < PopLength; i++) {
-		sprintf(filename, ("AI_Opp/Floreano/%d.dat"), i);
+		sprintf(filename, ("AI_Opp/0/%d.dat"), i);
 		if ((fp = fopen(filename, "wb+")) == NULL) {
 			fprintf(stderr, "%s\n", strerror(errno));
 			exit(EXIT_FAILURE);

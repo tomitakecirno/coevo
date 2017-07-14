@@ -127,7 +127,6 @@ void playerTK::Init_w()
 /* 子個体の評価値 */
 void FitnessChild(playerTK &child, std::vector<playerTK> &oppoment, bool s2)
 {
-	double child_win = 0;
 	double opponent_win = 0;
 	child.eval = 0;
 
@@ -148,7 +147,6 @@ void FitnessChild(playerTK &child, std::vector<playerTK> &oppoment, bool s2)
 			child.eval += child.Result[i];
 		}
 	}
-	child.eval = child_win;
 }
 
 /* 自分の戦略の情報を移す関数 */
@@ -200,4 +198,35 @@ void StrategySet_T(playerTK &oppoment) {
 			w3_T[i][j] = oppoment.w3_CO[i][j];
 		}
 	}
+}
+
+//最良個体のインデックスを返す
+int Choice_Best_Index(std::vector<playerTK> &Child) {
+	int Child_Length = int(Child.size());
+	std::vector<double> Tmp_Eval(Child_Length);
+
+	//一旦格納
+	for (int i = 0; i < Child_Length; i++) {
+		Tmp_Eval[i] = Child[i].eval;
+	}
+
+	int index = 0;
+	auto max = max_element(Tmp_Eval.begin(), Tmp_Eval.end());
+	//同じ評価地の個体が複数ある場合はランダム
+	int count_Num = int(count(Tmp_Eval.begin(), Tmp_Eval.end(), *max));
+	//cout << "count_Num:" << count_Num << endl;
+	if (count_Num == 1) {
+		//インデックスを取得
+		index = int(distance(Tmp_Eval.begin(), max));
+	}
+	else if (1 < count_Num) {
+		std::vector<int> Tmp_Max_Index(count_Num);
+		Tmp_Max_Index[0] = int(distance(Tmp_Eval.begin(), max));
+		for (int j = 1; j < count_Num; j++) {
+			auto Index_Iterator = find(Tmp_Eval.begin() + Tmp_Max_Index[j - 1] + 1, Tmp_Eval.end(), *max);
+			Tmp_Max_Index[j] = int(distance(Tmp_Eval.begin(), Index_Iterator));
+		}
+		index = int(Tmp_Max_Index[GetRand_Int(count_Num)]);
+	}
+	return index;
 }

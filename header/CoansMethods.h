@@ -130,16 +130,7 @@ void Coans::Coans_Tasks(int Trial)
 			}
 
 			//BestŒÂ‘Ì‚ğW’c‚Ö
-			int Index = 0;
-			double Max = Child[0].eval;
-
-			int Length = int(Child.size());
-			for (int i = 1; i < Length; i++) {
-				if (Max < Child[i].eval) {
-					Index = i;
-					Max = Child[i].eval;
-				}
-			}
+			int Index = Choice_Best_Index(Child);
 			Pop[MainParent] = Child[Index];
 
 			//ÀŒ±—p
