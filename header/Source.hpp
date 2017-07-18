@@ -14,25 +14,25 @@
 
 
 //世代交代モデル
-#define KO	30		//個体数
-#define KOT 30//対戦相手数
-#define PARENT 5	//親の数
-#define CHILD 10	//子供の数
-#define K 2//クラスタ数
-#define KL1 3		//List1で使う変数
-#define KL2 2		//List2で使う変数
+#define KO	30			//個体数
+#define KOT 30			//対戦相手数
+#define PARENT 5		//親の数
+#define CHILD 10		//子供の数
+#define K 2				//クラスタ数
+#define KL1 3			//List1で使う変数
+#define KL2 2			//List2で使う変数
 #define LLL 1
-#define RIVAL 1 //対戦相手の対戦回数
-#define COUNT 0//
-#define COUNT_T 0//
+#define RIVAL 1			//対戦相手の対戦回数
+#define COUNT 0			//
+#define COUNT_T 0		//
 #define FLORET 5
 
 #define KU		2000	//世代数
-#define TRIAL	1	//試行回数
-#define	PER		1	//データを取る間隔
+#define TRIAL	5		//試行回数
+#define	PER		100		//データを取る間隔
 
 //1:プレイ 2:学習 3:対戦結果
-#define DE 0
+#define DE 2
 
 //#include "stdafx.h"
 //ゲーム関係

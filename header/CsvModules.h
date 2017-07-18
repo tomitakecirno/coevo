@@ -9,8 +9,8 @@ Csvの入出力に関するモジュール置き場
 class CsvModules {
 public:
 	void Init(int Trial, int Gene, int Per);
-	void Set_Cr_P(std::vector<int> &Vector_Cruster);
-	void Set_Re_P(std::vector<int> &Vector_PopResult);
+	void SetCsv_Cr_P(std::vector<int> &Vector_Cruster);
+	void SetCsv_Re_P(std::vector<int> &Vector_PopResult);
 	void Fwrite_Cr_P();
 	void Fwrite_Re_P();
 	//void FileWrite_OppResult();
@@ -35,17 +35,14 @@ void CsvModules::Init(int Trial, int Gene, int Per) {
 	Re_P.resize(Csv_Gene / Csv_Per);
 }
 //世代毎のクラスタ番号を格納
-void CsvModules::Set_Cr_P(std::vector<int> &Vector_Cruster) {
+void CsvModules::SetCsv_Cr_P(std::vector<int> &Vector_Cruster) {
 	int Length = int(Vector_Cruster.size());
 	//リサイズ
-	Cr_P[VecLen_Cr_P].resize(Length);
-	for (int i = 0; i < Length; i++) {
-		Cr_P[VecLen_Cr_P][i] = Vector_Cruster[i];
-	}
+	Cr_P[VecLen_Cr_P] = Vector_Cruster;
 	VecLen_Cr_P++;
 }
 //世代毎の対戦結果を格納
-void CsvModules::Set_Re_P(std::vector<int> &Vector_PopResult){
+void CsvModules::SetCsv_Re_P(std::vector<int> &Vector_PopResult){
 	int Length = int(Vector_PopResult.size());
 	Re_P[VecLen_Re_P].resize(Length);
 	for (int i = 0; i < VecLen_Re_P; i++) {

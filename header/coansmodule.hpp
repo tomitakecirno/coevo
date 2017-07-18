@@ -336,48 +336,6 @@ void show_w(playerTK &one)
 /*****************
 メイン集団書き込み
 *****************/
-void FileWrite(std::vector<playerTK> &pop, int mode, int trial)
-{
-	//様式を合わせる
-	for (int i = 0; i < KO; i++) {
-		for (int j = 0; j < I1; j++) {
-			for (int k = 0; k < J1; k++) {
-				w1_GA[i][j][k] = pop[i].w1_CO[j][k];
-			}
-		}
-		for (int j = 0; j < I2; j++) {
-			for (int k = 0; k < J2; k++) {
-				w2_GA[i][j][k] = pop[i].w2_CO[j][k];
-			}
-		}
-		for (int j = 0; j < J1; j++) {
-			for (int k = 0; k < I2; k++) {
-				w3_GA[i][j][k] = pop[i].w3_CO[j][k];
-			}
-		}
-	}
-	//bef = trueの時AI，falseの時AIC
-	for (int i = 0; i < KO; i++) {
-		if (mode < 4) {
-			sprintf(filename, ("AI/%d/%d/%d.dat"), mode, trial, i);
-			if ((fp = fopen(filename, "wb+")) == NULL) {
-				fprintf(stderr, "%s\n", strerror(errno));
-				exit(EXIT_FAILURE);
-			}
-		}
-		else {
-			sprintf(filename, ("AIT/%d/%d.dat"), trial, i);
-			if ((fp = fopen(filename, "wb+")) == NULL) {
-				fprintf(stderr, "%s\n", strerror(errno));
-				exit(EXIT_FAILURE);
-			}
-		}
-		fwrite(w1_GA[i], sizeof(double), I1*J1, fp);
-		fwrite(w2_GA[i], sizeof(double), I2*J2, fp);
-		fwrite(w3_GA[i], sizeof(double), I2*J1, fp);
-		fclose(fp);
-	}
-}
 
 /*対戦させて勝利数とかを求める.*/
 void ALL(int mode, int oppoment, int trial) {
