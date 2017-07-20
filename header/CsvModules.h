@@ -53,7 +53,7 @@ void CsvModules::SetCsv_Re_P(std::vector<int> &Vector_PopResult){
 //クラスターをCSVファイルへ出力
 void CsvModules::Fwrite_Cr_P() {
 	//ファイル名設定
-	char fname[30];
+	char fname[50];
 	sprintf(fname, "./csv/Cruster/Cruster_%d.csv", Csv_Trial);
 	//ファイル出力ストリーム
 	std::ofstream ofs( fname );

@@ -19,7 +19,7 @@ public :
 	//対戦回数を取得
 	int Get_MatchUp_Num();
 	//戦略を書き込み
-	void File_Write_Pop(int trial, bool s1);
+	void File_Write_Pop(int trial, int gene, bool s1);
 	//以下実験用
 	void SetVec_Cr_Pop(std::vector<playerTK> &Pop);	//クラスタ番号をCSVクラスへ
 	void SetVec_Re_Pop(std::vector<playerTK> &Pop);	//集団の対戦結果を記録
@@ -70,15 +70,17 @@ void Coans::Coans_Tasks(int Trial)
 	Cr_Pop.resize(KO);
 	Re_Pop.resize(KO);
 
+	//初期世代の戦略を記録
+	File_Write_Pop(Trial, 0, true);
 	Machup_Num = 0;
 	//任意の世代数ループ
-	for (int gene = 0; gene < KU; gene++) {
-		std::cout << Trial << ":" << gene;
+	for (int Gene_Loop = 0; Gene_Loop < KU; Gene_Loop++) {
+		std::cout << Trial << ":" << Gene_Loop;
 		std::cout << "  |  ";
 		std::cout << "1" << ',';
 		Crustering(); //クラスタリング。手法によって変わる
 		//実験用
-		if (gene % PER == 0) {
+		if (Gene_Loop % PER == 0 && Gene_Loop != 0) {
 			std::cout << "9" << ',';
 			//集団のクラスタ番号をベクターに格納
 			SetVec_Cr_Pop(Pop);
@@ -149,16 +151,11 @@ void Coans::Coans_Tasks(int Trial)
 			Pop[MainParent] = Child[Index];
 
 			//実験用
-			/*
-			if (gene % PER == 0) {
+			if (Gene_Loop % PER == 0 && Gene_Loop != 0) {
 				std::cout << "10" << ',';
-				//Floreanoと対戦
-				//MachUpFloreano(Pop);
-				//個体の平均勝率をベクターへ
-				SetVec_Re_Pop(Pop);
-				Csv1.SetCsv_Re_P(Re_Pop);
+				//100世代毎に戦略を記録
+				File_Write_Pop(Trial, Gene_Loop /100, true);
 			}
-			*/
 			std::cout << "8" << ',';
 			//集団の解以外初期化
 			for (int i = 0; i < KO; i++) {
@@ -198,7 +195,7 @@ void Coans::SetVec_Re_Opp(std::vector<playerTK> &Opp) {
 int Coans::Get_MatchUp_Num() {
 	return Machup_Num;
 }
-void Coans::File_Write_Pop(int trial, bool s1)
+void Coans::File_Write_Pop(int trial, int gene, bool s1)
 {
 	//様式を合わせる
 	for (int i = 0; i < KO; i++) {
@@ -221,12 +218,15 @@ void Coans::File_Write_Pop(int trial, bool s1)
 	//bef = trueの時AI，falseの時AIC
 	for (int i = 0; i < KO; i++) {
 		if (s1) {
-			sprintf(filename, ("AI/%d/%d/%d.dat"), Method_Num, trial, i);
+			char filename[50];
+			//フォルダがなければ作成
+			sprintf(filename, ("AI/%d/%d/%d/%d.dat"), Method_Num, trial, gene, i);
 			if ((fp = fopen(filename, "wb+")) == NULL) {
 				fprintf(stderr, "%s\n", strerror(errno));
 				exit(EXIT_FAILURE);
 			}
 		}
+		/*
 		else {
 			sprintf(filename, ("AIT/%d/%d.dat"), trial, i);
 			if ((fp = fopen(filename, "wb+")) == NULL) {
@@ -234,6 +234,7 @@ void Coans::File_Write_Pop(int trial, bool s1)
 				exit(EXIT_FAILURE);
 			}
 		}
+		*/
 		fwrite(w1_GA[i], sizeof(double), I1*J1, fp);
 		fwrite(w2_GA[i], sizeof(double), I2*J2, fp);
 		fwrite(w3_GA[i], sizeof(double), I2*J1, fp);

@@ -1,5 +1,7 @@
+#pragma once
 #include "../header/coansmodule.hpp"
 #include "../header/CoansMethods.h"
+#include "../header/MatchUpMethod.h"
 #include "../header/Floreano.h"
 #include "../header/config.hpp"
 #include <fstream>
@@ -20,14 +22,13 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 {
 	//実験用対戦相手学習
 	if (DE == 0) {
+		Make_Directory_AIT(0,TRIAL);
 		FloreMethods Flore_1;
-		for (int i = 0; i < TRIAL; i++) {
+		for (int t = 4; t < TRIAL; t++) {
 			Flore_1.Main_Tasks();
-			Flore_1.Fwrite_Floreano();
-			if (i == TRIAL) {
-				break;
-			}
+			Flore_1.Fwrite_Floreano(t);
 		}
+		exit(0);
 	}
 	//学習で記録したデータをもとに実際に対戦
 	else if (DE == 1) {
@@ -37,12 +38,14 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	else if (DE == 2) {
 		std::vector<int> MatchUp_Count(TRIAL);
 		CoansMode1 Mode1;
-		for (int t = 0; t < TRIAL; t++) {
+		Make_Directory_AI(0, TRIAL, KU, PER);
+		Make_CSV_Directory();
+		for (int t = 3; t < TRIAL; t++) {
 			std::cout << "trial:" << t << "  ";
 			clock_t start = clock();
 			Mode1.Coans_Tasks(t);
 			clock_t end = clock();
-			Mode1.File_Write_Pop(t, true);
+			//Mode1.File_Write_Pop(t, true);
 			MatchUp_Count[t] = Mode1.Get_MatchUp_Num();
 
 			int time = (end - start) / CLOCKS_PER_SEC;
@@ -56,6 +59,20 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		}
 		//対戦数書き込み
 		MatchUp_CSV(MatchUp_Count);
+		exit(0);
+	}
+	//学習で記録したデータをもとに対戦.
+	else if (DE == 3) {
+		Match Match_1;
+		for (int Pop_t = 0; Pop_t < TRIAL; Pop_t++) {
+			for (int Opp_t = 0; Opp_t < F_TRIAL; Opp_t++) {
+				//現手法vsFloreano 世代数:2000(100世代間隔) 現手法集団50 Floreano集団30
+				Match_1.Init_Parameter(0, 0, 50, 30, 2000, 100);
+				Match_1.Match_And_SetDATA(Pop_t, Opp_t);
+				Match_1.File_Write_CSV(Pop_t, Opp_t);
+			}
+		}
+		exit(0);
 	}
 	//プレイ
 	WaitKey();		// キー入力待ち

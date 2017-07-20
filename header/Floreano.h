@@ -5,7 +5,7 @@
 class FloreMethods {
 public :
 	void Main_Tasks();
-	void Fwrite_Floreano();
+	void Fwrite_Floreano(int trial);
 private:
 	std::vector<playerTK> Pop;
 	std::vector<playerTK> Opp;
@@ -95,7 +95,7 @@ void FloreMethods::Main_Tasks(void) {
 		tmpN.erase(tmpN.begin() + tmprand);
 	}
 	//以下ループ
-	for (int e = 0; e < KU; e++) {
+	for (int e = 0; e < F_KU; e++) {
 		cout << "世代数:" << e << endl;
 		/*対戦*/
 		for (int i = 0; i < KO; i++) {
@@ -165,7 +165,7 @@ void FloreMethods::Main_Tasks(void) {
 	}
 }
 /*メイン集団書き込み*/
-void FloreMethods::Fwrite_Floreano()
+void FloreMethods::Fwrite_Floreano(int trial)
 {
 	int PopLength = int(Pop.size());
 	//様式を合わせる
@@ -187,11 +187,15 @@ void FloreMethods::Fwrite_Floreano()
 		}
 	}
 	//datファイルに書き込み
+	char filename[50];
+	int method = 0;
+	sprintf(filename, ("AIT/%d/%d"), method, trial);
+	CheckTheFolder::checkExistenceOfFolder(filename);
 	for (int i = 0; i < PopLength; i++) {
-		sprintf(filename, ("AI_Opp/0/%d.dat"), i);
+		sprintf(filename, ("AIT/%d/%d/%d.dat"), method, trial, i);
 		if ((fp = fopen(filename, "wb+")) == NULL) {
-			fprintf(stderr, "%s\n", strerror(errno));
-			exit(EXIT_FAILURE);
+			printf("file open error!!\n");
+			exit(0);
 		}
 		fwrite(w1_GA[i], sizeof(double), I1*J1, fp);
 		fwrite(w2_GA[i], sizeof(double), I2*J2, fp);
