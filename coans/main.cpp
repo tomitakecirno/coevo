@@ -6,6 +6,8 @@
 #include "../header/config.hpp"
 #include <fstream>
 #include <time.h>
+#include <cstdlib>
+#include <cstring>
 
 using namespace std;
 
@@ -20,8 +22,17 @@ void MatchUp_CSV(std::vector<int> &Count);
 
 int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	if (__argc < 2) {
+		cout << "Please Set Trial" << endl;
+		exit(0);
+	}
+	int Main_Mode = atoi(__argv[1]);
+	int Main_Trial = atoi(__argv[2]);
+
+	cout << "ƒ‚[ƒh:" << Main_Mode << endl;
+	cout << "ŽŽs‰ñ”:" << Main_Trial << endl;
 	//ŽÀŒ±—p‘Îí‘ŠŽèŠwK
-	if (DE == 0) {
+	if (Main_Mode == 0) {
 		Make_Directory_AIT(0,TRIAL);
 		FloreMethods Flore_1;
 		for (int t = 4; t < TRIAL; t++) {
@@ -31,46 +42,38 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		exit(0);
 	}
 	//ŠwK‚Å‹L˜^‚µ‚½ƒf[ƒ^‚ð‚à‚Æ‚ÉŽÀÛ‚É‘Îí
-	else if (DE == 1) {
+	else if (Main_Mode == 1) {
 		gamemode();
 	}
 	//ƒƒCƒ“W’cŠwK
-	else if (DE == 2) {
-		std::vector<int> MatchUp_Count(TRIAL);
+	else if (Main_Mode == 2) {
+		std::vector<int> MatchUp_Count(Main_Trial);
 		CoansMode1 Mode1;
-		Make_Directory_AI(0, TRIAL, KU, PER);
+		Make_Directory_AI(0, Main_Trial, KU, PER);
 		Make_CSV_Directory();
-		for (int t = 3; t < TRIAL; t++) {
-			std::cout << "trial:" << t << "  ";
-			clock_t start = clock();
-			Mode1.Coans_Tasks(t);
-			clock_t end = clock();
-			//Mode1.File_Write_Pop(t, true);
-			MatchUp_Count[t] = Mode1.Get_MatchUp_Num();
 
-			int time = (end - start) / CLOCKS_PER_SEC;
-			int hour = time / 3600;
-			int minute = time / 3600 / 60;
-			int second = time % 60;
-			std::cout << "Process time:" << oct << showbase << hour << ':';
-			std::cout << oct << showbase << minute << ':';
-			std::cout << oct << showbase << second << std::endl;
-			std::cout << "match_up num:" << MatchUp_Count[t] << std::endl;
-		}
+		clock_t Start_Main = clock();
+		Mode1.Coans_Tasks(Main_Trial);
+		clock_t End_Main = clock();
+		//Mode1.File_Write_Pop(t, true);
+		MatchUp_Count[Main_Trial] = Mode1.Get_MatchUp_Num();
+
+		int time = (End_Main - Start_Main) / CLOCKS_PER_SEC;
+		std::cout << "Process time:" << time << "[sec]" << std::endl;
+		std::cout << "match_up num:" << MatchUp_Count[Main_Trial] << std::endl;
+
 		//‘Îí”‘‚«ž‚Ý
 		MatchUp_CSV(MatchUp_Count);
 		exit(0);
 	}
 	//ŠwK‚Å‹L˜^‚µ‚½ƒf[ƒ^‚ð‚à‚Æ‚É‘Îí.
-	else if (DE == 3) {
+	else if (Main_Mode == 3) {
 		Match Match_1;
-		for (int Pop_t = 0; Pop_t < TRIAL; Pop_t++) {
-			for (int Opp_t = 0; Opp_t < F_TRIAL; Opp_t++) {
-				//Œ»Žè–@vsFloreano ¢‘ã”:2000(100¢‘ãŠÔŠu) Œ»Žè–@W’c50 FloreanoW’c30
-				Match_1.Init_Parameter(0, 0, 50, 30, 2000, 100);
-				Match_1.Match_And_SetDATA(Pop_t, Opp_t);
-				Match_1.File_Write_CSV(Pop_t, Opp_t);
-			}
+		for (int Opp_t = 0; Opp_t < F_TRIAL; Opp_t++) {
+			//Œ»Žè–@vsFloreano ¢‘ã”:2000(100¢‘ãŠÔŠu) Œ»Žè–@W’c50 FloreanoW’c30
+			Match_1.Init_Parameter(0, 0, 50, 30, KU, PER);
+			Match_1.Match_And_SetDATA(Main_Trial, Opp_t);
+			Match_1.File_Write_CSV(Main_Trial, Opp_t);
 		}
 		exit(0);
 	}

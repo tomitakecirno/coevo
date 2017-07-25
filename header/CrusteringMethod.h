@@ -1,250 +1,124 @@
+/*
+分けるクラスタの数を固定化して実験してみる
+（ツリー構造にすると大がかりなため）
+*/
 #pragma once
-#include "Cruster_Config.h"
+//#include "Cruster_Config.h"
+#include "config.hpp"
+#include <math.h>
+#include <forward_list>
+#include "coansmodule.hpp"
+
+//double Cal_Uclidean(std::vector<double> &a, std::vector<double> &b);
+double Range_Ward(double D_io, double D_jo, double D_ij, int N_i, int N_j, int N_o);
 
 //int Cal_Vec_Length(int Pop_Size);
+void Cru_Upgma(std::vector<playerTK> &Pop, int k) {
+	int Pop_Length = int(Pop.size());				//自集団のサイズ
+	int N = Pop_Length;								//現在のクラスタの数
 
-/*
-void Cru_Upgma(std::vector<Player> &Pop) {
-	int Vec_Length = Cal_Vec_Length(int(Pop.size()));
-	//最小距離の個体のペアを求める
-	vector<>Vec_Dis
-}
-*/
-/*
-int Cal_Vec_Length(int Pop_Size) {
-	int Length = 0;
-	for (int i = Pop_Size-1; 0 < i; i--) {
-		Length += i;
+	//距離Matrix
+	std::vector<std::vector<double> > Vec_Dis(Pop_Length);	//距離を格納
+	std::vector<int> Group_Index(Pop_Length);	//個体のクラスタ番号
+	std::vector<int> Group_Num(Pop_Length);		//クラスタ毎の個体数
+
+	for (int i = 0; i < Pop_Length; i++) {
+		Vec_Dis[i].resize(Pop_Length);
+		Group_Index[i] = i;
+		Group_Num[i] = 1;
 	}
-	return Length;
-}
-*/
-/****************************/
-/* クラスター分析           */
-/*      coded by Y.Suganuma */
-/****************************/
-/*
-#include <stdio.h>
-
-void cluster(int, int, int, int, double **, int *);
-double range(int, int, int, int, double **);
-double range_c(int, double, double, double, int, int, int);
-
-main()
-{
-	double **x;
-	int i1, i2, k, k1, L, n, N, *g;
-	int method;
-					// 方法，グループ数，変数の数，及び，データの数
-	scanf("%d %d %d %d", &method, &L, &n, &N);
-
-	g = new int [N];
-	x = new double * [N];
-					// データ
-	for (i1 = 0; i1 < N; i1++) {
-		x[i1] = new double [n];
-		for (i2 = 0; i2 < n; i2++)
-			scanf("%lf", &x[i1][i2]);
-	}
-					// クラスター分析
-	cluster(method, L, N, n, x, g);
-					// 出力
-	k = 1;
-	while (k <= L) {
-		k1 = -1;
-		printf("グループ %d\n", k);
-		for (i1 = 0; i1 < N && k1 < 0; i1++) {
-			if (g[i1] >= 0)
-				k1 = g[i1];
+	//距離Matrix生成
+	for (int i = 0; i < Pop_Length; i++) {
+		Vec_Dis[i][i] = 10000;
+		for (int j = i+1; j < Pop_Length; j++) {
+			//距離計算
+			Vec_Dis[i][j] = cal_kotai_distance(Pop[i], Pop[j]);
+			Vec_Dis[j][i] = Vec_Dis[i][j];
 		}
-		for (i1 = 0; i1 < N; i1++) {
-			if (g[i1] == k1) {
-				printf("   %d", i1);
-				for (i2 = 0; i2 < n; i2++)
-					printf(" %f", x[i1][i2]);
-				printf("\n");
-				g[i1] = -1;
+	}
+	//クラスタの数が既定数以下になったら終了
+	while (N > k) {
+		//最小値を求める
+		auto Min = min_element(Vec_Dis[0].begin(), Vec_Dis[0].end());
+		double Min_Value = *Min;
+		int Min_Index_A = 0;
+		int Min_Index_B = int(distance(Vec_Dis[0].begin(), Min));
+		for (int i = 1; i < N; i++) {
+			if (*(Min = min_element(Vec_Dis[i].begin(), Vec_Dis[i].end())) < Min_Value) {
+				Min_Value = *Min;
+				Min_Index_A = i;
+				Min_Index_B = int(distance(Vec_Dis[i].begin(), Min));
 			}
 		}
-		k++;
-	}
-
-	for (i1 = 0; i1 < N; i1++)
-		delete [] x[i1];
-	delete [] x;
-	delete [] g;
-
-	return 0;
-}
-*/
-/*********************************/
-/* クラスター分析                */
-/*      method : =1 : 最短距離法 */
-/*               =2 : 最長距離法 */
-/*               =3 : メジアン法 */
-/*               =4 : 重心法     */
-/*               =5 : 群平均法   */
-/*               =6 : ウォード法 */
-/*      L : グループの数         */
-/*      N : データの数           */
-/*      n : 変量の数             */
-/*      x : データ               */
-/*      g : 所属するグループ番号 */
-/*********************************/
-/*
-#include <math.h>
-
-void cluster(int method, int L, int N, int n, double **x, int *g)
-{
-	double **r, min;
-	int ci = 0, cj = 0, i1, i2, k, M = N, *n_g;
-					// 初期設定
-	k   = (method < 4) ? 0 : 1;
-	n_g = new int [N];
-	r   = new double * [N];
-	for (i1 = 0; i1 < N; i1++) {
-		g[i1]   = i1;
-		n_g[i1] = 1;
-		r[i1]   = new double [N];
-		for (i2 = i1+1; i2 < N; i2++)
-			r[i1][i2] = range(k, i1, i2, n, x);
-	}
-	for (i1 = 0; i1 < N; i1++) {
-		for (i2 = i1+1; i2 < N; i2++)
-			r[i2][i1] = r[i1][i2];
-	}
-					// 実行
-	while (M > L) {
-						// 最小距離のクラスターを探す
-		min = -1.0;
-		for (i1 = 0; i1 < N; i1++) {
-			if (g[i1] == i1) {
-				for (i2 = i1+1; i2 < N; i2++) {
-					if (g[i2] == i2) {
-						if (min < 0.0 || r[i1][i2] < min) {
-							min = r[i1][i2];
-							ci  = i1;
-							cj  = i2;
-						}
-					}
-				}
-			}
-		}
-						// クラスターを融合し，他のクラスターとの距離を計算
-		for (i1 = 0; i1 < N; i1++) {
-			if (g[i1] == i1) {
-				for (i2 = i1+1; i2 < N; i2++) {
-					if (g[i2] == i2) {
-						if (i1 != cj && i2 != cj) {
-							if (i1 == ci) {
-								r[i1][i2] = range_c(method, r[ci][i2], r[cj][i2], r[ci][cj],
-                                                    n_g[ci], n_g[cj], n_g[i2]);
-								r[i2][i1] = r[i1][i2];
-							}
-							else if (i2 == ci) {
-								r[i1][i2] = range_c(method, r[i1][ci], r[i1][cj], r[ci][cj],
-                                                    n_g[ci], n_g[cj], n_g[i2]);
-								r[i2][i1] = r[i1][i2];
-							}
-						}
+		//距離更新
+		for (int i = 0; i < Pop_Length; i++) {
+			if (Group_Index[i] == Group_Index[Min_Index_A] || Group_Index[i] == Group_Index[Min_Index_B]) {
+				for (int j = 0; j < Pop_Length; j++) {
+					if (Group_Index[j] != Group_Index[Min_Index_A] && Group_Index[j] != Group_Index[Min_Index_B]) {
+						//ウォード法で距離更新
+						Vec_Dis[i][j] = Range_Ward(Vec_Dis[Min_Index_A][j], Vec_Dis[Min_Index_B][j], Vec_Dis[Min_Index_A][Min_Index_B],
+							Group_Num[Min_Index_A], Group_Num[Min_Index_B], Group_Num[j]);
+						Vec_Dis[j][i] = Vec_Dis[i][j];
 					}
 				}
 			}
 		}
 
-		n_g[ci] += n_g[cj];
-		for (i1 = 0; i1 < N; i1++) {
-			if (g[i1] == cj)
-				g[i1] = ci;
+		//クラスタ数更新
+		Group_Num[Min_Index_A] += Group_Num[Min_Index_B];
+		Group_Num[Min_Index_B] = Group_Num[Min_Index_A];
+		//クラスタ番号更新
+		for (int i = 0; i < Pop_Length; i++) {
+			if (Group_Index[i] == Group_Index[Min_Index_B] && i != Min_Index_B) {
+				Group_Index[i] = Group_Index[Min_Index_A];
+			}
 		}
+		Group_Index[Min_Index_B] = Group_Index[Min_Index_A];
 
-		M--;
+		//同じクラスタに属している個体同士の距離を10000くらいにする
+		for (int i = 0; i < Pop_Length; i++) {
+			if (Group_Index[i] == Group_Index[Min_Index_A]) {
+				for (int j = 0; j < Pop_Length; j++) {
+					if (Group_Index[j] == Group_Index[Min_Index_A]) {
+						Vec_Dis[i][j] = 10000;
+						Vec_Dis[j][i] = 10000;
+					}
+				}
+			}
+		}
+		/*
+		std::cout << "距離表示" << std::endl;
+		Show_Distance(Vec_Dis);
+		//表示
+		std::cout << "2-4" << std::endl;;
+		std::cout << "Pop_Num = ";
+		Show_Vector(Group_Index);
+		std::cout << "Group_Num = ";
+		Show_Vector(Group_Num);
+		*/
+		N--;
 	}
-					// 領域の開放
-	for (i1 = 0; i1 < N; i1++)
-		delete [] r[i1];
-	delete [] r;
-	delete [] n_g;
+	for (int i = 0; i < Pop_Length; i++) {
+		Pop[i].nitch = Group_Index[i];
+	}
+}
+
+/*
+double Cal_Uclidean(std::vector<double> &a, std::vector<double> &b) {
+	int a_Length = int(a.size());
+	double Tmp_Dis_sum = 0;
+	for (int k = 0; k < a_Length; k++) {
+		Tmp_Dis_sum += (b[k] - a[k])*(b[k] - a[k]);
+	}
+	return sqrt(Tmp_Dis_sum);
 }
 */
-/*********************************************/
-/* ２つのデータ間の距離                      */
-/*      method : =0 : ユークリッド距離       */
-/*               =1 : ユークリッド距離の２乗 */
-/*      i,j : データ番号                     */
-/*      n : 変量の数                         */
-/*      x : データ                           */
-/*      return : 距離                        */
-/*********************************************/
-/*
-double range(int method, int i, int j, int n, double **x)
-{
-	double x1, r = 0.0;
-	int i2;
 
-	for (i2 = 0; i2 < n; i2++) {
-		x1  = x[i][i2] - x[j][i2];
-		r  += x1 * x1;
-	}
-	if (method == 0)
-		r = sqrt(r);
-
-	return r;
-}
-*/
-/***********************************************/
-/* ２つのクラスター間の距離                    */
-/*      method : =1 : 最短距離法               */
-/*               =2 : 最長距離法               */
-/*               =3 : メジアン法               */
-/*               =4 : 重心法                   */
-/*               =5 : 群平均法                 */
-/*               =6 : ウォード法               */
-/*      Dio : クラスターiとクラスターoとの距離 */
-/*      Djo : クラスターjとクラスターoとの距離 */
-/*      Dij : クラスターiとクラスターjとの距離 */
-/*      ni : クラスターiに含まれるデータ数     */
-/*      nj : クラスターjに含まれるデータ数     */
-/*      no : クラスターoに含まれるデータ数     */
-/*      x,y : データ                           */
-/*      return : 距離                          */
-/***********************************************/
-/*
-double range_c(int method, double Dio, double Djo, double Dij, int ni, int nj, int no)
-{
-	double r = 0.0;
+double Range_Ward(double D_io, double D_jo, double D_ij, int N_i, int N_j, int N_o) {
 	int nk;
-
-	switch (method) {
-					// 最短距離法
-		case 1:
-			r = (Dio <= Djo) ? Dio : Djo;
-			break;
-					// 最長距離法
-		case 2:
-			r = (Dio >= Djo) ? Dio : Djo;
-			break;
-					// メジアン法
-		case 3:
-			r = 0.5 * Dio + 0.5 * Djo - 0.25 * Dij;
-			break;
-					// 重心法
-		case 4:
-			nk = ni + nj;
-			r  = ni * Dio / nk + nj * Djo / nk - (double)ni * nj * Dij / ((double)nk * nk);
-			break;
-					// 群平均法
-		case 5:
-			nk = ni + nj;
-			r  = ni * Dio / nk + nj * Djo / nk;
-			break;
-					// ウォード法
-		case 6:
-			nk = ni + nj;
-			r  = ((ni + no) * Dio + (nj + no) * Djo - no * Dij) / ((double)nk + no);
-			break;
-	}
+	double r = 0;
+	nk = N_i + N_j;
+	r = ((N_i + N_o) * D_io + (N_j + N_o) * D_jo - N_o * D_ij) / ((double)nk + N_o);
 
 	return r;
 }
-*/

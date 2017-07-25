@@ -2,7 +2,7 @@
 
 class Numbers {
 public:
-	int NumbersMatch(Player *one, Player *another
+	int NumbersMatch(Player *one, Player *another)
 private:
 
 };

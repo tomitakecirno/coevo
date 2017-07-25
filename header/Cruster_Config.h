@@ -2,16 +2,17 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include "../header/getrandcoans.hpp"
+#include "../header/Usual_Methods.hpp"
 
-#define DEM 2	//次元数
-#define KO	30	//初期集団数
-#define KL1	4	//クラスタ関係のパラメーター
-#define KL2	3	//クラスタ関係のパラメーター
+#define DEM		100	//次元数
+#define KO		10	//初期集団数
+#define KL1		4	//クラスタ関係のパラメーター
+#define KL2		3	//クラスタ関係のパラメーター
+#define	K_CR	3	//階層型クラスターのパラメーター
 
 class Player {
 public:
-	void Init();
+	void Init(int d);
 	void Init_WS();
 	int Cr_Num;
 	double eval;
@@ -27,9 +28,9 @@ public:
 };
 
 //解を初期化
-void Player::Init() {
-	Stra.resize(DEM);
-	for (int i = 0; i < DEM; i++) {
+void Player::Init(int d) {
+	Stra.resize(d);
+	for (int i = 0; i < d; i++) {
 		Stra[i] = GetRand_Real(100);
 	}
 }
@@ -100,4 +101,27 @@ int Choice_Best_Index(std::vector<Player> &Child) {
 		index = int(Tmp_Max_Index[GetRand_Int(count_Num)]);
 	}
 	return index;
+}
+
+void Show_Vector(std::vector<int> &vec) {
+	int vec_length = int(vec.size());
+	std::cout << '[';
+	for (int v = 0; v < vec_length; v++) {
+		std::cout << vec[v] << ',';
+	}
+	std::cout << ']';
+	std::cout << std::endl;
+}
+
+void Show_Distance(std::vector<std::vector<double> > &vec1) {
+	int vec1_length = int(vec1.size());
+
+	for (int v = 0; v < vec1_length; v++) {
+		int vec2_length = int(vec1[v].size());
+		std::cout << "[";
+		for (int w = 0; w < vec2_length; w++) {
+			std::cout << vec1[v][w] << "--";
+		}
+		std::cout << "]" << std::endl;
+	}
 }

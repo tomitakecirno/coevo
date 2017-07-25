@@ -108,13 +108,13 @@ void Match::PvP(int Pop_Trial, int Opp_Trial, int Gene) {
 
 }
 void Match::Match_And_SetDATA(int Pop_Trial, int Opp_Trial) {
-	for (int g = 0; g < Loop_Length; g++) {
-		std::cout << "generation:" << g << std::endl;
+	for (int gene = 0; gene < Loop_Length; gene++) {
+		std::cout << "generation:" << gene << std::endl;
 		clock_t start = clock();
 		//‘Îí‚µ‚ÄŒ‹‰Ê‚ðŠi”[
-		PvP(Pop_Trial, Opp_Trial, g);
+		PvP(Pop_Trial, Opp_Trial, gene);
 		//‘ÎíŒ‹‰Ê‚©‚ç•½‹ÏŸ—˜”‚ð‹‚ß‚é
-		Set_CsvData(g);
+		Set_CsvData(gene);
 		clock_t end = clock();
 
 		int time = (end - start) / CLOCKS_PER_SEC;

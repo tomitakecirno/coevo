@@ -29,13 +29,11 @@ void Make_Directory_AI(int method, int trial, int gene, int per) {
 	CheckTheFolder::checkExistenceOfFolder("./AI");
 	sprintf_s(filename, 50, "./AI/%d", method);
 	CheckTheFolder::checkExistenceOfFolder(filename);
-	for (int t = 0; t < trial; t++) {
-		sprintf_s(filename, 50, "./AI/%d/%d", method, t);
+	sprintf_s(filename, 50, "./AI/%d/%d", method, trial);
+	CheckTheFolder::checkExistenceOfFolder(filename);
+	for (int g = 0; g < gene / per; g++) {
+		sprintf_s(filename, 50, "./AI/%d/%d/%d", method, trial, g);
 		CheckTheFolder::checkExistenceOfFolder(filename);
-		for (int g = 0; g < gene / per; g++) {
-			sprintf_s(filename, 50, "./AI/%d/%d/%d", method, t, g);
-			CheckTheFolder::checkExistenceOfFolder(filename);
-		}
 	}
 }
 

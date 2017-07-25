@@ -9,6 +9,7 @@ CoansMode4	前手法：前評価方法
 #include "config.hpp"
 #include "coansmodule.hpp"
 #include "CsvModules.h"
+#include "CrusteringMethod.h"
 
 /*手法のテンプレート*/
 class Coans{
@@ -154,7 +155,7 @@ void Coans::Coans_Tasks(int Trial)
 			if (Gene_Loop % PER == 0 && Gene_Loop != 0) {
 				std::cout << "10" << ',';
 				//100世代毎に戦略を記録
-				File_Write_Pop(Trial, Gene_Loop /100, true);
+				File_Write_Pop(Trial, Gene_Loop /PER, true);
 			}
 			std::cout << "8" << ',';
 			//集団の解以外初期化
@@ -165,7 +166,7 @@ void Coans::Coans_Tasks(int Trial)
 		std::cout << std::endl;
 	}
 	Csv1.Fwrite_Cr_P();
-	Csv1.Fwrite_Re_P();
+	//Csv1.Fwrite_Re_P();
 }
 void Coans::SetVec_Cr_Pop(std::vector<playerTK> &Pop){
 	//初期化
@@ -287,6 +288,59 @@ void CoansMode1::Return_Re(int Child_Num, int Opp_Num) {
 	}
 }
 void CoansMode1::Cal_Fitness() {
+	int Length = int(Child.size());
+	for (int i = 0; i < Length; i++) {
+		FitnessChild(Child[i], Opponent, false);
+	}
+}
+
+/*
+mode2
+対戦相手を各クラスタからの個体に限定
+評価は勝ち負けの数
+評価値に補正を加える
+クラスタリングに階層的な手法を導入
+*/
+class CoansMode2 : public Coans {
+public:
+	int		C;
+	void	Set_C(int k);
+private:
+	virtual void Set_Method();
+	virtual void Crustering();
+	virtual void Generate_Opp();
+	virtual void Return_Re(int ChildNumber, int Opp_Num);
+	virtual void Cal_Fitness();
+};
+void CoansMode2::Crustering() {
+	//近傍リスト生成＆クラスタ番号割り振り
+	Cru_Upgma(Pop, C);
+}
+void CoansMode2::Set_C(int k) {
+	C = k;
+}
+void CoansMode2::Set_Method() {
+	Method_Num = 1;
+}
+void CoansMode2::Generate_Opp() {
+	choice_oppoment(Pop, Opponent, Cr_Num);
+	Opp_Num = Cr_Num;
+}
+void CoansMode2::Return_Re(int Child_Num, int Opp_Num) {
+	if (player1.win == 1) {
+		Opponent[Opp_Num].Result[Child_Num] = 0;
+		Child[Child_Num].Result[Opp_Num] = 1;
+	}
+	else if (player2.win == 1) {
+		Opponent[Opp_Num].Result[Child_Num] = 1;
+		Child[Child_Num].Result[Opp_Num] = 0;
+	}
+	else {
+		Opponent[Opp_Num].Result[Child_Num] = 0;
+		Child[Child_Num].Result[Opp_Num] = 0;
+	}
+}
+void CoansMode2::Cal_Fitness() {
 	int Length = int(Child.size());
 	for (int i = 0; i < Length; i++) {
 		FitnessChild(Child[i], Opponent, false);
