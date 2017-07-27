@@ -28,8 +28,8 @@
 #define COUNT_T 0		//
 #define FLORET 5
 
-#define KU		4000	//世代数
-#define	PER		400		//データを取る間隔
+#define KU		2000	//世代数
+#define	PER		200		//データを取る間隔
 #define F_KU	300		//Floreano世代数
 #define TRIAL	5		//試行回数
 #define F_TRIAL	10		//試行回数

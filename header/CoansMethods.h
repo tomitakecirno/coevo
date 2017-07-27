@@ -411,7 +411,7 @@ void CoansMode2::Crustering() {
 	Cr_Num = Cru_K;
 }
 void CoansMode2::Set_Method() {
-	Method_Num = 1;
+	Method_Num = 2;
 }
 void CoansMode2::Generate_Opp() {
 	choice_oppoment(Pop, Opponent, Cru_K);

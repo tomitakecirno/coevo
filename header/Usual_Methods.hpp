@@ -74,8 +74,9 @@ void Make_CSV_Directory(int method) {
 	sprintf_s(filename, 50, "./csv/Cruster/%d", method);
 	CheckTheFolder::checkExistenceOfFolder(filename);
 
+
 	sprintf_s(filename, 50, "./csv/PopResult");
 	CheckTheFolder::checkExistenceOfFolder(filename);
-	sprintf_s(filename, 50, "./csv/PopResult%d",method);
+	sprintf_s(filename, 50, "./csv/PopResult/%d", method);
 	CheckTheFolder::checkExistenceOfFolder(filename);
 }

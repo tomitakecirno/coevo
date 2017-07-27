@@ -64,7 +64,7 @@ void Match::PvP(int Pop_Trial, int Opp_Trial, int Gene) {
 		char filename[50];
 		if (Pop_Method == 0) {
 			sprintf_s(filename, ("AI/%d/%d/%d/%d.dat"), Pop_Method, Pop_Trial, Gene, AI_Pop);
-		}else if (Pop_Method == 1) {
+		}else if (0 < Pop_Method) {
 			sprintf_s(filename, ("AI/%d/%d/%d/%d/%d.dat"), Pop_Method, Pop_Trial, Cru_K, Gene, AI_Pop);
 		}
 		if ((file = fopen(filename, "rb")) == NULL) {
@@ -72,7 +72,7 @@ void Match::PvP(int Pop_Trial, int Opp_Trial, int Gene) {
 			exit(0);
 		}
 		else {
-			if (Pop_Method == 1) {
+			if (0 < Pop_Method) {
 				std::cout << "Cru:" << Cru_K << std::endl;
 			}
 			std::cout
@@ -153,7 +153,11 @@ void Match::Set_CsvData(int g) {
 }
 void Match::File_Write_CSV(int Pop_trial, int Opp_trial) {
 	char fname[50];
-	sprintf(fname, "./csv/PopResult/PopResult_%d_%d_%d.csv", Pop_Method, Pop_trial, Opp_trial);
+	if (Pop_Method == 0) {
+		sprintf(fname, "./csv/PopResult/%d/PopResult_%d_%d.csv", Pop_Method, Pop_trial, Opp_trial);
+	}if (0 < Pop_Method) {
+		sprintf(fname, "./csv/PopResult/%d/PopResult_%d_%d_%d.csv", Pop_Method, Cru_K, Pop_trial, Opp_trial);
+	}
 	//ファイル出力ストリーム
 	std::ofstream ofs(fname);
 
