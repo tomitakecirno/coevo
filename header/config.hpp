@@ -1,4 +1,5 @@
 #pragma once
+/* #define NDEBUG */
 /*-------------------------
 下村君のゲームへ適用するときに
 共通して必要になる関数や構造体
@@ -10,6 +11,7 @@
 #include "Usual_Methods.hpp"
 #include "Source.hpp"
 #include <fstream>
+#include <cassert>
 
 //富田手法で使う構造体
 struct playerTK {
@@ -33,6 +35,7 @@ struct playerTK {
 	std::vector<double> Result; //対戦結果
 	std::vector<int> List1;
 	std::vector<int> List2;
+	std::vector<int> List3;
 	std::vector< std::vector<double> > w1_CO;
 	std::vector< std::vector<double> > w2_CO;
 	std::vector< std::vector<double> > w3_CO;
@@ -65,6 +68,7 @@ void playerTK::Init()
 	Result.clear();
 	List1.clear();
 	List2.clear();
+	List3.clear();
 }
 
 /* 解を初期化 */

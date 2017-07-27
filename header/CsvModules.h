@@ -8,26 +8,30 @@ Csvの入出力に関するモジュール置き場
 
 class CsvModules {
 public:
-	void Init(int Trial, int Gene, int Per);
+	void Init(int method, int Trial, int Gene, int Per, int k = 0);
 	void SetCsv_Cr_P(std::vector<int> &Vector_Cruster);
 	void SetCsv_Re_P(std::vector<int> &Vector_PopResult);
 	void Fwrite_Cr_P();
 	void Fwrite_Re_P();
 	//void FileWrite_OppResult();
-private:
+protected:
+	int Csv_Method;
 	int Csv_Trial;
 	int Csv_Gene;
 	int Csv_Per;
+	int Csv_K;
 	int VecLen_Cr_P;
 	int VecLen_Re_P;
 	std::vector<std::vector<int> > Cr_P;
 	std::vector<std::vector<int> > Re_P;
 };
 //パラメーターを初期化
-void CsvModules::Init(int Trial, int Gene, int Per) {
+void CsvModules::Init(int method, int Trial, int Gene, int Per, int k) {
+	Csv_Method = method;
 	Csv_Trial = Trial;
 	Csv_Gene = Gene;
 	Csv_Per = Per;
+	Csv_K = k;
 	VecLen_Cr_P = 0;
 	VecLen_Re_P = 0;
 
@@ -54,7 +58,12 @@ void CsvModules::SetCsv_Re_P(std::vector<int> &Vector_PopResult){
 void CsvModules::Fwrite_Cr_P() {
 	//ファイル名設定
 	char fname[50];
-	sprintf(fname, "./csv/Cruster/Cruster_%d.csv", Csv_Trial);
+	if (Csv_Method == 0) {
+		sprintf(fname, "./csv/Cruster/%d/Cruster_%d.csv", Csv_Method, Csv_Trial);
+	}
+	else if (Csv_Method == 1) {
+		sprintf(fname, "./csv/Cruster/%d/Cruster_%d_%d.csv", Csv_Method, Csv_Trial, Csv_K);
+	}
 	//ファイル出力ストリーム
 	std::ofstream ofs( fname );
 
@@ -70,7 +79,12 @@ void CsvModules::Fwrite_Cr_P() {
 void CsvModules::Fwrite_Re_P(){
 	//ファイル名設定
 	char fname[40];
-	sprintf(fname, "./csv/PopResult/PopResult_%d.csv", Csv_Trial);
+	if (Csv_Method == 0) {
+		sprintf(fname, "./csv/PopResult/%d/PopResult_%d.csv", Csv_Method, Csv_Trial);
+	}
+	else if (Csv_Method == 1) {
+		sprintf(fname, "./csv/PopResult/%d/PopResult_%d_%d.csv", Csv_Method, Csv_Trial, Csv_K);
+	}
 	//ファイル出力ストリーム
 	std::ofstream ofs(fname);
 
@@ -83,5 +97,3 @@ void CsvModules::Fwrite_Re_P(){
 		ofs << std::endl;
 	}
 }
-//void FileWrite_PopResult();
-//void FileWrite_OppResult();

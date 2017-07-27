@@ -6,7 +6,7 @@
 
 class Match {
 public:
-	void Init_Parameter(int Method_Pop, int Method_Opp, int Pop_N, int Opp_N, int Gene_N, int Per_N);
+	void Init_Parameter(int Method_P, int Method_O, int Pop_N, int Opp_N, int Gene_N, int Per_N, int Cru = 0);
 	void Match_And_SetDATA(int Pop_Trial, int Opp_Trial);
 	void File_Write_CSV(int Pop_trial, int Opp_trial);
 private:
@@ -17,6 +17,7 @@ private:
 	int Opp_Length;
 	int Pop_Method;	//ê¢ë„êî
 	int Opp_Method;
+	int	Cru_K;
 	std::vector<std::vector<std::vector<double> > > Pop_Result;
 	std::vector<std::vector<double> > Opp_Result;
 	std::vector<std::vector<double> > ToCsv_Data;
@@ -25,10 +26,11 @@ protected:
 	void PvP(int Pop_Trial, int Opp_Trial, int Gene);
 };
 
-void Match::Init_Parameter(int Method_P, int Method_O, int Pop_N, int Opp_N, int Gene_N, int Per_N) {
+void Match::Init_Parameter(int Method_P, int Method_O, int Pop_N, int Opp_N, int Gene_N, int Per_N, int Cru) {
 	Gene = Gene_N;	//ê¢ë„êî
 	Per = Per_N;
 	Loop_Length = Gene_N / Per_N;
+	Cru_K = Cru;
 
 	Pop_Method = Method_P;
 	Opp_Method = Method_O;
@@ -59,13 +61,21 @@ void Match::Init_Parameter(int Method_P, int Method_O, int Pop_N, int Opp_N, int
 void Match::PvP(int Pop_Trial, int Opp_Trial, int Gene) {
 	for (int AI_Pop = 0; AI_Pop < Pop_Length; AI_Pop++) {
 		//cout << ai1 << " ";
-		sprintf(filename, ("AI/%d/%d/%d/%d.dat"), Pop_Method, Pop_Trial, Gene, AI_Pop);
+		char filename[50];
+		if (Pop_Method == 0) {
+			sprintf_s(filename, ("AI/%d/%d/%d/%d.dat"), Pop_Method, Pop_Trial, Gene, AI_Pop);
+		}else if (Pop_Method == 1) {
+			sprintf_s(filename, ("AI/%d/%d/%d/%d/%d.dat"), Pop_Method, Pop_Trial, Cru_K, Gene, AI_Pop);
+		}
 		if ((file = fopen(filename, "rb")) == NULL) {
 			printf("file open error!!\n");
 			exit(0);
 		}
 		else {
-			std::cout 
+			if (Pop_Method == 1) {
+				std::cout << "Cru:" << Cru_K << std::endl;
+			}
+			std::cout
 				<< "open:Population_"
 				<< Pop_Method << '_'
 				<< Pop_Trial << '_'

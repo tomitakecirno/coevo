@@ -9,6 +9,7 @@ double cal_kotai_distance(playerTK one, playerTK another);
 void MakeList(std::vector<playerTK> &pop);
 void AnsList1(std::vector< std::vector<int> > &IndexSave, std::vector<playerTK> &pop);
 void AnsList2(std::vector< std::vector<int> > &IndexSave, std::vector<playerTK> &pop);
+void AnsList3(std::vector< std::vector<int> > &IndexSave, std::vector<playerTK> &pop);
 int SetNitch(int nitch_number, int kotai, std::vector<playerTK> &pop);
 void ExtensionXLM(int MainPare, std::vector<int> &SubPare, std::vector<playerTK> &pop, std::vector<playerTK> &child);
 void choice_oppoment(std::vector<playerTK> &pop, std::vector<playerTK> &oppoment, int count_nitch);
@@ -47,7 +48,75 @@ double cal_kotai_distance(playerTK one, playerTK another)
 /********************
 近傍リストを作る
 ********************/
-void MakeList(std::vector<playerTK> &pop)
+void MakeList(std::vector<playerTK> &pop, bool use_1, bool use_2, bool use_3)
+{
+	using namespace std;
+	vector<vector<double> > DisSaveList1(KO);
+	vector<vector<double> > DisSaveList2(KO);
+	vector<vector<double> > DisSaveList3(KO);
+	vector<vector<int> >    IndexSaveList1(KO); //K番目以内の個体を記録しておく
+	vector<vector<int> >    IndexSaveList2(KO); //K番目以内の個体を記録しておく
+	vector<vector<int> >    IndexSaveList3(KO); //K番目以内の個体を記録しておく
+	vector<double>::iterator min;
+	size_t index;
+
+	/*自身以外の個体との距離を総当たりで計測.自身も含む.*/
+	/*ついでに近い順に個体の番号も取得*/
+	for (int i = 0; i<KO; i++) {
+		DisSaveList1[i].resize(KO);
+		for (int j = 0; j<KO; j++) {
+			if (i != j)
+				DisSaveList1[i][j] = cal_kotai_distance(pop[i], pop[j]);
+			else
+				DisSaveList1[i][j] = 100000;
+		}
+	}
+	//一旦移しておく
+	DisSaveList2 = DisSaveList1;
+	DisSaveList3 = DisSaveList1;
+	for (int i = 0; i < KO; i++) {
+		if (use_1) {
+			//IndexSaveList1を作る
+			for (int j = 0; j < KL1; j++) {
+				min = min_element(DisSaveList1[i].begin(), DisSaveList1[i].end());
+				index = distance(DisSaveList1[i].begin(), min);
+				IndexSaveList1[i].push_back(int(index));
+				DisSaveList1[i][index] = 100000;
+			}
+		}
+		//IndexSaveList2を作る
+		if (use_2) {
+			for (int j = 0; j < KL2; j++) {
+				min = min_element(DisSaveList2[i].begin(), DisSaveList2[i].end());
+				index = distance(DisSaveList2[i].begin(), min);
+				IndexSaveList2[i].push_back(int(index));
+				DisSaveList2[i][index] = 100000;
+			}
+		}if (use_3) {
+			for (int j = 0; j < KL3; j++) {
+				min = min_element(DisSaveList3[i].begin(), DisSaveList3[i].end());
+				index = distance(DisSaveList3[i].begin(), min);
+				IndexSaveList3[i].push_back(int(index));
+				DisSaveList3[i][index] = 100000;
+			}
+		}
+	}
+	//AnsList1
+	if(use_1){
+		AnsList1(IndexSaveList1, pop);
+	}
+	if (use_2) {
+		AnsList2(IndexSaveList2, pop);
+	}
+	if (use_3) {
+		AnsList3(IndexSaveList3, pop);
+	}
+}
+
+/********************
+近傍リストを作る.List1オンリー
+********************/
+void Make_List1_Only(std::vector<playerTK> &pop)
 {
 	using namespace std;
 	vector<vector<double> > DisSaveList1(KO);
@@ -64,7 +133,7 @@ void MakeList(std::vector<playerTK> &pop)
 			if (i != j)
 				DisSaveList1[i].push_back(cal_kotai_distance(pop[i], pop[j]));
 			else
-				DisSaveList1[i].push_back(100000);
+				DisSaveList1[i].push_back(10000);
 		}
 	}
 	//一旦移しておく
@@ -74,23 +143,13 @@ void MakeList(std::vector<playerTK> &pop)
 		for (int j = 0; j < KL1; j++) {
 			min = min_element(DisSaveList1[i].begin(), DisSaveList1[i].end());
 			index = distance(DisSaveList1[i].begin(), min);
-			IndexSaveList1[i].push_back( int(index) );
-			DisSaveList1[i][index] = 100000;
-		}
-		//IndexSaveList2を作る
-		for (int j = 0; j < KL2; j++) {
-			min = min_element(DisSaveList2[i].begin(), DisSaveList2[i].end());
-			index = distance(DisSaveList2[i].begin(), min);
-			IndexSaveList2[i].push_back( int(index) );
-			DisSaveList2[i][index] = 100000;
+			IndexSaveList1[i].push_back(int(index));
+			DisSaveList1[i][index] = 10000;
 		}
 	}
 	//AnsList1
 	AnsList1(IndexSaveList1, pop);
-	//AnsList2
-	AnsList2(IndexSaveList2, pop);
 }
-
 /******************
 List1
 ******************/
@@ -123,6 +182,26 @@ void AnsList2(std::vector< std::vector<int> > &IndexSave, std::vector<playerTK> 
 				Tmp = IndexSave[i][j]; //一旦インデックスを保存
 				if (count(IndexSave[Tmp].begin(), IndexSave[Tmp].end(), i) != 0)
 					pop[i].List2.push_back(Tmp); //相手にも存在すれば近傍リストへ加える
+			}
+		}
+	}
+}
+/******************
+List3
+******************/
+void AnsList3(std::vector< std::vector<int> > &IndexSave, std::vector<playerTK> &pop)
+{
+	//近傍リスト1
+	for (int i = 0; i < KO; i++) {
+		int IndexSaveLength = int(IndexSave[i].size());
+		for (int j = 0; j < IndexSaveLength; j++) {
+			//i=jのときは何もしない
+			if (i == j) {}
+			else {
+				assert(!IndexSave[j].empty()); //空だったらエラー
+				if ( count(IndexSave[j].begin(), IndexSave[j].end(), i) != 0) {
+					pop[i].List1.push_back(j);
+				}
 			}
 		}
 	}

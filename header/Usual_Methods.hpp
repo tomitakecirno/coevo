@@ -37,6 +37,25 @@ void Make_Directory_AI(int method, int trial, int gene, int per) {
 	}
 }
 
+void Make_Directory_AI_1(int method, int trial, int k, int gene, int per) {
+	char filename[50];
+	// ./AI
+	CheckTheFolder::checkExistenceOfFolder("./AI");
+	// ./AI/Method
+	sprintf_s(filename, 50, "./AI/%d", method);
+	CheckTheFolder::checkExistenceOfFolder(filename);
+	// ./AI/Method/Triai
+	sprintf_s(filename, 50, "./AI/%d/%d", method, trial);
+	CheckTheFolder::checkExistenceOfFolder(filename);
+	// ./AI/Method/Triai
+	sprintf_s(filename, 50, "./AI/%d/%d/%d", method, trial, k);
+	CheckTheFolder::checkExistenceOfFolder(filename);
+	for (int g = 0; g < gene / per; g++) {
+		sprintf_s(filename, 50, "./AI/%d/%d/%d/%d", method, trial, k, g);
+		CheckTheFolder::checkExistenceOfFolder(filename);
+	}
+}
+
 void Make_Directory_AIT(int method, int trial) {
 	char filename[50];
 	CheckTheFolder::checkExistenceOfFolder("./AIT");
@@ -46,12 +65,17 @@ void Make_Directory_AIT(int method, int trial) {
 	CheckTheFolder::checkExistenceOfFolder(filename);
 }
 
-void Make_CSV_Directory() {
+void Make_CSV_Directory(int method) {
 	char filename[50];
 	sprintf_s(filename, 50, "./csv");
 	CheckTheFolder::checkExistenceOfFolder(filename);
 	sprintf_s(filename, 50, "./csv/Cruster");
 	CheckTheFolder::checkExistenceOfFolder(filename);
+	sprintf_s(filename, 50, "./csv/Cruster/%d", method);
+	CheckTheFolder::checkExistenceOfFolder(filename);
+
 	sprintf_s(filename, 50, "./csv/PopResult");
+	CheckTheFolder::checkExistenceOfFolder(filename);
+	sprintf_s(filename, 50, "./csv/PopResult%d",method);
 	CheckTheFolder::checkExistenceOfFolder(filename);
 }
