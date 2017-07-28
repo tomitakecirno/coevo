@@ -142,7 +142,7 @@ void FitnessChild(playerTK &child, std::vector<playerTK> &oppoment, bool s2)
 			for (int j = 0; j<oppomentResultLength; j++) {
 				opponent_win += oppoment[i].Result[j];
 			}
-			child.eval += child.Result[i] * fabs(opponent_win);
+			child.eval += child.Result[i] * opponent_win;
 		}
 	}
 	else

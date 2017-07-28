@@ -27,15 +27,15 @@ protected:
 };
 
 void Match::Init_Parameter(int Method_P, int Method_O, int Pop_N, int Opp_N, int Gene_N, int Per_N, int Cru) {
-	Gene = Gene_N;	//世代数
+	Gene = Gene_N+1;	//世代数
 	Per = Per_N;
-	Loop_Length = Gene_N / Per_N;
+	Loop_Length = (Gene_N / Per_N) + 1;
 	Cru_K = Cru;
 
 	Pop_Method = Method_P;
 	Opp_Method = Method_O;
 
-	Pop_Length = Pop_N;	//世代数
+	Pop_Length = Pop_N;
 	Opp_Length = Opp_N;
 
 	//自プレイヤーの初期化
@@ -54,7 +54,7 @@ void Match::Init_Parameter(int Method_P, int Method_O, int Pop_N, int Opp_N, int
 	//Csvファイル出力用ベクターの初期化
 	ToCsv_Data.resize(Loop_Length);
 	for (int i = 0; i < Loop_Length; i++) {
-		ToCsv_Data.resize(Pop_Length); //対戦相手数
+		ToCsv_Data[i].resize(Pop_Length); //対戦相手数
 	}
 }
 //自プレイヤーと相手プレイヤーを戦わせる

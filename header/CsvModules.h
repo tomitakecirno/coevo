@@ -35,8 +35,8 @@ void CsvModules::Init(int method, int Trial, int Gene, int Per, int k) {
 	VecLen_Cr_P = 0;
 	VecLen_Re_P = 0;
 
-	Cr_P.resize(Csv_Gene / Csv_Per);
-	Re_P.resize(Csv_Gene / Csv_Per);
+	Cr_P.resize( (Csv_Gene / Csv_Per) + 1);
+	Re_P.resize( (Csv_Gene / Csv_Per) + 1);
 }
 //世代毎のクラスタ番号を格納
 void CsvModules::SetCsv_Cr_P(std::vector<int> &Vector_Cruster) {
@@ -61,14 +61,14 @@ void CsvModules::Fwrite_Cr_P() {
 	if (Csv_Method == 0) {
 		sprintf(fname, "./csv/Cruster/%d/Cruster_%d.csv", Csv_Method, Csv_Trial);
 	}
-	else if (Csv_Method == 1) {
-		sprintf(fname, "./csv/Cruster/%d/Cruster_%d_%d.csv", Csv_Method, Csv_Trial, Csv_K);
+	else if (0 < Csv_Method) {
+		sprintf(fname, "./csv/Cruster/%d/Cruster_%d_%d.csv", Csv_Method, Csv_K, Csv_Trial);
 	}
 	//ファイル出力ストリーム
 	std::ofstream ofs( fname );
 
-	for (int i = 0; i < Csv_Gene / Csv_Per; i++) {
-		ofs << Csv_Per*(i + 1) << ',';
+	for (int i = 0; i < VecLen_Cr_P; i++) {
+		ofs << Csv_Per*i << ',';
 		int Length = int(Cr_P[i].size());
 		for (int j = 0; j < Length; j++) {
 			ofs << Cr_P[i][j] << ',';
@@ -82,13 +82,13 @@ void CsvModules::Fwrite_Re_P(){
 	if (Csv_Method == 0) {
 		sprintf(fname, "./csv/PopResult/%d/PopResult_%d.csv", Csv_Method, Csv_Trial);
 	}
-	else if (Csv_Method == 1) {
+	else if (0 < Csv_Method) {
 		sprintf(fname, "./csv/PopResult/%d/PopResult_%d_%d.csv", Csv_Method, Csv_Trial, Csv_K);
 	}
 	//ファイル出力ストリーム
 	std::ofstream ofs(fname);
 
-	for (int i = 0; i < Csv_Gene / Csv_Per; i++) {
+	for (int i = 0; i < Csv_Gene / Csv_Per + 1; i++) {
 		ofs << Csv_Per*(i + 1) << ',';
 		int Length = int(Re_P[i].size());
 		for (int j = 0; j < Length; j++) {

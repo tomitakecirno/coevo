@@ -31,10 +31,11 @@ void Make_Directory_AI(int method, int trial, int gene, int per) {
 	CheckTheFolder::checkExistenceOfFolder(filename);
 	sprintf_s(filename, 50, "./AI/%d/%d", method, trial);
 	CheckTheFolder::checkExistenceOfFolder(filename);
-	for (int g = 0; g < gene / per; g++) {
+	for (int g = 0; g < gene / per + 1; g++) {
 		sprintf_s(filename, 50, "./AI/%d/%d/%d", method, trial, g);
 		CheckTheFolder::checkExistenceOfFolder(filename);
 	}
+	std::cout << "Create Directory..." << std::endl;
 }
 
 void Make_Directory_AI_1(int method, int trial, int k, int gene, int per) {
@@ -50,10 +51,11 @@ void Make_Directory_AI_1(int method, int trial, int k, int gene, int per) {
 	// ./AI/Method/Triai
 	sprintf_s(filename, 50, "./AI/%d/%d/%d", method, trial, k);
 	CheckTheFolder::checkExistenceOfFolder(filename);
-	for (int g = 0; g < gene / per; g++) {
+	for (int g = 0; g < gene / per + 1; g++) {
 		sprintf_s(filename, 50, "./AI/%d/%d/%d/%d", method, trial, k, g);
 		CheckTheFolder::checkExistenceOfFolder(filename);
 	}
+	std::cout << "Create Directory..." << std::endl;
 }
 
 void Make_Directory_AIT(int method, int trial) {

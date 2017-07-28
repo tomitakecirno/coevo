@@ -37,7 +37,11 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		argv[3]:k
 	*/
 	cout << "モード:" << Main_Mode << endl;
+	cout << "手法:" << Main_Method << endl;
 	cout << "試行回数:" << Main_Trial << endl;
+	cout << "クラスタ数:" << Main_K << endl;
+	cout << "世代数:" << KU << endl;
+	cout << "区切り:" << PER << endl;
 	//実験用対戦相手学習
 	if (Main_Mode == 0) {
 		Make_Directory_AIT(0,TRIAL);
@@ -106,6 +110,21 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 			clock_t End_Main = clock();
 			//Mode1.File_Write_Pop(t, true);
 			int MatchUp_Count = Mode2.Get_MatchUp_Num();
+
+			int time = (End_Main - Start_Main) / CLOCKS_PER_SEC;
+			std::cout << "Process time:" << time << "[sec]" << std::endl;
+			std::cout << "match_up num:" << MatchUp_Count << std::endl;
+		}else if (Main_Method == 3) {
+			CoansMode3 Mode3;
+			Mode3.Set_C(Main_K);
+			Make_Directory_AI_1(Main_Method, Main_Trial, Main_K, KU, PER);
+			Make_CSV_Directory(Main_Method);
+
+			clock_t Start_Main = clock();
+			Mode3.Coans_Tasks(Main_Trial);
+			clock_t End_Main = clock();
+			//Mode1.File_Write_Pop(t, true);
+			int MatchUp_Count = Mode3.Get_MatchUp_Num();
 
 			int time = (End_Main - Start_Main) / CLOCKS_PER_SEC;
 			std::cout << "Process time:" << time << "[sec]" << std::endl;

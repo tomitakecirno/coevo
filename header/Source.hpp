@@ -21,7 +21,7 @@
 #define K 2				//クラスタ数
 #define KL1 3			//List1で使う変数
 #define KL2 2			//List2で使う変数
-#define KL3 5			//List2で使う変数
+#define KL3 10			//List3で使う変数
 #define LLL 1
 #define RIVAL 1			//対戦相手の対戦回数
 #define COUNT 0			//
