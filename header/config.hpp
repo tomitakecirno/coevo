@@ -205,7 +205,7 @@ void StrategySet_T(playerTK &oppoment) {
 }
 
 //最良個体のインデックスを返す
-int Choice_Best_Index(std::vector<playerTK> &Child) {
+int Choice_Best_Index(std::vector<playerTK> &Child, bool random = true) {
 	int Child_Length = int(Child.size());
 	std::vector<double> Tmp_Eval(Child_Length);
 
@@ -219,18 +219,23 @@ int Choice_Best_Index(std::vector<playerTK> &Child) {
 	//同じ評価地の個体が複数ある場合はランダム
 	int count_Num = int(count(Tmp_Eval.begin(), Tmp_Eval.end(), *max));
 	//cout << "count_Num:" << count_Num << endl;
-	if (count_Num == 1) {
-		//インデックスを取得
-		index = int(distance(Tmp_Eval.begin(), max));
-	}
-	else if (1 < count_Num) {
-		std::vector<int> Tmp_Max_Index(count_Num);
-		Tmp_Max_Index[0] = int(distance(Tmp_Eval.begin(), max));
-		for (int j = 1; j < count_Num; j++) {
-			auto Index_Iterator = find(Tmp_Eval.begin() + Tmp_Max_Index[j - 1] + 1, Tmp_Eval.end(), *max);
-			Tmp_Max_Index[j] = int(distance(Tmp_Eval.begin(), Index_Iterator));
+	if (random) {
+		if (count_Num == 1) {
+			//インデックスを取得
+			index = int(distance(Tmp_Eval.begin(), max));
 		}
-		index = int(Tmp_Max_Index[GetRand_Int(count_Num)]);
+		else if (1 < count_Num) {
+			std::vector<int> Tmp_Max_Index(count_Num);
+			Tmp_Max_Index[0] = int(distance(Tmp_Eval.begin(), max));
+			for (int j = 1; j < count_Num; j++) {
+				auto Index_Iterator = find(Tmp_Eval.begin() + Tmp_Max_Index[j - 1] + 1, Tmp_Eval.end(), *max);
+				Tmp_Max_Index[j] = int(distance(Tmp_Eval.begin(), Index_Iterator));
+			}
+			index = int(Tmp_Max_Index[GetRand_Int(count_Num)]);
+		}
+	}
+	else {
+		index = int(distance(Tmp_Eval.begin(), max));
 	}
 	return index;
 }

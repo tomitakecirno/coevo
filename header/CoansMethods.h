@@ -154,7 +154,7 @@ void Coans::Coans_Tasks(int Trial)
 
 			std::cout << "7" << ',';
 			//BestŒÂ‘Ì‚ðW’c‚Ö
-			int Index = Choice_Best_Index(Child);
+			int Index = Choice_Best_Index(Child, false);
 			Pop[MainParent] = Child[Index];
 
 			//ŽÀŒ±—p
