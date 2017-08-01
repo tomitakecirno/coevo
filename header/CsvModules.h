@@ -5,9 +5,18 @@ Csvの入出力に関するモジュール置き場
 #include <vector>
 #include <fstream>
 #include <cstdio>
+#include "Usual_Methods.hpp"
 
 class CsvModules {
 public:
+	CsvModules() {
+		std::cout << "Please Input Method's Number !" << std::endl;
+		exit(1);
+	}
+	CsvModules(int method) {
+		Csv_Method = method;
+		Make_CSV_Directory(method);
+	}
 	void Init(int method, int Trial, int Gene, int Per, int k = 0);
 	void SetCsv_Cr_P(std::vector<int> &Vector_Cruster);
 	void SetCsv_Re_P(std::vector<int> &Vector_PopResult);

@@ -10,7 +10,9 @@ CoansMode4	前手法：前評価方法
 #include "coansmodule.hpp"
 #include "CsvModules.h"
 #include "CrusteringMethod.h"
+#include "Usual_Methods.hpp"
 #include <time.h>
+#include <string>
 
 /*手法のテンプレート*/
 class Coans{
@@ -18,8 +20,6 @@ class Coans{
 public :
 	//手法のメインルーチン
 	void	Coans_Tasks(int Trial);
-	//パラメーターCをセット
-	void	Set_C(int k);
 	//対戦回数を取得
 	int		Get_MatchUp_Num();
 	//戦略を書き込み
@@ -30,12 +30,11 @@ public :
 	void	SetVec_Re_Opp(std::vector<playerTK> &Opp);	//相手集団の対戦結果をCSVクラスへ
 //非公開メンバ
 private:
-	virtual void Set_Method() = 0;
 	virtual void Crustering() = 0;
 	virtual void Generate_Opp() = 0;
 	virtual void Return_Re(int Child_Num, int Opp_Num) = 0;
 	virtual void Cal_Fitness() = 0;
-//このクラスと派生クラスからアクセス可能
+	//このクラスと派生クラスからアクセス可能
 protected:
 	int Machup_Num;						//対戦回数
 	int Cr_Num;							//クラスター番号
@@ -43,6 +42,7 @@ protected:
 	int MainParent;						//主親
 	int Method_Num;						//手法比較の時に使う
 	int	Cru_K;							//クラスタリングパラメーター
+	std::string Dir;
 	std::vector<int> SubParent;			//副親
 	std::vector<playerTK> Pop;			//進化させる集団
 	std::vector<playerTK> Child;		//子
@@ -57,7 +57,6 @@ void Coans::Coans_Tasks(int Trial)
 {
 	std::cout << "Initiarize" << std::endl;
 
-	Set_Method();
 	//集団宣言
 	Pop.resize(KO);
 	init_genrand((unsigned)time(NULL)); /*乱数初期化*/
@@ -67,9 +66,8 @@ void Coans::Coans_Tasks(int Trial)
 		Pop[i].Init();
 		Pop[i].Init_w();
 	}
-
-	std::cout << "Csv class generate" << std::endl;
-	CsvModules Csv1;
+	Make_Directory(Dir, Method_Num, Trial, KU, PER, Cru_K);
+	CsvModules Csv1(Method_Num);
 	Csv1.Init(Method_Num, Trial, KU, PER, Cru_K);
 	Cr_Pop.resize(KO);
 	Re_Pop.resize(KO);
@@ -81,6 +79,8 @@ void Coans::Coans_Tasks(int Trial)
 	int Loop_Time_Start;
 	int Loop_Time_End;
 	int Loop_Time;
+	Crustering();
+	exit(0);
 	for (int Gene_Loop = 1; Gene_Loop < KU+1; Gene_Loop++) {
 		Loop_Time_Start = clock();
 		std::cout << Method_Num << ":" << Trial << ":" << Cru_K << ":" << Gene_Loop;
@@ -190,9 +190,6 @@ void Coans::Coans_Tasks(int Trial)
 	Csv1.Fwrite_Cr_P();
 	//Csv1.Fwrite_Re_P(C);
 }
-void Coans::Set_C(int k) {
-	Cru_K = k;
-}
 void Coans::SetVec_Cr_Pop(std::vector<playerTK> &Pop){
 	//初期化
 	Cr_Pop.assign(KO, 0);
@@ -285,8 +282,13 @@ void Coans::File_Write_Pop(int trial, int gene, bool s1)
 	List1,2利用
 */
 class CoansMode0 : public Coans {
+public:
+	CoansMode0(std::string str, int k = 0){
+		Method_Num = 0;
+		Dir = str;
+		Cru_K = k;
+	}
 private :
-	virtual void Set_Method();
 	virtual void Crustering();
 	virtual void Generate_Opp();
 	virtual void Return_Re(int ChildNumber, int Opp_Num);
@@ -302,26 +304,13 @@ void CoansMode0::Crustering() {
 		}
 	}
 }
-void CoansMode0::Set_Method() {
-	Method_Num = 0;
-}
 void CoansMode0::Generate_Opp() {
 	choice_oppoment(Pop, Opponent, Cr_Num);
 	Opp_Num = Cr_Num;
 }
 void CoansMode0::Return_Re(int Child_Num, int Opp_Num) {
-	if (player1.win == 1) {
-		Opponent[Opp_Num].Result[Child_Num] = 0;
-		Child[Child_Num].Result[Opp_Num] = 1;
-	}
-	else if (player2.win == 1) {
-		Opponent[Opp_Num].Result[Child_Num] = 1;
-		Child[Child_Num].Result[Opp_Num] = 0;
-	}
-	else {
-		Opponent[Opp_Num].Result[Child_Num] = 0;
-		Child[Child_Num].Result[Opp_Num] = 0;
-	}
+	Opponent[Opp_Num].Result[Child_Num] = player2.hp - player1.hp;
+	Child[Child_Num].Result[Opp_Num] = player1.hp - player2.hp;
 }
 void CoansMode0::Cal_Fitness() {
 	int Length = int(Child.size());
@@ -333,18 +322,18 @@ void CoansMode0::Cal_Fitness() {
 
 /*
 	mode1
-	対戦相手を各クラスタからの個体に限定
-	評価は勝ち負けの数
-	評価値に補正を加える
-	クラスタリングに階層的な手法を導入
-	List1のみ利用
+	ウォード法の階層的クラスタリングで明示的にクラスタリング
+	評価はHPの差分
 */
 class CoansMode1 : public Coans {
 public:
-	//クラスタリングに使うパラメーターを設定
+	CoansMode1(std::string str, int k = 0) {
+		Method_Num = 1;
+		Dir = str;
+		Cru_K = k;
+	}
 private:
 	//クラスタリングに使うパラメーター
-	virtual void Set_Method();
 	virtual void Crustering();
 	virtual void Generate_Opp();
 	virtual void Return_Re(int ChildNumber, int Opp_Num);
@@ -352,13 +341,10 @@ private:
 };
 void CoansMode1::Crustering() {
 	//近傍リスト生成
-	MakeList(Pop, true, false, false);
+	//MakeList(Pop, true, false, false);
 	//クラスタ番号割り振り
 	Cru_Upgma(Pop, Cru_K);
 	Cr_Num = Cru_K;
-}
-void CoansMode1::Set_Method() {
-	Method_Num = 1;
 }
 void CoansMode1::Generate_Opp() {
 	choice_oppoment(Pop, Opponent, Cru_K);
@@ -384,7 +370,6 @@ void CoansMode1::Cal_Fitness() {
 		FitnessChild(Child[i], Opponent, false);
 	}
 }
-
 /*
 	mode2
 	対戦相手を各クラスタからの個体に限定
@@ -395,10 +380,13 @@ void CoansMode1::Cal_Fitness() {
 */
 class CoansMode2 : public Coans {
 public:
-	//クラスタリングに使うパラメーターを設定
+	CoansMode2(std::string str, int k = 0) {
+		Method_Num = 2;
+		Dir = str;
+		Cru_K = k;
+	}
 private:
 	//クラスタリングに使うパラメーター
-	virtual void Set_Method();
 	virtual void Crustering();
 	virtual void Generate_Opp();
 	virtual void Return_Re(int ChildNumber, int Opp_Num);
@@ -410,9 +398,6 @@ void CoansMode2::Crustering() {
 	//クラスタ番号割り振り
 	Cru_Upgma(Pop, Cru_K);
 	Cr_Num = Cru_K;
-}
-void CoansMode2::Set_Method() {
-	Method_Num = 2;
 }
 void CoansMode2::Generate_Opp() {
 	choice_oppoment(Pop, Opponent, Cru_K);
@@ -442,13 +427,18 @@ void CoansMode2::Cal_Fitness() {
 /*
 mode3
 交叉:List1
-クラスタリング:List2を使った動的クラスタリング
-評価は勝ちで1,負けで0
+対戦相手は自集団全体
+評価はHPの差分
 対戦結果を使って評価値に補正を加えている
 */
 class CoansMode3 : public Coans {
+public:
+	CoansMode3(std::string str, int k = 0) {
+		Method_Num = 3;
+		Dir = str;
+		Cru_K = k;
+	}
 private:
-	virtual void Set_Method();
 	virtual void Crustering();
 	virtual void Generate_Opp();
 	virtual void Return_Re(int ChildNumber, int Opp_Num);
@@ -464,28 +454,63 @@ void CoansMode3::Crustering() {
 		}
 	}
 }
-void CoansMode3::Set_Method() {
-	Method_Num = 3;
-}
 void CoansMode3::Generate_Opp() {
-	choice_oppoment(Pop, Opponent, Cr_Num);
-	Opp_Num = Cr_Num;
+	Opponent = Pop;
 }
 void CoansMode3::Return_Re(int Child_Num, int Opp_Num) {
-	if (player1.win == 1) {
-		Opponent[Opp_Num].Result[Child_Num] = 0;
-		Child[Child_Num].Result[Opp_Num] = 1;
-	}
-	else if (player2.win == 1) {
-		Opponent[Opp_Num].Result[Child_Num] = 1;
-		Child[Child_Num].Result[Opp_Num] = 0;
-	}
-	else {
-		Opponent[Opp_Num].Result[Child_Num] = 0;
-		Child[Child_Num].Result[Opp_Num] = 0;
-	}
+	Opponent[Opp_Num].Result[Child_Num] = player2.hp - player1.hp;
+	Child[Child_Num].Result[Opp_Num] = player1.hp - player2.hp;
 }
 void CoansMode3::Cal_Fitness() {
+	int Length = int(Child.size());
+	for (int i = 0; i < Length; i++) {
+		FitnessChild(Child[i], Opponent, false);
+	}
+}
+
+/*
+mode4
+交叉:List1
+対戦相手は自集団全体
+HPの差を適応度とする
+適応度に補正をかける
+*/
+
+class CoansMode4 : public Coans {
+public:
+	CoansMode4(std::string str, int k = 0) {
+		Method_Num = 4;
+		Dir = str;
+		Cru_K = k;
+	}
+private:
+	virtual void Set_Method();
+	virtual void Crustering();
+	virtual void Generate_Opp();
+	virtual void Return_Re(int ChildNumber, int Opp_Num);
+	virtual void Cal_Fitness();
+};
+void CoansMode4::Crustering() {
+	//近傍リスト生成＆クラスタ番号割り振り
+	MakeList(Pop, true, true, false);
+	Cr_Num = 1;
+	for (int i = 0; i < KO; i++) {
+		if (SetNitch(Cr_Num, i, Pop) == 1) {
+			Cr_Num++;
+		}
+	}
+}
+void CoansMode4::Set_Method() {
+	Method_Num = 4;
+}
+void CoansMode4::Generate_Opp() {
+	Opponent = Pop;
+}
+void CoansMode4::Return_Re(int Child_Num, int Opp_Num) {
+	Opponent[Opp_Num].Result[Child_Num] = (player2.hp - player1.hp) / 300;
+	Child[Child_Num].Result[Opp_Num] = (player1.hp - player2.hp) / 300;
+}
+void CoansMode4::Cal_Fitness() {
 	int Length = int(Child.size());
 	for (int i = 0; i < Length; i++) {
 		FitnessChild(Child[i], Opponent, true);
