@@ -82,6 +82,7 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		std::cout << "Process time:" << time << std::endl;
 		Match_0.Decide_Best(Main_Trial);
 	}
+
 	//Œ»Žè–@ŠwK
 	else if (Main_Mode == 2) {
 		//Œ»Žè–@
