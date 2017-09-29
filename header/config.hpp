@@ -15,6 +15,11 @@
 
 //富田手法で使う構造体
 struct playerTK {
+	playerTK() {
+		comp_flag = 0;
+		gene_count = 0;
+		delete_flag = 0;
+	}
 	int x = 0;
 	int y = 0;
 	int attackstate = 0;
@@ -39,6 +44,9 @@ struct playerTK {
 	std::vector< std::vector<double> > w1_CO;
 	std::vector< std::vector<double> > w2_CO;
 	std::vector< std::vector<double> > w3_CO;
+	int comp_flag;
+	int gene_count;
+	int delete_flag;
 public:
 	void Init();
 	void Init_0();
