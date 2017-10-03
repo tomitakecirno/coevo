@@ -1,12 +1,12 @@
 #pragma once
 /*-----------------------------------
-自分のANS使った手法の関数まとめ
+ANSを使った提案手法の関数まとめ
 -----------------------------------*/
 #include "config.hpp"
 
 int coans(int mode, int trial);
 double cal_kotai_distance(playerTK one, playerTK another);
-void MakeList(std::vector<playerTK> &pop);
+void MakeList(std::vector<playerTK> &pop, bool use_1, bool use_2, bool use_3);
 void AnsList1(std::vector< std::vector<int> > &IndexSave, std::vector<playerTK> &pop);
 void AnsList2(std::vector< std::vector<int> > &IndexSave, std::vector<playerTK> &pop);
 void AnsList3(std::vector< std::vector<int> > &IndexSave, std::vector<playerTK> &pop);
