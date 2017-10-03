@@ -13,9 +13,13 @@
 #include <fstream>
 #include <cassert>
 
+#define K_List1	5	/*ニッチの集団数*/
+#define K_List2	2	/*ニッチの集団数*/
+
 //富田手法で使う構造体
 struct playerTK {
 	playerTK() {
+		flag = 0;
 		comp_flag = 0;
 		gene_count = 0;
 		delete_flag = 0;
@@ -44,6 +48,7 @@ struct playerTK {
 	std::vector< std::vector<double> > w1_CO;
 	std::vector< std::vector<double> > w2_CO;
 	std::vector< std::vector<double> > w3_CO;
+	int flag;
 	int comp_flag;
 	int gene_count;
 	int delete_flag;

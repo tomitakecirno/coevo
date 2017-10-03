@@ -1,6 +1,7 @@
 #pragma once
 #include "../header/coansmodule.hpp"
 #include "../header/CoansMethods.h"
+#include "../header/coans_GT2016.hpp"
 #include "../header/MatchUpMethod.h"
 #include "../header/Floreano.h"
 #include "../header/config.hpp"
@@ -86,13 +87,15 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	//現手法学習
 	else if (Main_Mode == 2) {
 		//現手法
+		/*
 		if (Main_Method == 0) {
-			CoansMode0 Mode0("AI", Main_Method);
-			Mode0.Coans_Tasks(Main_Trial);
-			MatchUp_Count = Mode0.Get_MatchUp_Num();
+			Coans_GT2016 Coans_GT2016("AI", Main_K);
+			Coans_GT2016.Coans_GT2016_Tasks(Main_Trial);
+			MatchUp_Count = Coans_GT2016.Get_MatchUp_Num();
 		}
+		*/
 		//階層的クラスタリングを盛り込んだ手法
-		else if (Main_Method == 1) {
+		if (Main_Method == 1) {
 			CoansMode1 Mode1("TEST", Main_Method);
 			Mode1.Coans_Tasks(Main_Trial);
 			MatchUp_Count = Mode1.Get_MatchUp_Num();
