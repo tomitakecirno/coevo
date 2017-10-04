@@ -69,6 +69,7 @@ void MakeList(std::vector<playerTK> &pop, int Para_KL1, int Para_KL2, int Para_K
 				DisSaveList1[i][j] = 100000;
 		}
 	}
+	std::cout << "1-1-1" << ',';
 	//一旦移しておく
 	DisSaveList2 = DisSaveList1;
 	DisSaveList3 = DisSaveList1;
@@ -85,7 +86,7 @@ void MakeList(std::vector<playerTK> &pop, int Para_KL1, int Para_KL2, int Para_K
 		}
 		//IndexSaveList2を作る
 		if (Para_KL2) {
-			IndexSaveList1[i].resize(Para_KL2);
+			IndexSaveList2[i].resize(Para_KL2);
 			for (int j = 0; j < Para_KL2; j++) {
 				min = min_element(DisSaveList2[i].begin(), DisSaveList2[i].end());
 				index = distance(DisSaveList2[i].begin(), min);
@@ -93,7 +94,7 @@ void MakeList(std::vector<playerTK> &pop, int Para_KL1, int Para_KL2, int Para_K
 				DisSaveList2[i][index] = 100000;
 			}
 		}if (Para_KL3) {
-			IndexSaveList1[i].resize(Para_KL3);
+			IndexSaveList3[i].resize(Para_KL3);
 			for (int j = 0; j < Para_KL3; j++) {
 				min = min_element(DisSaveList3[i].begin(), DisSaveList3[i].end());
 				index = distance(DisSaveList3[i].begin(), min);
@@ -102,6 +103,7 @@ void MakeList(std::vector<playerTK> &pop, int Para_KL1, int Para_KL2, int Para_K
 			}
 		}
 	}
+	std::cout << "1-1-2" << ',';
 	//AnsList1
 	if(Para_KL1){
 		AnsList1(IndexSaveList1, pop);
@@ -112,6 +114,7 @@ void MakeList(std::vector<playerTK> &pop, int Para_KL1, int Para_KL2, int Para_K
 	if (Para_KL3) {
 		AnsList3(IndexSaveList3, pop);
 	}
+	std::cout << "1-1-3" << ',';
 }
 
 
@@ -280,9 +283,9 @@ void ExtensionXLM(int MainPare, std::vector<int> &SubPare, std::vector<playerTK>
 	}
 
 	//重心から親に対するベクトルを求める
-	double vector_w1[KL1][I1][J1];
-	double vector_w2[KL1][I2][J2];
-	double vector_w3[KL1][J1][I2];
+	double vector_w1[PARENT][I1][J1];
+	double vector_w2[PARENT][I2][J2];
+	double vector_w3[PARENT][J1][I2];
 	for (int i = 0; i<SubPareLength; i++) {
 		//w1_CO
 		for (int j = 0; j < I1; j++) {
@@ -307,14 +310,14 @@ void ExtensionXLM(int MainPare, std::vector<int> &SubPare, std::vector<playerTK>
 	double coe_w1;
 	double coe_w2;
 	double coe_w3;
-	for (int c = 1; c < CHILD + 1; c++) {
+	for (int c = 1; c < CHILD+1; c++) {
 		//初期化
 		child[c].Init();
 		child[c].Init_0();
-		for (int i = 0; i < SubPareLength; i++) {
-			coe_w1 = rand_normal(0, 1 / sqrt(KL1));
-			coe_w2 = rand_normal(0, 1 / sqrt(KL1));
-			coe_w3 = rand_normal(0, 1 / sqrt(KL1));
+		for (int i = 0; i < PARENT; i++) {
+			coe_w1 = rand_normal(0, 1 / sqrt(PARENT));
+			coe_w2 = rand_normal(0, 1 / sqrt(PARENT));
+			coe_w3 = rand_normal(0, 1 / sqrt(PARENT));
 			//w1_CO
 			for (int j = 0; j < I1; j++) {
 				for (int k = 0; k < J1; k++) {

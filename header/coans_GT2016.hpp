@@ -14,7 +14,14 @@
 class Coans_GT2016 {
 	//公開メンバ
 public:
-	//手法のメインルーチン
+	Coans_GT2016(std::string str, int k = 0) {
+		Machup_Num = 0;					//対戦回数
+		Cr_Num = 1;						//クラスター番号
+		Opp_Num = 0;					//対戦回数
+		Method_Num = k;					//手法比較の時に使う
+		Cru_K = 0;						//クラスタリングパラメーター
+		Dir = str;
+	}	//手法のメインルーチン
 	void	Coans_GT2016_Tasks(int Trial);
 	void	Update_Opponent(int index);
 	int		Cal_Gra_Nitch(int index);
@@ -27,14 +34,7 @@ public:
 	void	SetVec_Re_Opp(std::vector<playerTK> &Opp);	//相手集団の対戦結果をCSVクラスへ
 														//非公開メンバ
 protected:
-	Coans_GT2016(std::string str, int k = 0) {
-		Machup_Num = 0;					//対戦回数
-		Cr_Num = 1;						//クラスター番号
-		Opp_Num = 0;					//対戦回数
-		Method_Num = k;					//手法比較の時に使う
-		Cru_K = 0;						//クラスタリングパラメーター
-		Dir = str;
-	}
+
 	int Machup_Num;						//対戦回数
 	int Cr_Num;							//クラスター番号
 	int Opp_Num;						//対戦回数
@@ -380,7 +380,11 @@ void Coans_GT2016::Update_Opponent(int index)
 	}
 	/*対戦データおよびニッチ番号初期化*/
 	for (int i = 0; i < KO; i++) {
-		Opponent[i].flag = 0;		Opponent[i].eval = 0;		Opponent[i].nitch = 0;		Opponent[i].List2.clear();	}
+		Opponent[i].flag = 0;
+		Opponent[i].eval = 0;
+		Opponent[i].nitch = 0;
+		Opponent[i].List2.clear();
+	}
 	MakeList(Opponent, 0, K_List2, 0);
 }
 int Coans_GT2016::Cal_Gra_Nitch(int index)

@@ -1,7 +1,6 @@
 #pragma once
 #include "../header/coansmodule.hpp"
 #include "../header/CoansMethods.h"
-#include "../header/coans_GT2016.hpp"
 #include "../header/MatchUpMethod.h"
 #include "../header/Floreano.h"
 #include "../header/config.hpp"
@@ -23,6 +22,13 @@ DE
 void MatchUp_CSV(std::vector<int> &Count);
 void Show_Time(clock_t Start, clock_t End);
 
+/***********************************************
+PARAMETER
+Main_Mode	:モード	(0: 1: 2:提案手法の学習 3:)
+Main_Method	:提案手法
+Main_Trial	:試行回数
+Main_K		:クラスタリングパラメーター(?)
+***********************************************/
 int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	int Main_Mode;
@@ -30,8 +36,11 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	int Main_Trial;
 	int Main_K;
 	if (__argc < 3) {
-		cout << "not enough Parameter" << endl;
-		exit(1);
+		//パラメーター無しで動かす用
+		Main_Mode = 2;
+		Main_Method = 0;
+		Main_Trial = 0;
+		Main_K = 0;
 	}else if(__argc == 4) {
 		Main_Mode = atoi(__argv[1]);
 		Main_Method = atoi(__argv[2]);
@@ -87,13 +96,11 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	//現手法学習
 	else if (Main_Mode == 2) {
 		//現手法
-		/*
 		if (Main_Method == 0) {
-			Coans_GT2016 Coans_GT2016("AI", Main_K);
+			Coans_GT2016 Coans_GT2016("2016");
 			Coans_GT2016.Coans_GT2016_Tasks(Main_Trial);
 			MatchUp_Count = Coans_GT2016.Get_MatchUp_Num();
 		}
-		*/
 		//階層的クラスタリングを盛り込んだ手法
 		if (Main_Method == 1) {
 			CoansMode1 Mode1("TEST", Main_Method);

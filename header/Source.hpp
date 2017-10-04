@@ -1,44 +1,12 @@
-#pragma once
 #include "DxLib.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdlib.h>    
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <time.h>
 
-//NN
-#define I1 15//入力層
-#define J1 30//中間層
-#define I2 30//        
-#define J2 13//出力層
-
-
-//世代交代モデル
-#define KO	50			//個体数
-#define KOT 30			//対戦相手数
-#define PARENT 5		//親の数
-#define CHILD 10		//子供の数
-#define K 2				//クラスタ数
-#define KL1 3			//List1で使う変数
-#define KL2 2			//List2で使う変数
-#define KL3 10			//List3で使う変数
-#define LLL 1
-#define RIVAL 1			//対戦相手の対戦回数
-#define COUNT 0			//
-#define COUNT_T 0		//
-#define FLORET 5
-
-#define KU		2000	//世代数
-#define	PER		200		//データを取る間隔
-#define F_KU	300		//Floreano世代数
-#define TRIAL	5		//試行回数
-#define F_TRIAL	10		//試行回数
-
-//1:プレイ 2:学習 3:対戦結果
-#define DE 2
-
 //#include "stdafx.h"
-//ゲーム関係
 #pragma warning( disable:4996 )
 #define _AFX_SECURE_NO_WARNINGS
 #define PA 20
@@ -54,8 +22,33 @@
 #define RIGHT 2
 #define LEFT 0
 
-#define AICOUNT 30
-struct Player {
+
+#define I1		15	//入力層
+#define J1		30	//中間層
+#define I2		30	//        
+#define J2		13	//出力層
+#define KO		20	//個体数
+#define KOT		50	//対戦相手数
+#define KU		10	//世代数
+#define PER		1	//世代数
+#define K		2	//クラスタ数
+#define PARENT	4	//親の数
+#define CHILD	10	//子供の数
+#define LLL		1
+
+#define RIVAL 1		//対戦相手の対戦回数
+#define COUNT 0		//
+#define COUNT_T 0	//
+
+#define AICOUNT 14
+//1:プレイ 2:学習 3:対戦結果
+#define DE 2
+
+///////
+int counter = 0, FpsTime[2] = { 0, }, FpsTime_i = 0;
+double Fps = 0.0;
+char Key[256];
+struct Player {        
 	int x = 0;
 	int y = 0;
 	int attackstate = 0;
@@ -73,11 +66,6 @@ struct Player {
 	int combo = 1;
 	int fallspeed = 0;
 };
-
-///////
-int counter = 0, FpsTime[2] = { 0, }, FpsTime_i = 0;
-double Fps = 0.0;
-char Key[256];
 
 int Round = 1;
 int Start = 0;
@@ -98,6 +86,7 @@ int n_mo;
 int flag_sl[K] = { 0 };
 int flag_ss = 0;
 int flag_s = 0;
+
 
 double w1[I1][J1];//1P
 double w2[I2][J2];
@@ -215,7 +204,6 @@ void NNR1P(void);
 void NNR2P(void);
 void Floreano(void);
 void Floreano2(void);
-void FloreanoEval(void);
 void gamemode(void);
 void gmode(void);
 void n_learn(void);
@@ -224,25 +212,39 @@ double rand_normal(double mu, double sigma);
 double Uniform(void);
 void QSort(double x[], int y[], int left, int right);
 void Swap(double x[], int y[], int i, int j);
-void ALL(int mode, int oppoment, int trial);
-void ALLWatch(int mode, int trial);
+void ALL(void);
 void playeraa(void);
 
-/********************
-  ゲームモード
-********************/
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+	if (DE == 1) {
+		gamemode();
+	}
+	else if(DE == 0) {
+		gmode();
+	}
+	else if(DE == 2){
+		n_learn();
+	}
+	else {
+		ALL();
+	}
+	WaitKey();				// キー入力待ち
+	DxLib_End();				// ＤＸライブラリ使用の終了処理
+	return 0;				// ソフトの終了 
+}
 void gamemode(void) {
-  //学習結果を読み込むファイルをオープン
-	if ((file = fopen("AI/1/2/test.dat", "rb")) == NULL) {
+	if ((file = fopen("AI/test.dat", "rb")) == NULL) {
 		printf("file open error!!\n");
 		exit(EXIT_FAILURE);	/* (3)エラーの場合は通常、異常終了する */
 	}
-	if ((fp = fopen("AI/1/0/test.dat", "rb")) == NULL) {
+	if ((fp = fopen("AI/test_T.dat", "rb")) == NULL) {
 		printf("file open error!!\n");
 		exit(EXIT_FAILURE);	/* (3)エラーの場合は通常、異常終了する */
 	}
 	srand((unsigned int)time(NULL));
 	char Buf[256];
+
 	player1.x = 200;
 	player1.y = 400;
 	player2.x = 800;
@@ -250,6 +252,7 @@ void gamemode(void) {
 	int c = 0;
 	int i = 0;
 	int j = 0;
+
 
 	fread(w1, sizeof(double), I1 * J1, file);
 	fread(w2, sizeof(double), I2 * J2, file);
@@ -508,8 +511,6 @@ void gamemode(void) {
 		}
 	}
 }
-/***ゲームモードここまで****/
-/***********/
 void gmode(void) {
 
 	if ((file = fopen("gp/test.txt", "w")) == NULL) {
@@ -518,6 +519,7 @@ void gmode(void) {
 	}
 	fp = fopen("gp/test2.txt", "w");
 	srand((unsigned int)time(NULL));
+	char Buf[256];
 	player1.x = 200;
 	player1.y = 400;
 	player2.x = 800;
@@ -1139,9 +1141,6 @@ void attack(struct Player *playerO, struct Player *playerD)       {
 		break;
 	}
 }
-/*****
-描画処理？？？
-*****/
 void image(struct Player *player) {
 	if (player->attackstate == 0 && player->hitstate == 0) {
 		switch (player->movestate)
@@ -2886,10 +2885,6 @@ void Floreano2(void) {
 		}
 	}
 }
-
-/*********************
-        学習
-*********************/
 void n_learn(void) {
 	ChangeWindowMode(TRUE);
 	SetGraphMode(1200, 600, 32);
@@ -2903,6 +2898,7 @@ void n_learn(void) {
 		printf("file open error!!\n");
 		exit(EXIT_FAILURE);	/* (3)エラーの場合は通常、異常終了する */
 	}
+	char Buf[256];
 	player1.x = 200; player1.y = 400; player2.x = 800; player2.y = 400;
 	int c = 0, i = 0, j = 0, k = 0;
 	int number = 0, rival_number = 0;
@@ -2913,7 +2909,6 @@ void n_learn(void) {
 	srand((unsigned)time(NULL));
 
 	//集団初期個体
-	//KO:個体数 I1:入力層 J1:中間層 I2:中間層 J2:出力層
 	for (c = 0; c < KO; c++) {
 		for (i = 0; i < I1; i++) {
 			for (j = 0; j < J1; j++) {
@@ -2974,7 +2969,7 @@ void n_learn(void) {
 			double distance = 0;
 			double distance_a[K][KOT] = { 0 };
 			double distance_b[KOT] = { 0 };
-			//それぞれの中心とのユークリッド距離取得
+
 			for (c = 0; c < KOT; c++) {
 				for (i = 0; i < I1; i++) {
 					for (j = 0; j < J1; j++) {
@@ -3033,7 +3028,7 @@ void n_learn(void) {
 
 
 
-	//クラスタ分割(kmeans)
+	//クラスタ分割
 	double distance = 0;
 	for (k = 0; k < K; k++) {
 		for (c = 0; c < KOT; c++) {
@@ -3134,19 +3129,19 @@ void n_learn(void) {
 		OutputDebugString("\n");
 	}
 	*/
-	if ((double)wincount1 / (double)(losecount1 + wincount1) < 0.80) {//初期の学習の集団決定．勝率8割未満
+	if ((double)wincount1 / (double)(losecount1 + wincount1) < 0.80) {//初期の学習の集団決定
 		learn = 1;
 	}
 	else {
 		learn = 1;
 	}
-	//learn:1で自分？2で相手？
 	wincount1 = 0;
 	losecount1 = 0;
 	drawcount = 0;
 	while (1) {
 		while (learn == 1) {//集団の学習
 			//プログラム上の初期化
+
 			for (i = 0; i < CHILD + PARENT; i++) {
 				parent[i] = 0;
 				c_number[i] = i;
@@ -3175,7 +3170,6 @@ void n_learn(void) {
 			for (i = 0; i < I2; i++) {
 				for (j = 0; j < J1; j++) {
 					w3_g[i][j] = 0;
-
 					for (c = 0; c < CHILD + PARENT; c++) {
 						w3_c[c][i][j] = 0;
 					}
@@ -3184,6 +3178,7 @@ void n_learn(void) {
 
 			if (flag == 0) {
 				//相手集団の最良個体を選択
+				
 				for (i = 0; i < K; i++) {
 					good_rival[i] = cluster_in[i][0];
 					for (j = 0; j < cluster_in_number[i]; j++) {
@@ -3312,7 +3307,6 @@ void n_learn(void) {
 				}
 			}
 			//交叉REX
-			//w1,w2,w3　それぞれの重心と各親とのベクトルに乱数をかけて子個体の戦略へ
 			for (number = 0; number < CHILD; number++) {
 				for (i = 0; i < I1; i++) {
 					for (j = 0; j < J1; j++) {
@@ -3393,7 +3387,6 @@ void n_learn(void) {
 						}
 					}
 				}
-				//number:(子個体＋親個体)数
 				for (number = 0; number < CHILD + PARENT; number++) {//集団ループ
 					if (number >= CHILD&&win_count[parent[number - CHILD]] == 1) {
 						value_c[number] = value[parent[number - CHILD]];
@@ -3476,7 +3469,7 @@ void n_learn(void) {
 			}
 			int ccc = 0;
 			for (i = 0; i < KO; i++) {
-				ccc += int( win_count[i] );
+				ccc += win_count[i];
 			}
 			//if ((double)wincount1 / (double)(wincount1 + losecount1+drawcount) > 0.70||flag_s == 1) {
 			if (ccc >= KO / 2) {
@@ -3860,7 +3853,7 @@ void n_learn(void) {
 			//if ((par/K > 0.50)||flag_s >= K*4/aaa) {
 			int ccca = 0;
 			for (i = 0; i < KOT; i++) {
-				ccca += int(win_count_T[i]);
+				ccca += win_count_T[i];
 			}
 			if (ccca>=KOT/2) {
 				for (k = 0; k < K; k++) {
@@ -4120,12 +4113,10 @@ void n_learn(void) {
 		}
 	}
 }
-/********学習ここまで*********/
-
 void Competition(void) {
 	for (int i = 0; i < J1; i++) {
-		u2_c[i] = 0; //自集団の子個体
-		u2_c_T[i] = 0; //相手集団の子個体
+		u2_c[i] = 0;
+		u2_c_T[i] = 0;
 	}
 	player1 = playerR;
 	player2 = playerR;
@@ -4158,7 +4149,6 @@ void Competition(void) {
 		if (Start2 == 0) {
 			player1s = player1;
 			player2s = player2;
-			//おそらくニューラルネットワーク
 			NNR1P();
 			NNR2P();
 		}
@@ -4220,7 +4210,66 @@ void Swap(double x[],int y[], int i, int j)
 	y[i] = y[j];
 	y[j] = temp_n;
 }
+void ALL(void) {
+	int ai1, ai2;
+	int ai_w[AICOUNT] = { 0 }, ai_l[AICOUNT] = { 0 }, ai_d[AICOUNT] = {0};
+	int dre[AICOUNT] = { 0 };
 
+	for (ai1 = 0; ai1 < AICOUNT; ai1++) {
+		sprintf(filename, "AI/%d.dat", ai1);
+		if ((file = fopen(filename, "rb")) == NULL) {
+			printf("file open error!!\n");
+			exit(0);
+		}
+
+		fread(w1, sizeof(double), I1 * J1, file);
+		fread(w2, sizeof(double), I2 * J2, file);
+		fread(w3, sizeof(double), I2 * J1, file);
+
+	
+		fclose(file);
+
+		for (ai2 = 0; ai2 < AICOUNT; ai2++) {
+			sprintf(filename, "AI/%d.dat", ai2);
+			if ((fp = fopen(filename, "rb")) == NULL) {
+				printf("file open error!!\n");
+				exit(0);
+			}
+			fread(w1_T, sizeof(double), I1 * J1, fp);
+			fread(w2_T, sizeof(double), I2 * J2, fp);
+			fread(w3_T, sizeof(double), I2 * J1, fp);
+		
+			fclose(fp);
+
+			Competition();
+
+			if (player1.win == 1) {
+				ai_w[ai1]++;
+				//ai_l[ai2]++;
+			}
+			else if (player2.win == 1) {
+				ai_l[ai1]++;
+				//ai_w[ai2]++;
+				dre[ai1] = ai2;
+			}
+			else {
+				ai_d[ai1]++;
+				//ai_d[ai2]++;
+			}
+		}
+		char str12[128] = { 0 };
+		sprintf_s(str12, "%d", ai1);
+		OutputDebugString(str12);
+		OutputDebugString("\n");
+	}
+	for (ai1 = 0; ai1 < AICOUNT; ai1++) {
+		char str12[128] = { 0 };
+		sprintf_s(str12, "%d:%d勝,%d敗,%d引き分け:率%2f:%d",ai1,ai_w[ai1],ai_l[ai1],ai_d[ai1],(double)ai_w[ai1]/(double)(ai_w[ai1]+ ai_l[ai1]+ ai_d[ai1])*100,dre[ai1]);
+		OutputDebugString(str12);
+		OutputDebugString("\n");
+	}
+	exit(0);
+}
 void playeraa(void) {
 	//GetHitKeyStateAll(Buf);
 }

@@ -15,6 +15,13 @@
 
 #define K_List1	5	/*ニッチの集団数*/
 #define K_List2	2	/*ニッチの集団数*/
+#define TRIAL	10	/*ニッチの集団数*/
+#define KL1		2	/*ニッチの集団数*/
+
+#define F_TRIAL	10	/*ニッチの集団数*/
+#define FLORET	5	/*ニッチの集団数*/
+#define F_KU	300	/*ニッチの集団数*/
+
 
 //富田手法で使う構造体
 struct playerTK {
