@@ -21,6 +21,7 @@ DE
 ***************************/
 void MatchUp_CSV(std::vector<int> &Count);
 void Show_Time(clock_t Start, clock_t End);
+void Init_Test();
 
 /***********************************************
 PARAMETER
@@ -66,7 +67,7 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	cout << "世代数:" << KU << endl;
 	cout << "区切り:" << PER << endl;
 
-	int MatchUp_Count;
+	int MatchUp_Count=0;
 
 	clock_t Start_Main = clock();
 	//実験用対戦相手学習
@@ -123,6 +124,12 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 			MatchUp_Count = Mode4.Get_MatchUp_Num();
 		}
 	}
+	//テスト
+	else if (Main_Mode == 3) {
+		Init_Test();
+		gamemode();
+	}
+
 	clock_t End_Main = clock();
 	Show_Time(Start_Main, End_Main);
 	std::cout << "match_up num:" << MatchUp_Count << std::endl;
@@ -150,4 +157,54 @@ void MatchUp_CSV(std::vector<int> &Count) {
 		ofs << Count[i] << ',';
 	}
 	ofs << std::endl;
+}
+
+void Init_Test() {
+	double Test_W1[I1][J1];//1P
+	double Test_W2[I2][J2];
+	double Test_W3[I2][J1];
+
+	for (int i = 0; i < I1; i++) {
+		for (int j = 0; j < J1; j++) {
+			Test_W1[i][j] = GetRand_Real(10);
+		}
+	}
+	for (int i = 0; i < I2; i++) {
+		for (int j = 0; j < J2; j++) {
+			Test_W2[i][j] = GetRand_Real(10);
+		}
+	}
+	for (int i = 0; i < J1; i++) {
+		for (int j = 0; j < I2; j++) {
+			Test_W3[i][j] = GetRand_Real(10);
+		}
+	}
+
+	//AIフォルダを作る
+	std::stringstream File_Name;
+	FILE *fp_test;
+
+	File_Name << "./AI";
+	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
+
+	//ファイルオープン
+	//test.datへ書き込み
+	if ((fp_test = fopen("./AI/test.dat", "wb+")) == NULL) {
+		fprintf(stderr, "%s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	fwrite(Test_W1, sizeof(double), I1*J1, fp_test);
+	fwrite(Test_W2, sizeof(double), I2*J2, fp_test);
+	fwrite(Test_W3, sizeof(double), I2*J1, fp_test);
+	fclose(fp_test);
+
+	//test_T.datへ書き込み
+	if ((fp_test = fopen("./AI/test_T.dat", "wb+")) == NULL) {
+		fprintf(stderr, "%s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	fwrite(Test_W1, sizeof(double), I1*J1, fp_test);
+	fwrite(Test_W2, sizeof(double), I2*J2, fp_test);
+	fwrite(Test_W3, sizeof(double), I2*J1, fp_test);
+	fclose(fp_test);
 }

@@ -534,8 +534,7 @@ void Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 		Opponent[i].Init();
 		Opponent[i].Init_w();
 	}
-
-	Make_Directory(Dir, Method_Num, Trial, KU, PER, Cru_K);
+	Make_Directory_GT2016(Trial, KU, PER);
 	CsvModules Csv1(Method_Num);
 	Csv1.Init(Method_Num, Trial, KU, PER, Cru_K);
 	Cr_Pop.resize(KO);
@@ -620,7 +619,7 @@ void Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 				for (int c = 0; c < CHILD + 1; c++) {//集団ループ
 					StrategySet_M(Child[c]);
 					Machup_Num++;
-					Competition();//対戦 player1 = 子個体 palyer2 = 対戦相手？
+					//Competition();//対戦 player1 = 子個体 palyer2 = 対戦相手？
 					Opponent[r].Result[c] = (player2.hp - player1.hp) / 300;
 					Child[c].Result[r] = (player1.hp - player2.hp) / 300;
 				}
@@ -634,6 +633,7 @@ void Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 			std::cout << "7" << ',';
 			//Best個体を集団へ
 			int Index = Choice_Best_Index(Child, false);
+			Index = 3;
 			//Best → Child[Index];
 
 			std::cout << "8" << ',';
@@ -650,6 +650,7 @@ void Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 					Opponent[k].comp_flag = 1;
 					Opponent[k].delete_flag = 0;
 				}if (k == KO) {
+					std::cout << "8-1" << ',';
 					Update_Opponent(Index);
 				}
 			}
@@ -736,26 +737,30 @@ int Coans_GT2016::Get_MatchUp_Num() {
 }
 void Coans_GT2016::File_Write_Pop(int trial, int gene, bool s1)
 {
+	double w1_Main[KO][I1][J1];//集団
+	double w2_Main[KO][I2][J2];
+	double w3_Main[KO][I2][J1];
+
 	//様式を合わせる
 	for (int i = 0; i < KO; i++) {
 		for (int j = 0; j < I1; j++) {
 			for (int k = 0; k < J1; k++) {
-				w1_GA[i][j][k] = Pop[i].w1_CO[j][k];
+				w1_Main[i][j][k] = Pop[i].w1_CO[j][k];
 			}
 		}
 		for (int j = 0; j < I2; j++) {
 			for (int k = 0; k < J2; k++) {
-				w2_GA[i][j][k] = Pop[i].w2_CO[j][k];
+				w2_Main[i][j][k] = Pop[i].w2_CO[j][k];
 			}
 		}
 		for (int j = 0; j < J1; j++) {
 			for (int k = 0; k < I2; k++) {
-				w3_GA[i][j][k] = Pop[i].w3_CO[j][k];
+				w3_Main[i][j][k] = Pop[i].w3_CO[j][k];
 			}
 		}
 	}
 	//bef = trueの時AI，falseの時AIC
-	char filename[50];
+	FILE *fp_main;
 	std::stringstream File_Name;
 	std::stringstream Tmp_File_Name;
 
@@ -764,22 +769,19 @@ void Coans_GT2016::File_Write_Pop(int trial, int gene, bool s1)
 
 	for (int i = 0; i < KO; i++) {
 		Tmp_File_Name << File_Name.str() << "/" << i << ".dat";
-		//ファイルオープン
-		std::ofstream writing_file;
-		writing_file.open(Tmp_File_Name.str().c_str(), std::ios::out);
-		//ファイルがなければ新規で作る
-		if (writing_file.fail()) {
-			std::cout << "FileOpen Failer" << std::endl;
+		//ファイル書き込み
+		if ((fp_main = fopen(Tmp_File_Name.str().c_str(), "wb+")) == NULL) {
+			fprintf(stderr, "%s\n", strerror(errno));
+			exit(EXIT_FAILURE);
 		}
-		if (writing_file.is_open()) {
-			//書き込み
-			writing_file << w1_GA[i] << std::endl;
-			writing_file << w2_GA[i] << std::endl;
-			writing_file << w2_GA[i] << std::endl;
-		}
+		fwrite(w1_Main[i], sizeof(double), I1*J1, fp_main);
+		fwrite(w2_Main[i], sizeof(double), I2*J2, fp_main);
+		fwrite(w3_Main[i], sizeof(double), I2*J1, fp_main);
+
 		//クリア
 		Tmp_File_Name.str("");
 		Tmp_File_Name.clear(std::stringstream::goodbit);
+		fclose(fp_main);
 	}
 }
 
@@ -870,10 +872,13 @@ int Coans_GT2016::Cal_Gra_Nitch(int index)
 	Sum_N_W2 = std::vector<std::vector<std::vector<double>>>(Cr_Num, std::vector<std::vector<double>>(I2, std::vector<double>(J2, 0)));
 	Sum_N_W3 = std::vector<std::vector<std::vector<double>>>(Cr_Num, std::vector<std::vector<double>>(J1, std::vector<double>(I2, 0)));
 
+	std::cout << "8-1-1" << ',';
+	assert(0 < Cr_Num);
 	for (int Opp = 0; Opp < KO; Opp++) {
 		//親の解のそれぞれのベクトルを足す
 		//w1_CO
 		int Opp_Nitch = Opponent[Opp].nitch;
+		assert(Opp_Nitch <= Cr_Num);
 		for (int j = 0; j < I1; j++) {
 			for (int k = 0; k < J1; k++) {
 				Sum_N_W1[Opp_Nitch][j][k] += Opponent[Opp].w1_CO[j][k];
@@ -893,6 +898,7 @@ int Coans_GT2016::Cal_Gra_Nitch(int index)
 		}
 		Nitch_Num[Opp_Nitch]++;
 	}
+	std::cout << "8-1-2" << ',';
 	//ベクトルの重心を求める
 	//w1_CO
 	for (int Nit = 1; Nit < Cr_Num; Nit++) {
@@ -914,6 +920,7 @@ int Coans_GT2016::Cal_Gra_Nitch(int index)
 			}
 		}
 	}
+	std::cout << "8-1-3" << ',';
 	//重心と子個体の距離計算
 	double cal_sum = 0;
 	std::vector<double> Dis_Vector(Cr_Num);
@@ -938,6 +945,7 @@ int Coans_GT2016::Cal_Gra_Nitch(int index)
 		}
 		Dis_Vector[Nit] = sqrt(Dis_Vector[Nit]);
 	}
+	std::cout << "8-1-4" << ',';
 	auto min = min_element(Dis_Vector.begin()+1, Dis_Vector.end());
 	auto min_Nit = int(distance(Dis_Vector.begin(), min));
 	return min_Nit;

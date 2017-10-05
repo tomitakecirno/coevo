@@ -27,13 +27,13 @@
 #define J1		30	//中間層
 #define I2		30	//        
 #define J2		13	//出力層
-#define KO		20	//個体数
+#define KO		50	//個体数
 #define KOT		50	//対戦相手数
-#define KU		10	//世代数
-#define PER		1	//世代数
+#define KU		2000	//世代数
+#define PER		200	//世代数
 #define K		2	//クラスタ数
 #define PARENT	4	//親の数
-#define CHILD	10	//子供の数
+#define CHILD	20	//子供の数
 #define LLL		1
 
 #define RIVAL 1		//対戦相手の対戦回数

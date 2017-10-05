@@ -71,6 +71,23 @@ void Make_Directory_AIT(int method, int trial) {
 	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
 }
 
+void Make_Directory_GT2016(int trial, int gene, int per) {
+	std::stringstream File_Name;
+	std::stringstream Tmp_File_Name;
+
+	File_Name << "./2016";
+	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
+	File_Name << "/" << trial;
+	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
+
+	for (int g = 0; g < gene / per + 1; g++) {
+		Tmp_File_Name << File_Name.str() << "/" << g;
+		CheckTheFolder::checkExistenceOfFolder(Tmp_File_Name.str());
+		Tmp_File_Name.str("");
+		Tmp_File_Name.clear(std::stringstream::goodbit);
+	}
+}
+
 void Make_CSV_Directory(int method) {
 	std::stringstream File_Name;
 	std::stringstream Tmp_File_Name;
