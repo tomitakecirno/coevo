@@ -47,6 +47,7 @@ void CsvModules::Init(int method, int Trial, int Gene, int Per, int k) {
 
 	Cr_P.resize( (Csv_Gene / Csv_Per) + 1);
 	Re_P.resize( (Csv_Gene / Csv_Per) + 1);
+	std::cout << "Csv Initialized..." << std::endl;
 }
 //世代毎のクラスタ番号を格納
 void CsvModules::SetCsv_Cr_P(std::vector<int> &Vector_Cruster) {
@@ -107,3 +108,107 @@ void CsvModules::Fwrite_Re_P(){
 		ofs << std::endl;
 	}
 }
+
+class CsvModules_Intend {
+public:
+	void Create_Data(int method, int n, int trial, int gene, int per);
+protected:
+	int Method_Num;
+	int Gene;
+	int Method_KO;
+	int Method_Trial;
+	int Per;
+	std::string Dir;
+	std::vector<std::vector<std::vector<double>>> Input;
+	std::vector<std::vector<double>> Out_Ave;
+	std::vector<std::vector<double>> Out_Max;
+	std::vector<std::vector<double>> Out_Min;
+	bool GetContents(std::string filename, std::vector<std::vector<double>>& table);
+	//void Correct(std::vector<std::vector<double>>& table, std::vector<std::vector<double>> &input);
+};
+
+void CsvModules_Intend::Create_Data(int method, int n, int trial, int gene, int per) {
+	//世代数と個体の情報を記録するベクター
+	Method_Num = method;
+	Method_KO = n;
+	Method_Trial = trial;
+	Gene = gene;
+	Per = per;
+	Input = std::vector<std::vector<std::vector<double>>>(10, std::vector<std::vector<double>>(Gene/Per + 1, std::vector<double>(n, 0)));
+
+	char fname[50];
+	std::stringstream Tmp_FileName;
+	Tmp_FileName << "./csv/PopResult/" << Method_Num << "/";
+	for (int Opp = 0; Opp < 1; Opp++) {
+		for (int i = 0; i < Gene / Per + 1; i++) {
+			std::stringstream FileName;
+			std::vector<std::vector<double>> Tmp_Table;
+
+			//ファイル名設定
+			FileName << Tmp_FileName.str() << "PopResult_" << trial << "_" << Opp << ".csv";
+			if ( !GetContents(FileName.str(),Tmp_Table) ) {
+				std::cout << "file open error! " << FileName.str() << std::endl;
+			}
+
+			//Correct(Tmp_Table, Input[Opp]);
+			FileName.str("");
+			FileName.clear(std::stringstream::goodbit);
+
+		}
+	}
+}
+
+bool CsvModules_Intend::GetContents(std::string filename, std::vector<std::vector<double>>& table)
+{
+	// ファイルを開く
+	std::ifstream ifs(filename);
+	if (!ifs.is_open())
+	{
+		// ファイルが開けなかった場合は終了する
+		return false;
+	}
+
+	char delimiter = ',';
+	while (!ifs.eof()) {
+		// １行読み込む
+		std::string buffer;
+		ifs >> buffer;
+
+		std::vector<double> record;
+		std::stringstream streambuffer(buffer);
+		std::string token;
+		while (getline(streambuffer, token, delimiter))
+		{
+			record.push_back(atoi(token.c_str()));
+		}
+		table.push_back(record);
+	}
+	for (int i = 0; i < table.size(); i++) {
+		std::cout << i << ":[";
+		for (int j = 0; j < table[i].size(); j++) {
+			std::cout << table[i][j] << ",";
+		}
+		std::cout << "]" << std::endl;
+	}
+	return true;
+}
+/*
+void CsvModules_Intend::Correct(std::vector<std::vector<double>>& table, std::vector<std::vector<double>> &input) {
+	//check
+
+	int Table_Lengh_Y = int(table.size());
+	int input_Lengh_Y = int(input.size());
+	assert(Table_Lengh_Y == Gene/Per + 1);
+	assert(input_Lengh_Y == Gene/Per);
+	for (int i = 0; i < Table_Lengh_Y; i++) {
+		int Table_Lengh_X = int(table[i].size());
+		int input_Lengh_X = int(input[i].size());
+
+		assert(Table_Lengh_X == KO + 1);
+		assert(input_Lengh_X == KO);
+		for (int j = 1; j < Table_Lengh_X; j++) {
+			input[i - 2][j - 1] = atoi( table[i][j].c_str() );
+		}
+	}
+}
+*/

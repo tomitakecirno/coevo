@@ -69,7 +69,7 @@ void MakeList(std::vector<playerTK> &pop, int Para_KL1, int Para_KL2, int Para_K
 				DisSaveList1[i][j] = 100000;
 		}
 	}
-	std::cout << "1-1-1" << ',';
+	//std::cout << "1-1-1" << ',';
 	//一旦移しておく
 	DisSaveList2 = DisSaveList1;
 	DisSaveList3 = DisSaveList1;
@@ -103,7 +103,7 @@ void MakeList(std::vector<playerTK> &pop, int Para_KL1, int Para_KL2, int Para_K
 			}
 		}
 	}
-	std::cout << "1-1-2" << ',';
+	//std::cout << "1-1-2" << ',';
 	//AnsList1
 	if(Para_KL1){
 		AnsList1(IndexSaveList1, pop);
@@ -114,7 +114,7 @@ void MakeList(std::vector<playerTK> &pop, int Para_KL1, int Para_KL2, int Para_K
 	if (Para_KL3) {
 		AnsList3(IndexSaveList3, pop);
 	}
-	std::cout << "1-1-3" << ',';
+	//std::cout << "1-1-3" << ',';
 }
 
 
@@ -227,8 +227,6 @@ int SetNitch(int nitch_number, int kotai, std::vector<playerTK> &pop)
 //拡散ELM.w1,w2,w3それぞれ分けて生成する.
 void ExtensionXLM(int MainPare, std::vector<int> &SubPare, std::vector<playerTK> &pop, std::vector<playerTK> &child)
 {
-	using namespace std;
-
 	double sum_n_w1[I1][J1] = { 0 };
 	double sum_n_w2[I2][J2] = { 0 };
 	double sum_n_w3[J1][I2] = { 0 };
@@ -283,9 +281,9 @@ void ExtensionXLM(int MainPare, std::vector<int> &SubPare, std::vector<playerTK>
 	}
 
 	//重心から親に対するベクトルを求める
-	double vector_w1[PARENT][I1][J1];
-	double vector_w2[PARENT][I2][J2];
-	double vector_w3[PARENT][J1][I2];
+	double vector_w1[PARENT][I1][J1] = { 0 };
+	double vector_w2[PARENT][I2][J2] = { 0 };
+	double vector_w3[PARENT][J1][I2] = { 0 };
 	for (int i = 0; i<SubPareLength; i++) {
 		//w1_CO
 		for (int j = 0; j < I1; j++) {
@@ -306,6 +304,7 @@ void ExtensionXLM(int MainPare, std::vector<int> &SubPare, std::vector<playerTK>
 			}
 		}
 	}
+
 	//子個体の戦略生成
 	double coe_w1;
 	double coe_w2;
@@ -338,6 +337,7 @@ void ExtensionXLM(int MainPare, std::vector<int> &SubPare, std::vector<playerTK>
 			}
 		}
 	}
+
 }
 
 //対戦相手を選ぶ

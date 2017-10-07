@@ -6,7 +6,37 @@
 
 class Match {
 public:
-	void Init_Parameter(int Method_P, int Method_O, int Pop_N, int Opp_N, int Gene_N, int Per_N, int Cru = 0);
+	Match(std::string dir, int Method_P, int Method_O, int Pop_N, int Opp_N, int Gene_N, int Per_N, int Cru = 0) {
+		Dir = dir;
+		Gene = Gene_N + 1;	//世代数
+		Per = Per_N;
+		Loop_Length = (Gene_N / Per_N) + 1;
+		Cru_K = Cru;
+
+		Pop_Method = Method_P;
+		Opp_Method = Method_O;
+
+		Pop_Length = Pop_N;
+		Opp_Length = Opp_N;
+		//自プレイヤーの初期化
+		Pop_Result.resize(Pop_Length); //メンバー数
+		for (int i = 0; i < Pop_Length; i++) {
+			Pop_Result[i].resize(Loop_Length); //世代数
+			for (int j = 0; j < Loop_Length; j++) {
+				Pop_Result[i][j].resize(Opp_Length); //対戦相手数
+			}
+		}
+		//相手プレイヤーの初期化
+		Opp_Result.resize(Opp_Length);
+		for (int i = 0; i < Opp_Length; i++) {
+			Opp_Result[i].resize(Pop_Length); //対戦相手数
+		}
+		//Csvファイル出力用ベクターの初期化
+		ToCsv_Data.resize(Loop_Length);
+		for (int i = 0; i < Loop_Length; i++) {
+			ToCsv_Data[i].resize(Pop_Length); //対戦相手数
+		}
+	}
 	void Match_And_SetDATA(int Pop_Trial, int Opp_Trial);
 	void File_Write_CSV(int Pop_trial, int Opp_trial);
 	void Decide_Best(int Pop_Trial);
@@ -19,6 +49,7 @@ private:
 	int Pop_Method;	//世代数
 	int Opp_Method;
 	int	Cru_K;
+	std::string Dir;
 	std::vector<std::vector<std::vector<double> > > Pop_Result;
 	std::vector<std::vector<double> > Opp_Result;
 	std::vector<std::vector<double> > ToCsv_Data;
@@ -27,49 +58,18 @@ protected:
 	void PvP(int Pop_Trial, int Opp_Trial, int Gene);
 };
 
-void Match::Init_Parameter(int Method_P, int Method_O, int Pop_N, int Opp_N, int Gene_N, int Per_N, int Cru) {
-	Gene = Gene_N+1;	//世代数
-	Per = Per_N;
-	Loop_Length = (Gene_N / Per_N) + 1;
-	Cru_K = Cru;
-
-	Pop_Method = Method_P;
-	Opp_Method = Method_O;
-
-	Pop_Length = Pop_N;
-	Opp_Length = Opp_N;
-
-	//自プレイヤーの初期化
-	Pop_Result.resize(Pop_Length); //メンバー数
-	for (int i = 0; i < Pop_Length; i++) {
-		Pop_Result[i].resize(Loop_Length); //世代数
-		for (int j = 0; j < Loop_Length; j++) {
-			Pop_Result[i][j].resize(Opp_Length); //対戦相手数
-		}
-	}
-	//相手プレイヤーの初期化
-	Opp_Result.resize(Opp_Length);
-	for (int i = 0; i < Opp_Length; i++) {
-		Opp_Result[i].resize(Pop_Length); //対戦相手数
-	}
-	//Csvファイル出力用ベクターの初期化
-	ToCsv_Data.resize(Loop_Length);
-	for (int i = 0; i < Loop_Length; i++) {
-		ToCsv_Data[i].resize(Pop_Length); //対戦相手数
-	}
-}
 //自プレイヤーと相手プレイヤーを戦わせる
 void Match::PvP(int Pop_Trial, int Opp_Trial, int Gene) {
 	for (int AI_Pop = 0; AI_Pop < Pop_Length; AI_Pop++) {
 		//cout << ai1 << " ";
 		char filename[50];
-		if (Pop_Method == 0) {
-			sprintf_s(filename, ("AI/%d/%d/%d/%d.dat"), Pop_Method, Pop_Trial, Gene, AI_Pop);
-		}else if (0 < Pop_Method) {
-			sprintf_s(filename, ("AI/%d/%d/%d/%d/%d.dat"), Pop_Method, Pop_Trial, Cru_K, Gene, AI_Pop);
+		if (Cru_K == 0) {
+			sprintf_s(filename, ("%s/%d/%d/%d/%d.dat"), Dir.c_str(),Pop_Method, Pop_Trial, Gene, AI_Pop);
+		}else if (0 < Cru_K) {
+			sprintf_s(filename, ("%s/%d/%d/%d/%d/%d.dat"), Dir.c_str(),Pop_Method, Pop_Trial, Cru_K, Gene, AI_Pop);
 		}
 		if ((file = fopen(filename, "rb")) == NULL) {
-			printf("file open error!!\n");
+			printf("Main file open error!!\n");
 			exit(0);
 		}
 		else {
@@ -110,9 +110,10 @@ void Match::PvP(int Pop_Trial, int Opp_Trial, int Gene) {
 			else {
 				Pop_Result[AI_Pop][Gene][AI_Opp] = 0;
 			}
-			std::cout << Pop_Result[AI_Pop][Gene][AI_Opp] << std::endl;
+			std::cout << Pop_Result[AI_Pop][Gene][AI_Opp];
 		}
 	}
+	std::cout << std::endl;
 
 }
 //集団内全数対戦
@@ -124,11 +125,11 @@ void Match::Decide_Best(int Pop_Trial) {
 	for (int AI_Pop = 0; AI_Pop < Pop_Length; AI_Pop++) {
 		//cout << ai1 << " ";
 		char filename[50];
-		if (Pop_Method == 0) {
-			sprintf_s(filename, ("AI/%d/%d/%d/%d.dat"), Pop_Method, Pop_Trial, Gene, AI_Pop);
+		if (Cru_K == 0) {
+			sprintf_s(filename, ("%s/%d/%d/%d/%d.dat"), Dir.c_str(), Pop_Method, Pop_Trial, Gene, AI_Pop);
 		}
-		else if (0 < Pop_Method) {
-			sprintf_s(filename, ("AI/%d/%d/%d/%d/%d.dat"), Pop_Method, Pop_Trial, Cru_K, Gene, AI_Pop);
+		else if (0 < Cru_K) {
+			sprintf_s(filename, ("%s/%d/%d/%d/%d/%d.dat"), Dir.c_str(), Pop_Method, Pop_Trial, Cru_K, Gene, AI_Pop);
 		}
 		if ((file = fopen(filename, "rb")) == NULL) {
 			printf("file open error_1!!\n");
@@ -153,11 +154,11 @@ void Match::Decide_Best(int Pop_Trial) {
 
 		//対戦相手
 		for (int AI_Pop_2 = AI_Pop; AI_Pop_2 < Pop_Length; AI_Pop_2++) {
-			if (Pop_Method == 0) {
-				sprintf_s(filename, ("AI/%d/%d/%d/%d.dat"), Pop_Method, Pop_Trial, Gene, AI_Pop_2);
+			if (Cru_K == 0) {
+				sprintf_s(filename, ("%s/%d/%d/%d/%d.dat"), Dir.c_str(), Pop_Method, Pop_Trial, Gene, AI_Pop);
 			}
-			else if (0 < Pop_Method) {
-				sprintf_s(filename, ("AI/%d/%d/%d/%d/%d.dat"), Pop_Method, Pop_Trial, Cru_K, Gene, AI_Pop_2);
+			else if (0 < Cru_K) {
+				sprintf_s(filename, ("%s/%d/%d/%d/%d/%d.dat"), Dir.c_str(), Pop_Method, Pop_Trial, Cru_K, Gene, AI_Pop);
 			}
 			if ((file = fopen(filename, "rb")) == NULL) {
 				printf("file open error_2!!\n");
@@ -255,9 +256,9 @@ void Match::Set_CsvData(int g) {
 }
 void Match::File_Write_CSV(int Pop_trial, int Opp_trial) {
 	char fname[50];
-	if (Pop_Method == 0) {
+	if (Cru_K == 0) {
 		sprintf(fname, "./csv/PopResult/%d/PopResult_%d_%d.csv", Pop_Method, Pop_trial, Opp_trial);
-	}if (0 < Pop_Method) {
+	}if (0 < Cru_K) {
 		sprintf(fname, "./csv/PopResult/%d/PopResult_%d_%d_%d.csv", Pop_Method, Cru_K, Pop_trial, Opp_trial);
 	}
 	//ファイル出力ストリーム

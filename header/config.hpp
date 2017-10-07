@@ -46,6 +46,7 @@ struct playerTK {
 	int hp = 300;
 	int combo = 1;
 	int fallspeed = 0;
+	int win;
 	double eval;
 	int nitch;
 	std::vector<double> Result; //‘ÎíŒ‹‰Ê

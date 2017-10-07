@@ -33,13 +33,19 @@ Main_K		:クラスタリングパラメーター(?)
 int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	int Main_Mode;
-	int Main_Method;
 	int Main_Trial;
 	int Main_K;
+	int	Main_Method;
+
+	/*
+		argv[1]:Method
+		argv[2]:Trial
+		argv[3]:k
+	*/
 	if (__argc < 3) {
 		//パラメーター無しで動かす用
-		Main_Mode = 2;
-		Main_Method = 0;
+		Main_Mode = 3;
+		Main_Method = 2;
 		Main_Trial = 0;
 		Main_K = 0;
 	}else if(__argc == 4) {
@@ -55,17 +61,12 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		Main_K = atoi(__argv[4]);
 	}
 
-	/*	
-		argv[1]:Method
-		argv[2]:Trial
-		argv[3]:k
-	*/
-	cout << "モード:" << Main_Mode << endl;
-	cout << "手法:" << Main_Method << endl;
-	cout << "試行回数:" << Main_Trial << endl;
-	cout << "クラスタ数:" << Main_K << endl;
-	cout << "世代数:" << KU << endl;
-	cout << "区切り:" << PER << endl;
+	std::cout << "Mode:" << Main_Mode << std::endl;
+	std::cout << "手法:" << Main_Method << std::endl;
+	std::cout << "試行回数:" << Main_Trial << std::endl;
+	std::cout << "クラスタ数:" << Main_K << std::endl;
+	std::cout << "世代数:" << KU << std::endl;
+	std::cout << "区切り:" << PER << std::endl;
 
 	int MatchUp_Count=0;
 
@@ -81,9 +82,8 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	}
 	//学習で記録したデータをもとに実際に対戦
 	else if (Main_Mode == 1) {
-		Match Match_0;
+		Match Match_0("AI", Main_Method, 0, KO, KOT, KU, PER, Main_K);
 		Make_CSV_Directory(Main_Method);
-		Match_0.Init_Parameter(Main_Method, 0, 50, 30, KU, PER, Main_K);
 
 		for (int Opp_t = 0; Opp_t < F_TRIAL; Opp_t++) {
 			//現手法vsFloreano 世代数:2000(100世代間隔) 現手法集団50 Floreano集団30
@@ -104,28 +104,33 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		}
 		//階層的クラスタリングを盛り込んだ手法
 		if (Main_Method == 1) {
-			CoansMode1 Mode1("TEST", Main_Method);
+			CoansMode1 Mode1("AI");
 			Mode1.Coans_Tasks(Main_Trial);
 			MatchUp_Count = Mode1.Get_MatchUp_Num();
 		}
 		//階層的クラスタリング＋List3
 		else if (Main_Method == 2) {
-			CoansMode2 Mode2("AI", Main_K);
+			CoansMode2 Mode2("AI");
 			Mode2.Coans_Tasks(Main_Trial);
 			MatchUp_Count = Mode2.Get_MatchUp_Num();
 		}else if (Main_Method == 3) {
-			CoansMode3 Mode3("AI", Main_K);
+			CoansMode3 Mode3("AI");
 			Mode3.Coans_Tasks(Main_Trial);
 			MatchUp_Count = Mode3.Get_MatchUp_Num();
 		}
 		else if (Main_Method == 4) {
-			CoansMode4 Mode4("AI", Main_Method);
+			CoansMode4 Mode4("AI");
 			Mode4.Coans_Tasks(Main_Trial);
 			MatchUp_Count = Mode4.Get_MatchUp_Num();
 		}
 	}
-	//テスト
+	//csv統合
 	else if (Main_Mode == 3) {
+		CsvModules_Intend Method;
+		Method.Create_Data(Main_Method, KO, Main_Trial, KU, PER);
+	}
+	//テスト
+	else if (Main_Mode == 4) {
 		Init_Test();
 		gamemode();
 	}

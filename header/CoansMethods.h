@@ -56,8 +56,6 @@ protected:
 };
 void Coans::Coans_Tasks(int Trial)
 {
-	std::cout << "Initiarize" << std::endl;
-
 	//集団宣言
 	Pop.resize(KO);
 	init_genrand((unsigned)time(NULL)); /*乱数初期化*/
@@ -80,8 +78,9 @@ void Coans::Coans_Tasks(int Trial)
 	int Loop_Time_Start;
 	int Loop_Time_End;
 	int Loop_Time;
-	Crustering();
-	exit(0);
+	//Crustering();
+
+	std::cout << "Initiarized..." << std::endl;
 	for (int Gene_Loop = 1; Gene_Loop < KU+1; Gene_Loop++) {
 		Loop_Time_Start = clock();
 		std::cout << Method_Num << ":" << Trial << ":" << Cru_K << ":" << Gene_Loop;
@@ -106,7 +105,7 @@ void Coans::Coans_Tasks(int Trial)
 		//主親選ぶ
 		MainParent = GetRand_Int(KO);
 		//副親を選ぶ
-		for (int i = 0; i < KL1; i++) {
+		for (int i = 0; i < PARENT; i++) {
 			if (Pop[MainParent].List1.empty()) {
 				break;
 			}
@@ -124,6 +123,29 @@ void Coans::Coans_Tasks(int Trial)
 			//拡張XLM
 			Child[0] = Pop[MainParent];
 			ExtensionXLM(MainParent, SubParent, Pop, Child);
+			/*
+			std::vector<std::vector<double> > Child_Dis(CHILD + 1);
+			for (int i = 0; i < CHILD + 1; i++) {
+				Child_Dis[i].resize(CHILD);
+			}
+			for (int i = 0; i < CHILD+1; i++) {
+				for (int j = i+1; j < CHILD; j++) {
+					Child_Dis[i][j] = cal_kotai_distance(Child[i],Child[j]);
+					Child_Dis[j][i] = Child_Dis[i][j];
+				}
+			}
+			std::cout << std::endl;
+			for (int i = 0; i < CHILD + 1; i++) {
+				std::cout << i << ":[";
+				for (int j = 0; j < CHILD; j++) {
+					std::cout << Child_Dis[i][j] << ',';
+				}
+				std::cout << ']';
+				std::cout << std::endl;
+			}
+
+			exit(0);
+			*/
 			//対戦相手の個体を選ぶ
 			std::cout << "4" << ',';
 			Generate_Opp();
@@ -248,10 +270,10 @@ void Coans::File_Write_Pop(int trial, int gene, bool s1)
 	//bef = trueの時AI，falseの時AIC
 	char filename[50];
 	for (int i = 0; i < KO; i++) {
-		if (Method_Num == 0) {
+		if (Cru_K == 0) {
 			sprintf(filename, ("AI/%d/%d/%d/%d.dat"), Method_Num, trial, gene, i);
 		}
-		else if (0 < Method_Num) {
+		else if (0 < Cru_K) {
 			sprintf(filename, ("AI/%d/%d/%d/%d/%d.dat"), Method_Num, trial, Cru_K, gene, i);
 		}
 		if ((fp = fopen(filename, "wb+")) == NULL) {
@@ -272,6 +294,7 @@ void Coans::File_Write_Pop(int trial, int gene, bool s1)
 		fwrite(w3_GA[i], sizeof(double), I2*J1, fp);
 		fclose(fp);
 	}
+	std::cout << "0 Generation written..." << std::endl;
 }
 
 /*
@@ -281,10 +304,9 @@ void Coans::File_Write_Pop(int trial, int gene, bool s1)
 */
 class CoansMode1 : public Coans {
 public:
-	CoansMode1(std::string str, int k = 0) {
+	CoansMode1(std::string str) {
 		Method_Num = 1;
 		Dir = str;
-		Cru_K = k;
 	}
 private:
 	//クラスタリングに使うパラメーター
@@ -327,18 +349,16 @@ void CoansMode1::Cal_Fitness() {
 
 /*
 	mode2
-	対戦相手を各クラスタからの個体に限定
-	評価は勝ち負けの数
-	評価値に補正を加える
-	クラスタリングに階層的な手法を導入
-	リストを3にしてみる
+	交叉	：List1
+	対戦相手：各クラスタの代表
+	適応度	：自分と相手のHPの差分
 */
 class CoansMode2 : public Coans {
 public:
-	CoansMode2(std::string str, int k = 0) {
+	CoansMode2(std::string str) {
 		Method_Num = 2;
 		Dir = str;
-		Cru_K = k;
+		Cru_K = 0;
 	}
 private:
 	//クラスタリングに使うパラメーター
@@ -349,28 +369,21 @@ private:
 };
 void CoansMode2::Crustering() {
 	//近傍リスト生成
-	MakeList(Pop, false, false, true);
-	//クラスタ番号割り振り
-	Cru_Upgma(Pop, Cru_K);
-	Cr_Num = Cru_K;
+	MakeList(Pop, K_List1, K_List2, 0);
+	Cr_Num = 1;
+	for (int i = 0; i < KO; i++) {
+		if (SetNitch(Cr_Num, i, Pop) == 1) {
+			Cr_Num++;
+		}
+	}
 }
 void CoansMode2::Generate_Opp() {
-	choice_oppoment(Pop, Opponent, Cru_K);
-	Opp_Num = Cru_K;
+	choice_oppoment(Pop, Opponent, Cr_Num);
+	Opp_Num = Cr_Num;
 }
 void CoansMode2::Return_Re(int Child_Num, int Opp_Num) {
-	if (player1.win == 1) {
-		Opponent[Opp_Num].Result[Child_Num] = 0;
-		Child[Child_Num].Result[Opp_Num] = 1;
-	}
-	else if (player2.win == 1) {
-		Opponent[Opp_Num].Result[Child_Num] = 1;
-		Child[Child_Num].Result[Opp_Num] = 0;
-	}
-	else {
-		Opponent[Opp_Num].Result[Child_Num] = 0;
-		Child[Child_Num].Result[Opp_Num] = 0;
-	}
+	Opponent[Opp_Num].Result[Child_Num] = player2.hp - player1.hp;
+	Child[Child_Num].Result[Opp_Num] = player1.hp - player2.hp;
 }
 void CoansMode2::Cal_Fitness() {
 	int Length = int(Child.size());
@@ -381,17 +394,16 @@ void CoansMode2::Cal_Fitness() {
 
 /*
 	mode3
-	交叉:List1
-	対戦相手は自集団全体
-	評価はHPの差分
-	対戦結果を使って評価値に補正を加えている
+	交叉	：List1
+	対戦相手：集団全体
+	適応度	：自分と相手のHPの差分
 */
 class CoansMode3 : public Coans {
 public:
-	CoansMode3(std::string str, int k = 0) {
+	CoansMode3(std::string str) {
 		Method_Num = 3;
 		Dir = str;
-		Cru_K = k;
+		Cru_K = 0;
 	}
 private:
 	virtual void Crustering();
@@ -401,7 +413,7 @@ private:
 };
 void CoansMode3::Crustering() {
 	//近傍リスト生成＆クラスタ番号割り振り
-	MakeList(Pop, true, true, false);
+	MakeList(Pop, K_List1, K_List2, 0);
 	Cr_Num = 1;
 	for (int i = 0; i < KO; i++) {
 		if (SetNitch(Cr_Num, i, Pop) == 1) {
@@ -425,17 +437,16 @@ void CoansMode3::Cal_Fitness() {
 
 /*
 	mode4
-	交叉:List1
-	対戦相手は自集団全体
-	HPの差を適応度とする
-	適応度に補正をかける
+	交叉	：List1
+	対戦相手：集団全体
+	適応度	：自分と相手のHPの差分＋適応度に追加補正
 */
 class CoansMode4 : public Coans {
 public:
-	CoansMode4(std::string str, int k = 0) {
+	CoansMode4(std::string str) {
 		Method_Num = 4;
 		Dir = str;
-		Cru_K = k;
+		Cru_K = 0;
 	}
 private:
 	virtual void Set_Method();
@@ -446,7 +457,7 @@ private:
 };
 void CoansMode4::Crustering() {
 	//近傍リスト生成＆クラスタ番号割り振り
-	MakeList(Pop, true, true, false);
+	MakeList(Pop, K_List1, K_List2, 0);
 	Cr_Num = 1;
 	for (int i = 0; i < KO; i++) {
 		if (SetNitch(Cr_Num, i, Pop) == 1) {
@@ -461,8 +472,8 @@ void CoansMode4::Generate_Opp() {
 	Opponent = Pop;
 }
 void CoansMode4::Return_Re(int Child_Num, int Opp_Num) {
-	Opponent[Opp_Num].Result[Child_Num] = (player2.hp - player1.hp) / 300;
-	Child[Child_Num].Result[Opp_Num] = (player1.hp - player2.hp) / 300;
+	Opponent[Opp_Num].Result[Child_Num] = (player2.hp - player1.hp)/300;
+	Child[Child_Num].Result[Opp_Num] = (player1.hp - player2.hp)/300;
 }
 void CoansMode4::Cal_Fitness() {
 	int Length = int(Child.size());
@@ -872,13 +883,13 @@ int Coans_GT2016::Cal_Gra_Nitch(int index)
 	Sum_N_W2 = std::vector<std::vector<std::vector<double>>>(Cr_Num, std::vector<std::vector<double>>(I2, std::vector<double>(J2, 0)));
 	Sum_N_W3 = std::vector<std::vector<std::vector<double>>>(Cr_Num, std::vector<std::vector<double>>(J1, std::vector<double>(I2, 0)));
 
-	std::cout << "8-1-1" << ',';
 	assert(0 < Cr_Num);
 	for (int Opp = 0; Opp < KO; Opp++) {
 		//親の解のそれぞれのベクトルを足す
 		//w1_CO
 		int Opp_Nitch = Opponent[Opp].nitch;
 		assert(Opp_Nitch <= Cr_Num);
+		std::cout << "Opp:" << Opp << ',';
 		for (int j = 0; j < I1; j++) {
 			for (int k = 0; k < J1; k++) {
 				Sum_N_W1[Opp_Nitch][j][k] += Opponent[Opp].w1_CO[j][k];
@@ -898,7 +909,6 @@ int Coans_GT2016::Cal_Gra_Nitch(int index)
 		}
 		Nitch_Num[Opp_Nitch]++;
 	}
-	std::cout << "8-1-2" << ',';
 	//ベクトルの重心を求める
 	//w1_CO
 	for (int Nit = 1; Nit < Cr_Num; Nit++) {
