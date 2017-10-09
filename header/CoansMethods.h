@@ -630,7 +630,7 @@ void Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 				for (int c = 0; c < CHILD + 1; c++) {//集団ループ
 					StrategySet_M(Child[c]);
 					Machup_Num++;
-					//Competition();//対戦 player1 = 子個体 palyer2 = 対戦相手？
+					Competition();//対戦 player1 = 子個体 palyer2 = 対戦相手？
 					Opponent[r].Result[c] = (player2.hp - player1.hp) / 300;
 					Child[c].Result[r] = (player1.hp - player2.hp) / 300;
 				}
@@ -644,7 +644,7 @@ void Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 			std::cout << "7" << ',';
 			//Best個体を集団へ
 			int Index = Choice_Best_Index(Child, false);
-			Index = 3;
+			//Index = 3;
 			//Best → Child[Index];
 
 			std::cout << "8" << ',';
@@ -709,6 +709,7 @@ void Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 		std::cout << "Time per gene : " << Loop_Time << " [sec]" << std::endl;
 		assert(Gene_Loop <= KU);
 	}
+
 	Csv1.Fwrite_Cr_P();
 	//Csv1.Fwrite_Re_P(C);
 }
@@ -883,13 +884,16 @@ int Coans_GT2016::Cal_Gra_Nitch(int index)
 	Sum_N_W2 = std::vector<std::vector<std::vector<double>>>(Cr_Num, std::vector<std::vector<double>>(I2, std::vector<double>(J2, 0)));
 	Sum_N_W3 = std::vector<std::vector<std::vector<double>>>(Cr_Num, std::vector<std::vector<double>>(J1, std::vector<double>(I2, 0)));
 
-	assert(0 < Cr_Num);
+	std::cout << "8-1-1" << ',';
+	std::cout << "Cr_Num:" << Cr_Num << ",";
+	std::cout << "Sum_N_W1:" << Sum_N_W1.size() << ",";
+	std::cout << "Opponent:" << Opponent.size() << ",";
 	for (int Opp = 0; Opp < KO; Opp++) {
 		//親の解のそれぞれのベクトルを足す
 		//w1_CO
 		int Opp_Nitch = Opponent[Opp].nitch;
-		assert(Opp_Nitch <= Cr_Num);
-		std::cout << "Opp:" << Opp << ',';
+		std::cout << "Opp_Nitch:" << Opp_Nitch << ",";
+		//std::cout << "Opp:" << Opp << ',';
 		for (int j = 0; j < I1; j++) {
 			for (int k = 0; k < J1; k++) {
 				Sum_N_W1[Opp_Nitch][j][k] += Opponent[Opp].w1_CO[j][k];
@@ -909,6 +913,7 @@ int Coans_GT2016::Cal_Gra_Nitch(int index)
 		}
 		Nitch_Num[Opp_Nitch]++;
 	}
+	std::cout << "8-1-2" << ',';
 	//ベクトルの重心を求める
 	//w1_CO
 	for (int Nit = 1; Nit < Cr_Num; Nit++) {
