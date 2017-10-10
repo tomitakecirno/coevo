@@ -36,29 +36,38 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	int Main_Trial;
 	int Main_K;
 	int	Main_Method;
+	std::vector<int> method;
 
 	/*
 		argv[1]:Method
 		argv[2]:Trial
 		argv[3]:k
 	*/
-	if (__argc < 3) {
-		//パラメーター無しで動かす用
-		Main_Mode = 3;
-		Main_Method = 2;
-		Main_Trial = 0;
-		Main_K = 0;
-	}else if(__argc == 4) {
-		Main_Mode = atoi(__argv[1]);
-		Main_Method = atoi(__argv[2]);
-		Main_Trial = atoi(__argv[3]);
-		Main_K = 0;
+	Main_Mode = atoi(__argv[1]);
+	if (Main_Mode == 2) {
+		if (__argc < 3) {
+			//パラメーター無しで動かす用
+			Main_Method = 0;
+			Main_Trial = 0;
+			Main_K = 0;
+		}
+		else if (__argc == 4) {
+			Main_Method = atoi(__argv[2]);
+			Main_Trial = atoi(__argv[3]);
+			Main_K = 0;
+		}
+		else if (__argc == 5) {
+			Main_Method = atoi(__argv[2]);
+			Main_Trial = atoi(__argv[3]);
+			Main_K = atoi(__argv[4]);
+		}
 	}
-	else if (__argc == 5) {
-		Main_Mode = atoi(__argv[1]);
-		Main_Method = atoi(__argv[2]);
-		Main_Trial = atoi(__argv[3]);
-		Main_K = atoi(__argv[4]);
+	if (Main_Mode == 3) {
+		method.resize(__argc-2);
+		for (int i = 0; i < __argc - 2; i++) {
+			//method[i] = atoi(__argv[i+2]);
+			method[i] = 2;
+		}
 	}
 
 	std::cout << "Mode:" << Main_Mode << std::endl;
@@ -98,7 +107,7 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	else if (Main_Mode == 2) {
 		//現手法
 		if (Main_Method == 0) {
-			Coans_GT2016 Coans_GT2016("2016");
+			Coans_GT2016 Coans_GT2016("AI");
 			Coans_GT2016.Coans_GT2016_Tasks(Main_Trial);
 			MatchUp_Count = Coans_GT2016.Get_MatchUp_Num();
 		}
@@ -127,7 +136,7 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	//csv統合
 	else if (Main_Mode == 3) {
 		CsvModules_Intend Method;
-		Method.Create_Data(Main_Method, KO, Main_Trial, KU, PER);
+		Method.Create_Data(method, KO, Main_Trial, KU, PER);
 	}
 	//テスト
 	else if (Main_Mode == 4) {

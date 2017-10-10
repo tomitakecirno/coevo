@@ -707,9 +707,8 @@ void Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 		Loop_Time_End = clock();
 		Loop_Time = (Loop_Time_End - Loop_Time_Start) / CLOCKS_PER_SEC;
 		std::cout << "Time per gene : " << Loop_Time << " [sec]" << std::endl;
-		assert(Gene_Loop <= KU);
+		//assert(Gene_Loop <= KU);
 	}
-
 	Csv1.Fwrite_Cr_P();
 	//Csv1.Fwrite_Re_P(C);
 }
@@ -880,9 +879,9 @@ int Coans_GT2016::Cal_Gra_Nitch(int index)
 	std::vector< std::vector < std::vector<double> > > Sum_N_W3;
 
 	Nitch_Num = std::vector<int>(Cr_Num, 0);
-	Sum_N_W1 = std::vector<std::vector<std::vector<double>>>(Cr_Num, std::vector<std::vector<double>>(I1, std::vector<double>(J1, 0)));
-	Sum_N_W2 = std::vector<std::vector<std::vector<double>>>(Cr_Num, std::vector<std::vector<double>>(I2, std::vector<double>(J2, 0)));
-	Sum_N_W3 = std::vector<std::vector<std::vector<double>>>(Cr_Num, std::vector<std::vector<double>>(J1, std::vector<double>(I2, 0)));
+	Sum_N_W1 = std::vector<std::vector<std::vector<double>>>(Cr_Num + 1, std::vector<std::vector<double>>(I1, std::vector<double>(J1, 0.0)));
+	Sum_N_W2 = std::vector<std::vector<std::vector<double>>>(Cr_Num + 1, std::vector<std::vector<double>>(I2, std::vector<double>(J2, 0.0)));
+	Sum_N_W3 = std::vector<std::vector<std::vector<double>>>(Cr_Num + 1, std::vector<std::vector<double>>(J1, std::vector<double>(I2, 0.0)));
 
 	std::cout << "8-1-1" << ',';
 	std::cout << "Cr_Num:" << Cr_Num << ",";
