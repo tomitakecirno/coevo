@@ -32,12 +32,17 @@ Main_K		:クラスタリングパラメーター(?)
 ***********************************************/
 int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	int Main_Mode = 0;
-	int Main_Trial = 0;
-	int Main_K = 0;
-	int	Main_Method = 0;
-	std::vector<int> method;
+	int Main_Mode	= 0;
+	int Main_Trial	= 0;
+	int Main_K		= 0;
+	int	Main_Method	= 0;
+	int Main_KO		= 0;
+	int Main_KU		= 0;
+	int Main_PER	= 0;
+	int	Main_PARENT = 0;
+	int	Main_CHILD	= 0;
 
+	std::vector<int> method;
 	/*
 		argv[1]:Method
 		argv[2]:Trial
@@ -107,10 +112,11 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	}
 
 	//現手法学習
+	// DIR, KO, KU, PER, K, PARENT, CHILD
 	else if (Main_Mode == 2) {
 		//現手法
 		if (Main_Method == 0) {
-			Coans_GT2016 Coans_GT2016("AI");
+			Coans_GT2016 Coans_GT2016("AI", Main_KO, Main_KU, Main_PER, Main_K, Main_PARENT, Main_CHILD);
 			Coans_GT2016.Coans_GT2016_Tasks(Main_Trial);
 			MatchUp_Count = Coans_GT2016.Get_MatchUp_Num();
 		}

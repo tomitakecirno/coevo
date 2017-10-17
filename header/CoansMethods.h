@@ -24,12 +24,7 @@ public :
 	void	Coans_Tasks(int Trial);			//現手法
 	//対戦回数を取得
 	int		Get_MatchUp_Num();
-	//戦略を書き込み
-	void	File_Write_Pop(int trial, int gene, bool s1);
 	//以下実験用
-	void	SetVec_Cr_Pop(std::vector<playerTK> &Pop);	//クラスタ番号をCSVクラスへ
-	void	SetVec_Re_Pop(std::vector<playerTK> &Pop);	//集団の対戦結果を記録
-	void	SetVec_Re_Opp(std::vector<playerTK> &Opp);	//相手集団の対戦結果をCSVクラスへ
 //非公開メンバ
 private:
 	virtual void Crustering() = 0;
@@ -66,13 +61,10 @@ void Coans::Coans_Tasks(int Trial)
 		Pop[i].Init_w();
 	}
 	Make_Directory(Dir, Method_Num, Trial, KU, PER, Cru_K);
-	CsvModules Csv1(Method_Num);
-	Csv1.Init(Method_Num, Trial, KU, PER, Cru_K);
 	Cr_Pop.resize(KO);
 	Re_Pop.resize(KO);
 
 	//初期世代の戦略を記録
-	File_Write_Pop(Trial, 0, true);
 	Machup_Num = 0;
 	//任意の世代数ループ
 	int Loop_Time_Start;
@@ -91,12 +83,10 @@ void Coans::Coans_Tasks(int Trial)
 		if (Gene_Loop % PER == 0 || Gene_Loop == 1) {
 			std::cout << "9" << ',';
 			//集団のクラスタ番号をベクターに格納
-			SetVec_Cr_Pop(Pop);
+			//SetVec_Cr_Pop(Pop);
 			//格納したベクターをCsvクラスへ
-			Csv1.SetCsv_Cr_P(Cr_Pop);
 		}
 		else {
-			SetVec_Cr_Pop(Pop);
 		}
 		int tmpIndex;
 		int tmpSub;
@@ -184,7 +174,6 @@ void Coans::Coans_Tasks(int Trial)
 			if (Gene_Loop % PER == 0) {
 				std::cout << "10" << ',';
 				//100世代毎に戦略を記録
-				File_Write_Pop(Trial, Gene_Loop / PER, true);
 			}
 			std::cout << "8";
 			std::cout << "  [";
@@ -196,105 +185,15 @@ void Coans::Coans_Tasks(int Trial)
 			for (int i = 0; i < KO; i++) {
 				Pop[i].Init();
 			}
-			/*
-			std::cout << "  [";
-			int Cr_Pop_Length = int(Cr_Pop.size());
-			for (int cp = 0; cp < Cr_Pop_Length; cp++) {
-				std::cout << Cr_Pop[cp] << ",";
-			}
-			std::cout << "]" << std::endl;
-			*/
 		}
 		Loop_Time_End = clock();
 		Loop_Time = (Loop_Time_End - Loop_Time_Start) / CLOCKS_PER_SEC;
 		std::cout << "Time per gene : " << Loop_Time << " [sec]" << std::endl;
 		assert( Gene_Loop <= KU );
 	}
-	Csv1.Fwrite_Cr_P();
-	//Csv1.Fwrite_Re_P(C);
-}
-void Coans::SetVec_Cr_Pop(std::vector<playerTK> &Pop){
-	//初期化
-	Cr_Pop.assign(KO, 0);
-	for (int i = 0; i < KO; i++) {
-		assert( Pop[i].nitch < KO );
-		assert( 0 <= Pop[i].nitch );
-		Cr_Pop[ Pop[i].nitch ]++;
-	}
-	Cr_Pop.erase( std::remove(Cr_Pop.begin(), Cr_Pop.end(), 0), Cr_Pop.end() );
-	assert( !Cr_Pop.empty() );
-	/*
-	std::cout << "[";
-	int Cr_Pop_Length = int(Cr_Pop.size());
-	for (int cp = 0; cp < Cr_Pop_Length; cp++) {
-		std::cout << Cr_Pop[cp] << ",";
-	}
-	std::cout << "]" << std::endl;
-	*/
-}
-void Coans::SetVec_Re_Pop(std::vector<playerTK> &Pop) {
-	for (int i = 0; i < KO; i++) {
-		//対戦結果のベクターの和を格納する
-		Re_Pop[i] = int(std::accumulate(Pop[i].Result.begin(), Pop[i].Result.end(), 0.0));
-	}
-}
-void Coans::SetVec_Re_Opp(std::vector<playerTK> &Opp) {
-	for (int i = 0; i < Opp_Num; i++) {
-		//対戦結果のベクターの和を格納する
-		Re_Opp[i] = int(std::accumulate(Opp[i].Result.begin(), Opp[i].Result.end(), 0.0));
-	}
 }
 int Coans::Get_MatchUp_Num() {
 	return Machup_Num;
-}
-void Coans::File_Write_Pop(int trial, int gene, bool s1)
-{
-	//様式を合わせる
-	for (int i = 0; i < KO; i++) {
-		for (int j = 0; j < I1; j++) {
-			for (int k = 0; k < J1; k++) {
-				w1_GA[i][j][k] = Pop[i].w1_CO[j][k];
-			}
-		}
-		for (int j = 0; j < I2; j++) {
-			for (int k = 0; k < J2; k++) {
-				w2_GA[i][j][k] = Pop[i].w2_CO[j][k];
-			}
-		}
-		for (int j = 0; j < J1; j++) {
-			for (int k = 0; k < I2; k++) {
-				w3_GA[i][j][k] = Pop[i].w3_CO[j][k];
-			}
-		}
-	}
-	//bef = trueの時AI，falseの時AIC
-	char filename[50];
-	for (int i = 0; i < KO; i++) {
-		if (Cru_K == 0) {
-			sprintf(filename, ("AI/%d/%d/%d/%d.dat"), Method_Num, trial, gene, i);
-		}
-		else if (0 < Cru_K) {
-			sprintf(filename, ("AI/%d/%d/%d/%d/%d.dat"), Method_Num, trial, Cru_K, gene, i);
-		}
-		if ((fp = fopen(filename, "wb+")) == NULL) {
-			fprintf(stderr, "%s\n", strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-		/*
-		else {
-			sprintf(filename, ("AIT/%d/%d.dat"), trial, i);
-			if ((fp = fopen(filename, "wb+")) == NULL) {
-				fprintf(stderr, "%s\n", strerror(errno));
-				exit(EXIT_FAILURE);
-			}
-		}
-		*/
-		fwrite(w1_GA[i], sizeof(double), I1*J1, fp);
-		fwrite(w2_GA[i], sizeof(double), I2*J2, fp);
-		fwrite(w3_GA[i], sizeof(double), I2*J1, fp);
-		fclose(fp);
-	}
-	std::cout << "0 Generation written..." << std::endl;
 }
 
 /*
@@ -483,45 +382,50 @@ void CoansMode4::Cal_Fitness() {
 }
 
 
-/*卒論手法のクラス*/
+/*
+	卒論手法のクラス
+*/
 class Coans_GT2016 {
-	//公開メンバ
+//公開メンバ
 public:
-	Coans_GT2016(std::string str, int k = 0) {
-		Machup_Num = 0;					//対戦回数
-		Cr_Num = 1;						//クラスター番号
-		Opp_Num = 0;					//対戦回数
+	Coans_GT2016(std::string str, int n, int g, int g_p, int p, int c, int k = 0) {
 		Method_Num = 0;					//手法比較の時に使う
-		Cru_K = 0;						//クラスタリングパラメーター
-		Dir = str;
+		Pop_n = n;							//自集団の個体数
+		Gene = g;							//世代数
+		Per = g_p;							//間隔
+		Pare = p;							//親個体数
+		Child = c;							//子個体数
+		Machup_Num = 0;					//対戦回数
+		Opp_Num = 0;					
+		Cru_K = k;						//クラスタリングパラメーター
+		Dir = str;		
 	}
 	//手法のメインルーチン
 	void	Coans_GT2016_Tasks(int Trial);
-	void	Update_Opponent(int index);
-	int		Cal_Gra_Nitch(int index);
 	int		Get_MatchUp_Num();
 	//戦略を書き込み
-	void	File_Write_Pop(int trial, int gene, bool s1);
 	//以下実験用
 	void	SetVec_Cr_Pop(std::vector<playerTK> &Pop);	//クラスタ番号をCSVクラスへ
 	void	SetVec_Re_Pop(std::vector<playerTK> &Pop);	//集団の対戦結果を記録
 	void	SetVec_Re_Opp(std::vector<playerTK> &Opp);	//相手集団の対戦結果をCSVクラスへ
-														//非公開メンバ
+//非公開メンバ
 protected:
+	int Method_Num;						//手法比較の時に使う
+	int Pop_n;							//自集団の個体数
+	int Gene;							//世代数
+	int Per;							//間隔
+	int Pare;							//親個体数
+	int Child;							//子個体数
 	int Machup_Num;						//対戦回数
 	int Cr_Num;							//クラスター番号
-	int Opp_Num;						//対戦回数
-	int Method_Num;						//手法比較の時に使う
+	int Opp_Num;						
 	int	Cru_K;							//クラスタリングパラメーター
 	int MainParent;						//主親
 	std::string Dir;
-	std::vector<int> SubParent;			//副親
 	std::vector<playerTK> Pop;			//進化させる集団
-	std::vector<playerTK> Child;		//子
 	std::vector<playerTK> Opponent;		//対戦相手
-	std::vector<double> Gra_Nitch_w1;
-	std::vector<double> Gra_Nitch_w2;
-	std::vector<double> Gra_Nitch_w3;
+	void Update_Opponent(playerTK child);
+	int	 Cal_Gra_Nitch(playerTK child);
 	//以下実験用
 	std::vector<int> Cr_Pop;			//クラスタ番号を格納
 	std::vector<int> Re_Pop;			//メインの対戦結果を格納
@@ -532,40 +436,38 @@ void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 	std::cout << "Initiarize" << std::endl;
 
 	//集団宣言
-	Pop.resize(KO);
-	Opponent.resize(KO);
+	Pop.resize(Pop_n);
+	Opponent.resize(Pop_n);
 	init_genrand((unsigned)time(NULL)); /*乱数初期化*/
 
 										//集団初期化
-	for (int i = 0; i < KO; i++) {
+	for (int i = 0; i < Pop_n; i++) {
 		Pop[i].Init();
 		Pop[i].Init_w();
 	}
-	for (int i = 0; i < KO; i++) {
+	for (int i = 0; i < Pop_n; i++) {
 		Opponent[i].Init();
 		Opponent[i].Init_w();
 	}
-	Make_Directory(Dir, Method_Num, Trial, KU, PER, Cru_K);
-	CsvModules Csv1(Method_Num);
-	Csv1.Init(Method_Num, Trial, KU, PER, Cru_K);
-	Cr_Pop.resize(KO);
-	Re_Pop.resize(KO);
+	Make_Directory(Dir, Method_Num, Trial, Gene, Per, Cru_K);
+	Cr_Pop.resize(Pop_n);
+	Re_Pop.resize(Pop_n);
 
 	//初期世代の戦略を記録
-	File_Write_Pop(Trial, 0, true);
 	//任意の世代数ループ
 	int Loop_Time_Start;
 	int Loop_Time_End;
 	int Loop_Time;
+
 	MakeList(Opponent, 0, K_List2, 0);
 	Cr_Num = 1;
-	for (int i = 0; i < KO; i++) {
+	for (int i = 0; i < Pop_n; i++) {
 		if (SetNitch(Cr_Num, i, Opponent) == 1) {
 			Cr_Num++;
 		}
 	}
 
-	for (int Gene_Loop = 1; Gene_Loop < KU + 1; Gene_Loop++) {
+	for (int Gene_Loop = 1; Gene_Loop < Gene + 1; Gene_Loop++) {
 		Loop_Time_Start = clock();
 		std::cout << Method_Num << ":" << Trial << ":" << Cru_K << ":" << Gene_Loop;
 		std::cout << "  |  ";
@@ -576,12 +478,10 @@ void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 		std::cout << "1-1" << ',';
 
 		//実験用
-		if (Gene_Loop % PER == 0 || Gene_Loop == 1) {
+		if (Gene_Loop % Per == 0 || Gene_Loop == 1) {
 			std::cout << "12" << ',';
 			//集団のクラスタ番号をベクターに格納
-			SetVec_Cr_Pop(Pop);
-			//格納したベクターをCsvクラスへ
-			Csv1.SetCsv_Cr_P(Cr_Pop);
+			//SetVec_Cr_Pop(Pop);
 		}
 		else {
 			SetVec_Cr_Pop(Pop);
@@ -589,12 +489,12 @@ void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 
 		int tmpIndex;
 		int tmpSub;
-		SubParent.resize(0); //副親
+		std::vector<int> SubParent;	//副親
 		std::cout << "2" << ',';
 		//主親選ぶ
-		MainParent = GetRand_Int(KO);
+		MainParent = GetRand_Int(Pop_n);
 		//副親を選ぶ
-		for (int i = 0; i < PARENT; i++) {
+		for (int i = 0; i < Pare; i++) {
 			if (Pop[MainParent].List1.empty()) {
 				break;
 			}
@@ -606,8 +506,9 @@ void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 		//副親があれば以下の処理を行う
 		if (!SubParent.empty()) {
 			//子個体生成
-			Child.resize(CHILD + 1);
+			std::vector<playerTK> Child(Child + 1);
 			Child[0] = Pop[MainParent];
+			int child_size = int(Child.size());
 
 			std::cout << "3" << ',';
 			//拡張XLM
@@ -619,16 +520,16 @@ void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 			//player1:子個体，player2:対戦相手0
 			std::cout << "5" << ',';
 			//相手集団との対戦結果を格納するベクターをリサイズ
-			for (int i = 0; i < KO; i++) {
-				Opponent[i].Result.resize(CHILD + 1);
+			for (int i = 0; i < Pop_n; i++) {
+				Opponent[i].Result.resize(child_size);
 			}
-			for (int i = 0; i < CHILD + 1; i++) {
-				Child[i].Result.resize(KO);
+			for (int i = 0; i < child_size; i++) {
+				Child[i].Result.resize(Pop_n);
 			}
 			//ここで対戦
-			for (int r = 0; r < KO; r++) {//相手ループ
+			for (int r = 0; r < Pop_n; r++) {//相手ループ
 				StrategySet_T(Opponent[r]);
-				for (int c = 0; c < CHILD + 1; c++) {//集団ループ
+				for (int c = 0; c < child_size; c++) {//集団ループ
 					StrategySet_M(Child[c]);
 					Machup_Num++;
 					Competition();//対戦 player1 = 子個体 palyer2 = 対戦相手？
@@ -638,8 +539,7 @@ void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 			}
 			std::cout << "6" << ',';
 			//適応度計算
-			int Length = int(Child.size());
-			for (int i = 0; i < Length; i++) {
+			for (int i = 0; i < child_size; i++) {
 				FitnessChild(Child[i], Opponent, false);
 			}
 			std::cout << "7" << ',';
@@ -652,22 +552,22 @@ void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 			//削除予定の個体があれば
 			if (Index != 0) {
 				int k;
-				for (k = 0; k < KO; k++) {
+				for (k = 0; k < Pop_n; k++) {
 					if (Opponent[k].delete_flag != 0) {
 						break;
 					}
 				}
-				if (k != KO) {
+				if (k != Pop_n) {
 					Opponent[k] = Child[Index];
 					Opponent[k].comp_flag = 1;
 					Opponent[k].delete_flag = 0;
-				}if (k == KO) {
+				}if (k == Pop_n) {
 					std::cout << "8-1" << ',';
-					Update_Opponent(Index);
+					Update_Opponent(Child[Index]);
 				}
 			}
 			std::cout << "9" << ',';
-			for (int i = 0; i < KO; i++) {
+			for (int i = 0; i < Pop_n; i++) {
 				if (Opponent[i].delete_flag != 1) {
 					if (Opponent[i].comp_flag == 0) {
 						Opponent[i].gene_count++;
@@ -683,19 +583,18 @@ void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 				}
 			}
 			//実験用
-			if (Gene_Loop % PER == 0) {
+			if (Gene_Loop % Per == 0) {
 				std::cout << "11" << ',';
 				//100世代毎に戦略を記録
-				File_Write_Pop(Trial, Gene_Loop / PER, true);
 			}
 			std::cout << "10" << ',';
 			std::cout << "  [";
-			for (int c = 0; c < CHILD + 1; c++) {
+			for (int c = 0; c < child_size; c++) {
 				std::cout << Child[c].eval << ",";
 			}
 			std::cout << "]" << std::endl;
 			//集団の解以外初期化
-			for (int i = 0; i < KO; i++) {
+			for (int i = 0; i < Pop_n; i++) {
 				Pop[i].Init();
 			}
 			std::cout << "  [";
@@ -710,101 +609,18 @@ void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 		std::cout << "Time per gene : " << Loop_Time << " [sec]" << std::endl;
 		//assert(Gene_Loop <= KU);
 	}
-	Csv1.Fwrite_Cr_P();
-	//Csv1.Fwrite_Re_P(C);
-}
-void  Coans_GT2016::SetVec_Cr_Pop(std::vector<playerTK> &Pop) {
-	//初期化
-	Cr_Pop.assign(KO, 0);
-	for (int i = 0; i < KO; i++) {
-		assert(Pop[i].nitch < KO);
-		assert(0 <= Pop[i].nitch);
-		Cr_Pop[Pop[i].nitch]++;
-	}
-	Cr_Pop.erase(std::remove(Cr_Pop.begin(), Cr_Pop.end(), 0), Cr_Pop.end());
-	assert(!Cr_Pop.empty());
-	/*
-	std::cout << "[";
-	int Cr_Pop_Length = int(Cr_Pop.size());
-	for (int cp = 0; cp < Cr_Pop_Length; cp++) {
-	std::cout << Cr_Pop[cp] << ",";
-	}
-	std::cout << "]" << std::endl;
-	*/
-}
-void  Coans_GT2016::SetVec_Re_Pop(std::vector<playerTK> &Pop) {
-	for (int i = 0; i < KO; i++) {
-		//対戦結果のベクターの和を格納する
-		Re_Pop[i] = int(std::accumulate(Pop[i].Result.begin(), Pop[i].Result.end(), 0.0));
-	}
-}
-void  Coans_GT2016::SetVec_Re_Opp(std::vector<playerTK> &Opp) {
-	for (int i = 0; i < Opp_Num; i++) {
-		//対戦結果のベクターの和を格納する
-		Re_Opp[i] = int(std::accumulate(Opp[i].Result.begin(), Opp[i].Result.end(), 0.0));
-	}
 }
 int	  Coans_GT2016::Get_MatchUp_Num() {
 	return Machup_Num;
 }
-void  Coans_GT2016::File_Write_Pop(int trial, int gene, bool s1)
-{
-	double w1_Main[KO][I1][J1];//集団
-	double w2_Main[KO][I2][J2];
-	double w3_Main[KO][I2][J1];
-
-	//様式を合わせる
-	for (int i = 0; i < KO; i++) {
-		for (int j = 0; j < I1; j++) {
-			for (int k = 0; k < J1; k++) {
-				w1_Main[i][j][k] = Pop[i].w1_CO[j][k];
-			}
-		}
-		for (int j = 0; j < I2; j++) {
-			for (int k = 0; k < J2; k++) {
-				w2_Main[i][j][k] = Pop[i].w2_CO[j][k];
-			}
-		}
-		for (int j = 0; j < J1; j++) {
-			for (int k = 0; k < I2; k++) {
-				w3_Main[i][j][k] = Pop[i].w3_CO[j][k];
-			}
-		}
-	}
-	//bef = trueの時AI，falseの時AIC
-	FILE *fp_main;
-	std::stringstream File_Name;
-	std::stringstream Tmp_File_Name;
-
-	File_Name << "./" << Dir << "/" << Method_Num << "/" << trial << "/" << gene / PER;
-	//File_Name << "./" << Dir;
-
-	for (int i = 0; i < KO; i++) {
-		Tmp_File_Name << File_Name.str() << "/" << i << ".dat";
-		//ファイル書き込み
-		if ((fp_main = fopen(Tmp_File_Name.str().c_str(), "wb+")) == NULL) {
-			fprintf(stderr, "%s\n", strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-		fwrite(w1_Main[i], sizeof(double), I1*J1, fp_main);
-		fwrite(w2_Main[i], sizeof(double), I2*J2, fp_main);
-		fwrite(w3_Main[i], sizeof(double), I2*J1, fp_main);
-
-		//クリア
-		Tmp_File_Name.str("");
-		Tmp_File_Name.clear(std::stringstream::goodbit);
-		fclose(fp_main);
-	}
-}
-
-void  Coans_GT2016::Update_Opponent(int index)
+void  Coans_GT2016::Update_Opponent(playerTK child)
 {
 	/*いらない相手を残すと有害。勝ち数で残す個体判断しているので、余計な勝ち数がカウントされる。*/
 	/*距離が最小のニッチの重心を見つけて、ニッチ番号を取得*/
 	int Nit_Count = 0;
-	int Nit_Num = Cal_Gra_Nitch(index);
+	int Nit_Num = Cal_Gra_Nitch(child);
 	//一番近いクラスタの番号を入れる
-	Child[index].nitch = Nit_Num;
+	child.nitch = Nit_Num;
 
 	/*戦闘データ初期化*/
 	for (int i = 0; i<KO; i++) {
@@ -824,9 +640,9 @@ void  Coans_GT2016::Update_Opponent(int index)
 		}
 	}
 	assert(0 <= Nit_Count);
-	Child[index].eval = 0;
-	Child[index].flag = 0;
-	Oppc[0] = Child[index];
+	child.eval = 0;
+	child.flag = 0;
+	Oppc[0] = child;
 
 	/*該当するニッチの個体と子個体でリーグ戦*/
 	int Oppc_size = int(Oppc.size());
@@ -878,7 +694,7 @@ void  Coans_GT2016::Update_Opponent(int index)
 		}
 	}
 }
-int   Coans_GT2016::Cal_Gra_Nitch(int index)
+int   Coans_GT2016::Cal_Gra_Nitch(playerTK child)
 {
 	std::vector<int> Nitch_Num;
 	std::vector< std::vector < std::vector<double> > > Sum_N_W1;
@@ -944,19 +760,19 @@ int   Coans_GT2016::Cal_Gra_Nitch(int index)
 	for (int Nit = 1; Nit < Cr_Num; Nit++) {
 		for (int j = 0; j < I1; j++) {
 			for (int k = 0; k < J1; k++) {
-				Dis_Vector[Nit] += (Sum_N_W1[Nit][j][k] - Child[index].w1_CO[j][k])*(Sum_N_W1[Nit][j][k] - Child[index].w1_CO[j][k]);
+				Dis_Vector[Nit] += (Sum_N_W1[Nit][j][k] - child.w1_CO[j][k])*(Sum_N_W1[Nit][j][k] - child.w1_CO[j][k]);
 			}
 		}
 		//w2の距離
 		for (int j = 0; j < I2; j++) {
 			for (int k = 0; k < J2; k++) {
-				Dis_Vector[Nit] += (Sum_N_W2[Nit][j][k] - Child[index].w2_CO[j][k])*(Sum_N_W2[Nit][j][k] - Child[index].w2_CO[j][k]);
+				Dis_Vector[Nit] += (Sum_N_W2[Nit][j][k] - child.w2_CO[j][k])*(Sum_N_W2[Nit][j][k] - child.w2_CO[j][k]);
 			}
 		}
 		//w3の距離
 		for (int j = 0; j < J1; j++) {
 			for (int k = 0; k < I2; k++) {
-				Dis_Vector[Nit] += (Sum_N_W3[Nit][j][k] - Child[index].w3_CO[j][k])*(Sum_N_W3[Nit][j][k] - Child[index].w3_CO[j][k]);
+				Dis_Vector[Nit] += (Sum_N_W3[Nit][j][k] - child.w3_CO[j][k])*(Sum_N_W3[Nit][j][k] - child.w3_CO[j][k]);
 			}
 		}
 		Dis_Vector[Nit] = sqrt(Dis_Vector[Nit]);
@@ -965,4 +781,117 @@ int   Coans_GT2016::Cal_Gra_Nitch(int index)
 	auto min = min_element(Dis_Vector.begin()+1, Dis_Vector.end());
 	auto min_Nit = int(distance(Dis_Vector.begin(), min));
 	return min_Nit;
+}
+
+/*
+	実験用の関数
+*/
+//戦略を書き込む
+class Exp {
+public:
+	void Stra_Output_Pop(std::string dir, std::vector<playerTK> &Pop, int method, int trial, int gene);
+	void SetVec_Cr_Pop(std::vector<playerTK> &Pop, int Num);
+	void SetVec_Re_Pop(std::vector<playerTK> &Pop, int Num);
+	void SetVec_Re_Opp(std::vector<playerTK> &Opp, int Num);
+protected:
+	//各世代のクラスタ情報を格納
+	std::vector<std::vector<int>> Cr_Pop;
+	std::vector<std::vector<double>> Re_Pop;
+	std::vector<std::vector<double>> Re_Opp;
+};
+//戦略を書き込む
+void Exp::Stra_Output_Pop(std::string dir, std::vector<playerTK> &Pop, int method, int trial, int gene)
+{
+	int pop_size = int(Pop.size());
+	std::vector<std::vector<std::vector<double>>> w1_Main;
+	std::vector<std::vector<std::vector<double>>> w2_Main;
+	std::vector<std::vector<std::vector<double>>> w3_Main;
+
+	w1_Main = std::vector<std::vector<std::vector<double>>>(pop_size, std::vector<std::vector<double>>(I1, std::vector<double>(J1, 0)));
+	w2_Main = std::vector<std::vector<std::vector<double>>>(pop_size, std::vector<std::vector<double>>(I2, std::vector<double>(J2, 0)));
+	w3_Main = std::vector<std::vector<std::vector<double>>>(pop_size, std::vector<std::vector<double>>(I2, std::vector<double>(J1, 0)));
+
+	//様式を合わせる
+	for (int i = 0; i < pop_size; i++) {
+		for (int j = 0; j < I1; j++) {
+			for (int k = 0; k < J1; k++) {
+				w1_Main[i][j][k] = Pop[i].w1_CO[j][k];
+			}
+		}
+		for (int j = 0; j < I2; j++) {
+			for (int k = 0; k < J2; k++) {
+				w2_Main[i][j][k] = Pop[i].w2_CO[j][k];
+			}
+		}
+		for (int j = 0; j < J1; j++) {
+			for (int k = 0; k < I2; k++) {
+				w3_Main[i][j][k] = Pop[i].w3_CO[j][k];
+			}
+		}
+	}
+	//bef = trueの時AI，falseの時AIC
+	FILE *fp_main;
+	std::stringstream File_Name;
+	std::stringstream Tmp_File_Name;
+
+	File_Name << "./" << dir << "/" << method << "/" << trial << "/" << gene / PER;
+	//File_Name << "./" << Dir;
+
+	for (int i = 0; i < pop_size; i++) {
+		Tmp_File_Name << File_Name.str() << "/" << i << ".dat";
+		//ファイル書き込み
+		if ((fp_main = fopen(Tmp_File_Name.str().c_str(), "wb+")) == NULL) {
+			fprintf(stderr, "%s\n", strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+		fwrite(w1_Main[i].data(), sizeof(double), I1*J1, fp_main);
+		fwrite(w2_Main[i].data(), sizeof(double), I2*J2, fp_main);
+		fwrite(w3_Main[i].data(), sizeof(double), I2*J1, fp_main);
+
+		//クリア
+		Tmp_File_Name.str("");
+		Tmp_File_Name.clear(std::stringstream::goodbit);
+		fclose(fp_main);
+	}
+}
+//クラスタを書き込む
+void Exp::SetVec_Cr_Pop(std::vector<playerTK> &Pop, int Num) {
+	int pop_size = int(Pop.size());
+
+	Cr_Pop.resize(Num+1);
+	Cr_Pop[Num].resize(pop_size);
+	for (int i = 0; i < pop_size; i++) {
+		Cr_Pop[Num][i] = Pop[i].nitch;
+	}
+	/*
+	for (int i = 0; i < pop_size; i++) {
+		assert(Pop[i].nitch < Pop_n);
+		assert(0 <= Pop[i].nitch);
+		Cr_Pop[Pop[i].nitch]++;
+	}
+	Cr_Pop.erase(std::remove(Cr_Pop.begin(), Cr_Pop.end(), 0), Cr_Pop.end());
+	assert(!Cr_Pop.empty());
+	*/
+}
+void Exp::SetVec_Re_Pop(std::vector<playerTK> &Pop, int Num) {
+	int pop_size = int(Pop.size());
+
+	Re_Pop.resize(Num + 1);
+	Re_Pop[Num].resize(pop_size);
+
+	for (int i = 0; i < pop_size; i++) {
+		//対戦結果のベクターの和を格納する
+		Re_Pop[Num][i] = double(std::accumulate(Pop[i].Result.begin(), Pop[i].Result.end(), 0.0));
+	}
+}
+void Exp::SetVec_Re_Opp(std::vector<playerTK> &Opp, int Num) {
+	int opp_size = int(Opp.size());
+
+	Re_Opp.resize(Num + 1);
+	Re_Opp[Num].resize(opp_size);
+
+	for (int i = 0; i < opp_size; i++) {
+		//対戦結果のベクターの和を格納する
+		Re_Opp[Num][i] = int(std::accumulate(Opp[i].Result.begin(), Opp[i].Result.end(), 0.0));
+	}
 }

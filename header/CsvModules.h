@@ -7,6 +7,7 @@ Csvの入出力に関するモジュール置き場
 #include <fstream>
 #include <cstdio>
 #include "Usual_Methods.hpp"
+#include "config.hpp"
 
 #define ENEMY 10
 
@@ -16,12 +17,20 @@ public:
 		std::cout << "Please Input Method's Number !" << std::endl;
 		exit(1);
 	}
-	CsvModules(int method) {
+	CsvModules(std::string str, int method, int Trial, int Gene, int Per, int k = 0) {
+		Dir = str;
 		Csv_Method = method;
+		Csv_Trial = Trial;
+		Csv_Gene = Gene;
+		Csv_Per = Per;
+		Csv_K = k;
+		Cr_P.resize(Gene / Per + 1);
+		Re_P.resize(Gene / Per + 1);
+
 		Make_CSV_Directory(method);
+		std::cout << "Csv Initialized..." << std::endl;
 	}
-	void Init(int method, int Trial, int Gene, int Per, int k = 0);
-	void SetCsv_Cr_P(std::vector<int> &Vector_Cruster);
+	void Stra_Output_Pop(std::vector<playerTK> &Pop, int index);
 	void SetCsv_Re_P(std::vector<int> &Vector_PopResult);
 	void Fwrite_Cr_P();
 	void Fwrite_Re_P();
@@ -32,33 +41,66 @@ protected:
 	int Csv_Gene;
 	int Csv_Per;
 	int Csv_K;
-	int VecLen_Cr_P;
-	int VecLen_Re_P;
-	std::vector<std::vector<int> > Cr_P;
-	std::vector<std::vector<int> > Re_P;
+	std::string Dir;
+	std::vector<std::vector<int>> Cr_P;
+	std::vector<std::vector<int>> Re_P;
 };
-//パラメーターを初期化
-void CsvModules::Init(int method, int Trial, int Gene, int Per, int k) {
-	Csv_Method = method;
-	Csv_Trial = Trial;
-	Csv_Gene = Gene;
-	Csv_Per = Per;
-	Csv_K = k;
-	VecLen_Cr_P = 0;
-	VecLen_Re_P = 0;
-
-	Cr_P.resize( (Csv_Gene / Csv_Per) + 1);
-	Re_P.resize( (Csv_Gene / Csv_Per) + 1);
-	std::cout << "Csv Initialized..." << std::endl;
-}
 //世代毎のクラスタ番号を格納
-void CsvModules::SetCsv_Cr_P(std::vector<int> &Vector_Cruster) {
-	int Length = int(Vector_Cruster.size());
-	//リサイズ
-	Cr_P[VecLen_Cr_P] = Vector_Cruster;
-	VecLen_Cr_P++;
+void CsvModules::Stra_Output_Pop(std::vector<playerTK> &Pop,int index) {
+	int pop_size = int(Pop.size());
+	std::vector<std::vector<std::vector<double>>> w1_Main;
+	std::vector<std::vector<std::vector<double>>> w2_Main;
+	std::vector<std::vector<std::vector<double>>> w3_Main;
+
+	w1_Main = std::vector<std::vector<std::vector<double>>>(pop_size, std::vector<std::vector<double>>(I1, std::vector<double>(J1, 0)));
+	w2_Main = std::vector<std::vector<std::vector<double>>>(pop_size, std::vector<std::vector<double>>(I2, std::vector<double>(J2, 0)));
+	w3_Main = std::vector<std::vector<std::vector<double>>>(pop_size, std::vector<std::vector<double>>(I2, std::vector<double>(J1, 0)));
+
+	//様式を合わせる
+	for (int i = 0; i < pop_size; i++) {
+		for (int j = 0; j < I1; j++) {
+			for (int k = 0; k < J1; k++) {
+				w1_Main[i][j][k] = Pop[i].w1_CO[j][k];
+			}
+		}
+		for (int j = 0; j < I2; j++) {
+			for (int k = 0; k < J2; k++) {
+				w2_Main[i][j][k] = Pop[i].w2_CO[j][k];
+			}
+		}
+		for (int j = 0; j < J1; j++) {
+			for (int k = 0; k < I2; k++) {
+				w3_Main[i][j][k] = Pop[i].w3_CO[j][k];
+			}
+		}
+	}
+	//bef = trueの時AI，falseの時AIC
+	FILE *fp_main;
+	std::stringstream File_Name;
+	std::stringstream Tmp_File_Name;
+
+	File_Name << "./" << Dir << "/" << Csv_Method << "/" << Csv_Trial << "/" << Csv_Gene / Csv_Per;
+	//File_Name << "./" << Dir;
+
+	for (int i = 0; i < pop_size; i++) {
+		Tmp_File_Name << File_Name.str() << "/" << i << ".dat";
+		//ファイル書き込み
+		if ((fp_main = fopen(Tmp_File_Name.str().c_str(), "wb+")) == NULL) {
+			fprintf(stderr, "%s\n", strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+		fwrite(w1_Main[i].data(), sizeof(double), I1*J1, fp_main);
+		fwrite(w2_Main[i].data(), sizeof(double), I2*J2, fp_main);
+		fwrite(w3_Main[i].data(), sizeof(double), I2*J1, fp_main);
+
+		//クリア
+		Tmp_File_Name.str("");
+		Tmp_File_Name.clear(std::stringstream::goodbit);
+		fclose(fp_main);
+	}
 }
 //世代毎の対戦結果を格納
+/*
 void CsvModules::SetCsv_Re_P(std::vector<int> &Vector_PopResult){
 	int Length = int(Vector_PopResult.size());
 	Re_P[VecLen_Re_P].resize(Length);
@@ -67,7 +109,9 @@ void CsvModules::SetCsv_Re_P(std::vector<int> &Vector_PopResult){
 	}
 	VecLen_Re_P++;
 }
+*/
 //クラスターをCSVファイルへ出力
+/*
 void CsvModules::Fwrite_Cr_P() {
 	//ファイル名設定
 	char fname[50];
@@ -89,6 +133,8 @@ void CsvModules::Fwrite_Cr_P() {
 		ofs << std::endl;
 	}
 }
+*/
+/*
 void CsvModules::Fwrite_Re_P(){
 	//ファイル名設定
 	char fname[40];
@@ -110,7 +156,8 @@ void CsvModules::Fwrite_Re_P(){
 		ofs << std::endl;
 	}
 }
-
+*/
+//csvを統合するクラス
 class CsvModules_Intend {
 public:
 	void Create_Data(std::vector<int> &me, int n, int trial, int gene, int per);
