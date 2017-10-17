@@ -527,7 +527,7 @@ protected:
 	std::vector<int> Re_Pop;			//メインの対戦結果を格納
 	std::vector<int> Re_Opp;			//対戦相手の
 };
-void Coans_GT2016::Coans_GT2016_Tasks(int Trial)
+void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 {
 	std::cout << "Initiarize" << std::endl;
 
@@ -545,7 +545,7 @@ void Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 		Opponent[i].Init();
 		Opponent[i].Init_w();
 	}
-	Make_Directory_GT2016(Trial, KU, PER);
+	Make_Directory(Dir, Method_Num, Trial, KU, PER, Cru_K);
 	CsvModules Csv1(Method_Num);
 	Csv1.Init(Method_Num, Trial, KU, PER, Cru_K);
 	Cr_Pop.resize(KO);
@@ -557,6 +557,14 @@ void Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 	int Loop_Time_Start;
 	int Loop_Time_End;
 	int Loop_Time;
+	MakeList(Opponent, 0, K_List2, 0);
+	Cr_Num = 1;
+	for (int i = 0; i < KO; i++) {
+		if (SetNitch(Cr_Num, i, Opponent) == 1) {
+			Cr_Num++;
+		}
+	}
+
 	for (int Gene_Loop = 1; Gene_Loop < KU + 1; Gene_Loop++) {
 		Loop_Time_Start = clock();
 		std::cout << Method_Num << ":" << Trial << ":" << Cru_K << ":" << Gene_Loop;
@@ -566,13 +574,6 @@ void Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 		//クラスタリング
 		MakeList(Pop, K_List1, 0, 0);
 		std::cout << "1-1" << ',';
-		MakeList(Opponent, 0, K_List2, 0);
-		Cr_Num = 1;
-		for (int i = 0; i < KO; i++) {
-			if (SetNitch(Cr_Num, i, Opponent) == 1) {
-				Cr_Num++;
-			}
-		}
 
 		//実験用
 		if (Gene_Loop % PER == 0 || Gene_Loop == 1) {
@@ -712,7 +713,7 @@ void Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 	Csv1.Fwrite_Cr_P();
 	//Csv1.Fwrite_Re_P(C);
 }
-void Coans_GT2016::SetVec_Cr_Pop(std::vector<playerTK> &Pop) {
+void  Coans_GT2016::SetVec_Cr_Pop(std::vector<playerTK> &Pop) {
 	//初期化
 	Cr_Pop.assign(KO, 0);
 	for (int i = 0; i < KO; i++) {
@@ -731,22 +732,22 @@ void Coans_GT2016::SetVec_Cr_Pop(std::vector<playerTK> &Pop) {
 	std::cout << "]" << std::endl;
 	*/
 }
-void Coans_GT2016::SetVec_Re_Pop(std::vector<playerTK> &Pop) {
+void  Coans_GT2016::SetVec_Re_Pop(std::vector<playerTK> &Pop) {
 	for (int i = 0; i < KO; i++) {
 		//対戦結果のベクターの和を格納する
 		Re_Pop[i] = int(std::accumulate(Pop[i].Result.begin(), Pop[i].Result.end(), 0.0));
 	}
 }
-void Coans_GT2016::SetVec_Re_Opp(std::vector<playerTK> &Opp) {
+void  Coans_GT2016::SetVec_Re_Opp(std::vector<playerTK> &Opp) {
 	for (int i = 0; i < Opp_Num; i++) {
 		//対戦結果のベクターの和を格納する
 		Re_Opp[i] = int(std::accumulate(Opp[i].Result.begin(), Opp[i].Result.end(), 0.0));
 	}
 }
-int Coans_GT2016::Get_MatchUp_Num() {
+int	  Coans_GT2016::Get_MatchUp_Num() {
 	return Machup_Num;
 }
-void Coans_GT2016::File_Write_Pop(int trial, int gene, bool s1)
+void  Coans_GT2016::File_Write_Pop(int trial, int gene, bool s1)
 {
 	double w1_Main[KO][I1][J1];//集団
 	double w2_Main[KO][I2][J2];
@@ -775,7 +776,7 @@ void Coans_GT2016::File_Write_Pop(int trial, int gene, bool s1)
 	std::stringstream File_Name;
 	std::stringstream Tmp_File_Name;
 
-	File_Name << "./" << Dir << "/" << trial << "/" << gene / PER;
+	File_Name << "./" << Dir << "/" << Method_Num << "/" << trial << "/" << gene / PER;
 	//File_Name << "./" << Dir;
 
 	for (int i = 0; i < KO; i++) {
@@ -796,7 +797,7 @@ void Coans_GT2016::File_Write_Pop(int trial, int gene, bool s1)
 	}
 }
 
-void Coans_GT2016::Update_Opponent(int index)
+void  Coans_GT2016::Update_Opponent(int index)
 {
 	/*いらない相手を残すと有害。勝ち数で残す個体判断しているので、余計な勝ち数がカウントされる。*/
 	/*距離が最小のニッチの重心を見つけて、ニッチ番号を取得*/
@@ -870,8 +871,14 @@ void Coans_GT2016::Update_Opponent(int index)
 		Opponent[i].List2.clear();
 	}
 	MakeList(Opponent, 0, K_List2, 0);
+	Cr_Num = 1;
+	for (int i = 0; i < KO; i++) {
+		if (SetNitch(Cr_Num, i, Opponent) == 1) {
+			Cr_Num++;
+		}
+	}
 }
-int Coans_GT2016::Cal_Gra_Nitch(int index)
+int   Coans_GT2016::Cal_Gra_Nitch(int index)
 {
 	std::vector<int> Nitch_Num;
 	std::vector< std::vector < std::vector<double> > > Sum_N_W1;
@@ -883,15 +890,10 @@ int Coans_GT2016::Cal_Gra_Nitch(int index)
 	Sum_N_W2 = std::vector<std::vector<std::vector<double>>>(Cr_Num + 1, std::vector<std::vector<double>>(I2, std::vector<double>(J2, 0.0)));
 	Sum_N_W3 = std::vector<std::vector<std::vector<double>>>(Cr_Num + 1, std::vector<std::vector<double>>(J1, std::vector<double>(I2, 0.0)));
 
-	std::cout << "8-1-1" << ',';
-	std::cout << "Cr_Num:" << Cr_Num << ",";
-	std::cout << "Sum_N_W1:" << Sum_N_W1.size() << ",";
-	std::cout << "Opponent:" << Opponent.size() << ",";
 	for (int Opp = 0; Opp < KO; Opp++) {
 		//親の解のそれぞれのベクトルを足す
 		//w1_CO
 		int Opp_Nitch = Opponent[Opp].nitch;
-		std::cout << "Opp_Nitch:" << Opp_Nitch << ",";
 		//std::cout << "Opp:" << Opp << ',';
 		for (int j = 0; j < I1; j++) {
 			for (int k = 0; k < J1; k++) {
@@ -912,7 +914,7 @@ int Coans_GT2016::Cal_Gra_Nitch(int index)
 		}
 		Nitch_Num[Opp_Nitch]++;
 	}
-	std::cout << "8-1-2" << ',';
+	//std::cout << "8-1-2" << ',';
 	//ベクトルの重心を求める
 	//w1_CO
 	for (int Nit = 1; Nit < Cr_Num; Nit++) {
@@ -934,7 +936,7 @@ int Coans_GT2016::Cal_Gra_Nitch(int index)
 			}
 		}
 	}
-	std::cout << "8-1-3" << ',';
+	//std::cout << "8-1-3" << ',';
 	//重心と子個体の距離計算
 	double cal_sum = 0;
 	std::vector<double> Dis_Vector(Cr_Num);
@@ -959,7 +961,7 @@ int Coans_GT2016::Cal_Gra_Nitch(int index)
 		}
 		Dis_Vector[Nit] = sqrt(Dis_Vector[Nit]);
 	}
-	std::cout << "8-1-4" << ',';
+	//std::cout << "8-1-4" << ',';
 	auto min = min_element(Dis_Vector.begin()+1, Dis_Vector.end());
 	auto min_Nit = int(distance(Dis_Vector.begin(), min));
 	return min_Nit;

@@ -32,10 +32,10 @@ Main_K		:クラスタリングパラメーター(?)
 ***********************************************/
 int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	int Main_Mode;
-	int Main_Trial;
-	int Main_K;
-	int	Main_Method;
+	int Main_Mode = 0;
+	int Main_Trial = 0;
+	int Main_K = 0;
+	int	Main_Method = 0;
 	std::vector<int> method;
 
 	/*
@@ -43,12 +43,13 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		argv[2]:Trial
 		argv[3]:k
 	*/
+	//Main_Mode = 3;
 	Main_Mode = atoi(__argv[1]);
-	if (Main_Mode == 2) {
+	if (Main_Mode == 1 || Main_Mode == 2) {
 		if (__argc < 3) {
 			//パラメーター無しで動かす用
-			Main_Method = 0;
-			Main_Trial = 0;
+			Main_Method = atoi(__argv[2]);
+			Main_Trial = atoi(__argv[3]);
 			Main_K = 0;
 		}
 		else if (__argc == 4) {
@@ -63,10 +64,12 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		}
 	}
 	if (Main_Mode == 3) {
+		//method.resize(1);
+		//method[0] = 2;
 		method.resize(__argc-2);
 		for (int i = 0; i < __argc - 2; i++) {
-			//method[i] = atoi(__argv[i+2]);
-			method[i] = 2;
+			method[i] = atoi(__argv[i+2]);
+			//method[i] = 2;
 		}
 	}
 
