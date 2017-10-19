@@ -14,15 +14,16 @@ Csvの入出力に関するモジュール置き場
 class CsvModules {
 public:
 	//ファイル読み込み
-	bool GetContents(std::string filename, std::vector<std::vector<std::string>>& table);
-	bool GetContents_int(std::string filename, std::vector<std::vector<int>> &input);
-	bool GetContents_double(std::string filename, std::vector<std::vector<double>> &input);
+	template<class Vec_out>
+	bool GetContents(std::string filename, Vec_out &input);
 	//ファイル書き込み
-	bool fwrite_int(std::string fname, std::vector<std::vector<int>> &vector, int per = 1);
-	bool fwrite_double(std::string fname, std::vector<std::vector<double>> &vector, int per = 1);
+	template<class Vec_in>
+	bool csv_fwrite(std::string fname, Vec_in &vector, int per=1);
 };
-bool CsvModules::GetContents(std::string filename, std::vector<std::vector<std::string>>& table)
+template<class Vec_out>
+bool CsvModules::GetContents(std::string filename, Vec_out &input)
 {
+	std::vector<std::vector<std::string>> table;
 	// ファイルを開く
 	std::ifstream ifs(filename);
 	if (!ifs.is_open())
@@ -48,16 +49,6 @@ bool CsvModules::GetContents(std::string filename, std::vector<std::vector<std::
 	}
 	table.erase(table.end() - 1);
 
-	return true;
-}
-bool CsvModules::GetContents_int(std::string filename, std::vector<std::vector<int>> &input) {
-	//check
-	std::vector<std::vector<std::string>> table;
-	if (!GetContents(filename, table)) {
-		std::cout << "file open error! " << filename << std::endl;
-		return false;
-	}
-
 	int Table_Lengh_Y = int(table.size());
 	for (int i = 1; i < Table_Lengh_Y; i++) {
 		int Table_Lengh_X = int(table[i].size());
@@ -68,26 +59,10 @@ bool CsvModules::GetContents_int(std::string filename, std::vector<std::vector<i
 	}
 	return true;
 }
-bool CsvModules::GetContents_double(std::string filename, std::vector<std::vector<double>> &input) {
-	//check
-	std::vector<std::vector<std::string>> table;
-	if (!GetContents(filename, table)) {
-		std::cout << "file open error! " << filename << std::endl;
-		return false;
-	}
 
-	int Table_Lengh_Y = int(table.size());
-	for (int i = 1; i < Table_Lengh_Y; i++) {
-		int Table_Lengh_X = int(table[i].size());
-
-		for (int j = 1; j < Table_Lengh_X; j++) {
-			input[i - 1][j - 1] = atof(table[i][j].c_str());
-		}
-	}
-	return true;
-}
-bool CsvModules::fwrite_int(std::string fname, std::vector<std::vector<int>> &vector, int per = 1) {
-	int vector_size = vector.size();
+template<class Vec_in>
+bool CsvModules::csv_fwrite(std::string fname, Vec_in &vector, int per) {
+	int vector_size = int(vector.size());
 
 	int max_size = 0;
 	for (int i = 0; i < vector_size; i++) {
@@ -96,42 +71,6 @@ bool CsvModules::fwrite_int(std::string fname, std::vector<std::vector<int>> &ve
 			max_size = vector_size2;
 		}
 	}
-
-	std::ofstream ofs(fname);
-	if (!ofs.is_open())
-	{
-		// ファイルが開けなかった場合は終了する
-		return false;
-	}
-	//1段目
-	ofs << " " << ',';
-	for (int i = 0; i < max_size; i++) {
-		ofs << i + 1 << ',';
-	}
-	ofs << std::endl;
-
-	//2段目以降
-	for (int i = 0; i < vector_size; i++) {
-		ofs << per*i << ',';
-		for (const auto &em : vector[i]) {
-			ofs << em << ',';
-		}
-		ofs << std::endl;
-	}
-	std::cout << "file:" << fname << "...done" << std::endl;
-	return true;
-}
-bool CsvModules::fwrite_double(std::string fname, std::vector<std::vector<double>> &vector, int per = 1) {
-	int vector_size = vector.size();
-
-	int max_size = 0;
-	for (int i = 0; i < vector_size; i++) {
-		int vector_size2 = int(vector[i].size());
-		if (max_size < vector_size2) {
-			max_size = vector_size2;
-		}
-	}
-
 	std::ofstream ofs(fname);
 	if (!ofs.is_open())
 	{
@@ -158,11 +97,11 @@ bool CsvModules::fwrite_double(std::string fname, std::vector<std::vector<double
 	return true;
 }
 
+/*
+	実験用のcsv
+*/
 class Csv_exp : public CsvModules {
-	Csv_exp() {
-		std::cout << "Please Input Method's Number !" << std::endl;
-		exit(1);
-	}
+public:
 	Csv_exp(std::string str, int method, int Trial, int Gene, int Per, int k = 0) {
 		Dir = str;
 		Csv_Method = method;
@@ -229,6 +168,7 @@ void Csv_exp::Stra_Output_Pop(std::vector<playerTK> &Pop, int index) {
 
 	for (int i = 0; i < pop_size; i++) {
 		Tmp_File_Name << File_Name.str() << "/" << i << ".dat";
+		Check_Directory(Tmp_File_Name.str());
 		//ファイル書き込み
 		if ((fp_main = fopen(Tmp_File_Name.str().c_str(), "wb+")) == NULL) {
 			fprintf(stderr, "%s\n", strerror(errno));
@@ -291,10 +231,9 @@ void Csv_exp::fwrite_Cr_P() {
 		sprintf(fname, "./csv/Cruster/Cruster_%d_%d_%d_%d.csv", Csv_Method, Csv_Trial, Csv_Gene, Csv_K);
 		sprintf(fname2, "./csv/Cruster/Cruster2_%d_%d_%d_%d.csv", Csv_Method, Csv_Trial, Csv_Gene, Csv_K);
 	}
-
 	//ファイル出力
-	fwrite_int(fname, Cr_P);
-	fwrite_int(fname2, tmp_Cr_P);
+	csv_fwrite(std::string(fname), Cr_P);
+	csv_fwrite(std::string(fname2), tmp_Cr_P);
 }
 void Csv_exp::Fwrite_Re_P() {
 	//ファイル名設定
@@ -392,24 +331,22 @@ void CsvModules_Intend::Create_Data(std::vector<int> &me, int n, int trial, int 
 	for (int i = 0; i < method_size; i++) {
 		std::cout << "method_size:" << method_size << std::endl;
 		std::cout << "method:" << method[i] << " start..." << std::endl;
-		std::stringstream Tmp_FileName;
+		std::stringstream tmp_fname;
 		std::vector<std::vector<std::vector<double>>> Input;
 
-		Tmp_FileName << "./csv/PopResult/" << method[i] << "/";
+		tmp_fname << "./csv/PopResult/" << method[i] << "/";
 		Input = std::vector<std::vector<std::vector<double>>>(ENEMY, std::vector<std::vector<double>>(Gene / Per + 1, std::vector<double>(n, 0)));
-
 		for (int Opp = 0; Opp < ENEMY; Opp++) {
 			//ファイル名設定
-			std::stringstream FileName;
+			std::stringstream fname;
 			std::vector<std::vector<std::string>> table;
-			FileName << Tmp_FileName.str() << "PopResult_" << trial << "_" << Opp << ".csv";
-
+			fname << tmp_fname.str() << "PopResult_" << trial << "_" << Opp << ".csv";
 			//ファイル読み込み
-			if (!GetContents_double(FileName.str(), Input[Opp])) {
+			if (!GetContents(fname.str(), Input[Opp])) {
 				std::cout << "file input error! " << std::endl;
 			}
-			FileName.str("");
-			FileName.clear(std::stringstream::goodbit);
+			fname.str("");
+			fname.clear(std::stringstream::goodbit);
 			std::cout << "   Enemy:" << Opp << " done..." << std::endl;
 		}
 
@@ -422,18 +359,12 @@ void CsvModules_Intend::Create_Data(std::vector<int> &me, int n, int trial, int 
 
 		std::cout << "method:" << method[i] << " done..." << std::endl;
 	}
-	/*
-	std::stringstream filename;
-	filename << "./csv/Result_" << KU << ".csv";
-	OutContents(filename.str());
-	std::cout << "OutContents ...done" << std::endl;
-	*/
 }
 //ファイル読み込み(2次元ベクター)
 //ファイル出力(2次元ベクター)
 bool CsvModules_Intend::OutContents(std::string filename)
 {
-	// ファイルを開く
+	// ファイルを開
 	std::ofstream ofs(filename);
 	if (!ofs.is_open())
 	{

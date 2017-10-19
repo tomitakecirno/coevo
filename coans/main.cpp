@@ -29,18 +29,20 @@ Main_Mode	:モード	(0: 1: 2:提案手法の学習 3:)
 Main_Method	:提案手法
 Main_Trial	:試行回数
 Main_K		:クラスタリングパラメーター(?)
+
+Main_K		:クラスタリングパラメーター(?)
 ***********************************************/
 int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	int Main_Mode	= 0;
+	int	Main_Method = 0;
 	int Main_Trial	= 0;
-	int Main_K		= 0;
-	int	Main_Method	= 0;
 	int Main_KO		= 0;
-	int Main_KU		= 0;
-	int Main_PER	= 0;
-	int	Main_PARENT = 0;
-	int	Main_CHILD	= 0;
+	int Main_K		= 0;
+	int Main_KU		= KU;
+	int Main_PER	= PER;
+	int	Main_PARENT = PARENT;
+	int	Main_CHILD	= CHILD;
 
 	std::vector<int> method;
 	/*
@@ -49,24 +51,37 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		argv[3]:k
 	*/
 	//Main_Mode = 3;
+	if (__argc < 2) {
+		cout << "Please set parameter" << endl;
+		exit(0);
+	}
 	Main_Mode = atoi(__argv[1]);
 	if (Main_Mode == 1 || Main_Mode == 2) {
-		if (__argc < 3) {
-			//パラメーター無しで動かす用
-			Main_Method = atoi(__argv[2]);
-			Main_Trial = atoi(__argv[3]);
-			Main_K = 0;
+		switch (__argc) {
+		case 4:
+			Main_KU = atoi(__argv[3]);
+			break;
+		case 5:
+			Main_KU = atoi(__argv[3]);
+			Main_Trial = atoi(__argv[4]);
+			break;
+		case 7:
+			Main_KU = atoi(__argv[3]);
+			Main_Trial = atoi(__argv[4]);
+			Main_PARENT = atoi(__argv[5]);
+			Main_CHILD = atoi(__argv[6]);
+			break;
+		case 8:
+			Main_KU = atoi(__argv[3]);
+			Main_Trial = atoi(__argv[4]);
+			Main_PARENT = atoi(__argv[5]);
+			Main_CHILD = atoi(__argv[6]);
+			Main_K = atoi(__argv[7]);
+			break;
 		}
-		else if (__argc == 4) {
-			Main_Method = atoi(__argv[2]);
-			Main_Trial = atoi(__argv[3]);
-			Main_K = 0;
-		}
-		else if (__argc == 5) {
-			Main_Method = atoi(__argv[2]);
-			Main_Trial = atoi(__argv[3]);
-			Main_K = atoi(__argv[4]);
-		}
+		Main_Method = atoi(__argv[2]);
+		Main_Trial = atoi(__argv[3]);
+		Main_PER = Main_KU/10;
 	}
 	if (Main_Mode == 3) {
 		//method.resize(1);
