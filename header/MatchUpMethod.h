@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <time.h>
+#include "CsvModules.h"
 
 class Match {
 public:
@@ -19,26 +20,15 @@ public:
 		Pop_Length = Pop_N;
 		Opp_Length = Opp_N;
 		//自プレイヤーの初期化
-		Pop_Result.resize(Pop_Length); //メンバー数
-		for (int i = 0; i < Pop_Length; i++) {
-			Pop_Result[i].resize(Loop_Length); //世代数
-			for (int j = 0; j < Loop_Length; j++) {
-				Pop_Result[i][j].resize(Opp_Length); //対戦相手数
-			}
-		}
+		Pop_Result = std::vector<std::vector<double>>(Pop_Length, std::vector<double>(Opp_Length,0));
 		//相手プレイヤーの初期化
-		Opp_Result.resize(Opp_Length);
-		for (int i = 0; i < Opp_Length; i++) {
-			Opp_Result[i].resize(Pop_Length); //対戦相手数
-		}
+		Opp_Result = std::vector<std::vector<double>>(Opp_Length, std::vector<double>(Pop_Length,0));
 		//Csvファイル出力用ベクターの初期化
-		ToCsv_Data.resize(Loop_Length);
-		for (int i = 0; i < Loop_Length; i++) {
-			ToCsv_Data[i].resize(Pop_Length); //対戦相手数
-		}
+		ToCsv_Data = std::vector<std::vector<double>>(Loop_Length, std::vector<double>(Pop_Length, 0));
 	}
-	void Match_And_SetDATA(int Pop_Trial, int Opp_Trial);
-	void File_Write_CSV(int Pop_trial, int Opp_trial);
+	void main_task(int Pop_Trial, int Opp_Trial);
+	void output_re_csv(int Pop_trial, int Opp_trial);
+	void output_ni_csv(int Pop_trial, int Opp_trial);
 	void Decide_Best(int Pop_Trial);
 private:
 	int Gene;	//世代数
@@ -46,15 +36,15 @@ private:
 	int Loop_Length;	//ループ
 	int Pop_Length;	//世代数
 	int Opp_Length;
-	int Pop_Method;	//世代数
+	int Pop_Method;
 	int Opp_Method;
 	int	Cru_K;
 	std::string Dir;
-	std::vector<std::vector<std::vector<double> > > Pop_Result;
+	std::vector<std::vector<double>> Pop_Result;
 	std::vector<std::vector<double> > Opp_Result;
 	std::vector<std::vector<double> > ToCsv_Data;
 protected:
-	void Set_CsvData(int trial);
+	void setdata(int trial);
 	void PvP(int Pop_Trial, int Opp_Trial, int Gene);
 };
 
@@ -105,12 +95,12 @@ void Match::PvP(int Pop_Trial, int Opp_Trial, int Gene) {
 			//対戦
 			Competition();
 			if (player1.win == 1) {
-				Pop_Result[AI_Pop][Gene][AI_Opp] = 1;
+				Pop_Result[AI_Pop][AI_Opp] = 1;
 			}
 			else {
-				Pop_Result[AI_Pop][Gene][AI_Opp] = 0;
+				Pop_Result[AI_Pop][AI_Opp] = 0;
 			}
-			std::cout << Pop_Result[AI_Pop][Gene][AI_Opp];
+			std::cout << Pop_Result[AI_Pop][AI_Opp];
 		}
 	}
 	std::cout << std::endl;
@@ -218,66 +208,93 @@ void Match::Decide_Best(int Pop_Trial) {
 	fwrite(w3, sizeof(double), I2*J1, fp);
 
 }
-void Match::Match_And_SetDATA(int Pop_Trial, int Opp_Trial) {
+void Match::main_task(int Pop_Trial, int Opp_Trial)
+{
 	for (int gene = 0; gene < Loop_Length; gene++) {
 		std::cout << "generation:" << gene << std::endl;
 		//対戦して結果を格納
 		PvP(Pop_Trial, Opp_Trial, gene);
 		//対戦結果から平均勝利数を求める
-		Set_CsvData(gene);
+		setdata(gene);
 	}
 	std::cout << "Set Data" << std::endl;
+	output_re_csv(Pop_Trial, Opp_Trial);
+	output_ni_csv(Pop_Trial, Opp_Trial);
+	std::cout << "Output result csv" << std::endl;
 }
-void Match::Set_CsvData(int g) {
-	//0で初期化
-	std::vector<double> Pop_Eval(Pop_Length, 0);
-
-	for (int p = 0; p < Pop_Length; p++) {
-		std::cout << p << "_Result:[";
-		for (int o = 0; o < Opp_Length; o++) {
-			std::cout << Pop_Result[p][g][o] << ",";
+void Match::setdata(int g) {
+	//評価値を求める
+	std::vector<double> pop_eval(Pop_Length, 0);
+	for (auto &p : Pop_Result) {
+		std::cout << "Result:[";
+		for (auto &o : p) {
+			std::cout << o << ",";
 		}
 		std::cout << "]" <<std::endl;
 	}
-	//自プレイヤーの評価値を求める
-	for (int p = 0; p < Pop_Length; p++) {
-		for (int o = 0; o < Opp_Length; o++) {
-			Pop_Eval[p] += Pop_Result[p][g][o];
-			//std::cout << Pop_Eval[p] << ',';
+	for (int i = 0; i < Pop_Length; i++) {
+		for (auto &pr : Pop_Result[i]) {
+			pop_eval[i] += pr;
 		}
 	}
 	std::cout << "eval:[";
-	for (int p = 0; p < Pop_Length; p++) {
-		std::cout << Pop_Eval[p] << ",";
+	for (auto &pe : pop_eval) {
+		std::cout << pe << ",";
 	}
 	std::cout << "]" << std::endl;
-
-	ToCsv_Data[g] = Pop_Eval;
+	ToCsv_Data[g] = pop_eval;
 }
-void Match::File_Write_CSV(int Pop_trial, int Opp_trial) {
+void Match::output_re_csv(int Pop_trial, int Opp_trial) {
 	char fname[50];
 	if (Cru_K == 0) {
-		sprintf(fname, "./csv/PopResult/%d/PopResult_%d_%d.csv", Pop_Method, Pop_trial, Opp_trial);
+		sprintf(fname, "./csv/%d/PopResult_%d_%d_%d_%d.csv", Pop_Method, Pop_Method, Pop_trial, Opp_trial, Gene);
 	}if (0 < Cru_K) {
-		sprintf(fname, "./csv/PopResult/%d/PopResult_%d_%d_%d.csv", Pop_Method, Cru_K, Pop_trial, Opp_trial);
+		sprintf(fname, "./csv/%d/PopResult_%d_%d_%d_%d_%d.csv", Pop_Method, Pop_Method, Pop_trial, Opp_trial, Gene, Cru_K);
 	}
-	//ファイル出力ストリーム
-	std::ofstream ofs(fname);
+	//
+	CsvModules cm;
+	cm.csv_fwrite(std::string(fname), ToCsv_Data, Per);
+}
+void Match::output_ni_csv(int Pop_trial, int Opp_trial) {
+	CsvModules cm;
+	char fname[50];
+	std::vector<std::vector<int>> pop_nitch; //ニッチ番号を格納
 
-	ofs << "世代数" << ',';
-	for (int j = 0; j < Pop_Length; j++) {
-		ofs << "p" << j << ',';
+	if (Cru_K == 0) {
+		sprintf(fname, "./csv/%d/Cruster_%d_%d_%d.csv", Pop_Method, Pop_Method, Pop_trial, Gene);
+	}if (0 < Cru_K) {
+		sprintf(fname, "./csv/%d/PopResult_%d_%d_%d_%d_%d.csv", Pop_Method, Pop_Method, Pop_trial, Opp_trial, Gene, Cru_K);
 	}
-	ofs << std::endl;
 
-	//結果を出力
+	if (!cm.GetContents(fname, pop_nitch)) {
+		std::cout << "pop_nitch input error" << std::endl;
+	}
+
 	for (int i = 0; i < Loop_Length; i++) {
-		ofs << i*Per << ',';
-		for (int j = 0; j < Pop_Length; j++) {
-			ofs << ToCsv_Data[i][j] << ',';
-			//std::cout << ToCsv_Data[i][j] << ',';
+		int max_num = *max_element(pop_nitch[i].begin(), pop_nitch[i].end());
+		for (int j = 0; j < max_num; j++) {
+			int count = int(std::count(pop_nitch[i].begin(), pop_nitch[i].end(), j));
+			if (count != 0) {
+				//ニッチ毎の個体を記録
+				int c_index = 0;
+				std::vector<std::vector<double>> tmp_eval;
+				tmp_eval = std::vector<std::vector<double>>(count, std::vector<double>(Opp_Length, 0));
+				for (int k = 0; k < Pop_Length; k++) {
+					if (pop_nitch[i][k] == j) {
+						tmp_eval[c_index] = Pop_Result[i];
+						c_index++;
+					}
+				}
+				//ファイル出力
+				char fname[50];
+				if (Cru_K == 0) {
+					sprintf(fname, "./csv/%d/nrdata/pop_nitch_result_%d_%d_%d_%d_%d.csv", Pop_Method, Pop_Method, Pop_trial, Opp_trial, Gene,j);
+				}if (0 < Cru_K) {
+					sprintf(fname, "./csv/%d/nrdata/pop_nitch_result_%d_%d_%d_%d_%d_%d.csv", Pop_Method, Pop_Method, Pop_trial, Opp_trial, Gene, Cru_K,j);
+				}
+				cm.csv_fwrite(std::string(fname), tmp_eval);
+			}
 		}
-		ofs << std::endl;
+		//
 	}
-	std::cout << "File Written" << std::endl;
 }

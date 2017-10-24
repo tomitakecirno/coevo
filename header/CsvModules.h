@@ -48,12 +48,14 @@ bool CsvModules::GetContents(std::string filename, Vec_out &input)
 		table.push_back(record);
 	}
 	table.erase(table.end() - 1);
+	
+	int table_len_Y = int(table.size());
+	input.resize(table_len_Y - 1);
+	for (int i = 1; i < table_len_Y; i++) {
+		int table_len_X = int(table[i].size());
+		input[i].resize(table_len_X - 1);
 
-	int Table_Lengh_Y = int(table.size());
-	for (int i = 1; i < Table_Lengh_Y; i++) {
-		int Table_Lengh_X = int(table[i].size());
-
-		for (int j = 1; j < Table_Lengh_X; j++) {
+		for (int j = 1; j < table_len_X; j++) {
 			input[i - 1][j - 1] = atoi(table[i][j].c_str());
 		}
 	}
@@ -77,7 +79,6 @@ bool CsvModules::csv_fwrite(std::string fname, Vec_in &vector, int per) {
 		// ファイルが開けなかった場合は終了する
 		return false;
 	}
-
 	//1段目
 	ofs << " " << ',';
 	for (int i = 0; i < max_size; i++) {
@@ -102,30 +103,36 @@ bool CsvModules::csv_fwrite(std::string fname, Vec_in &vector, int per) {
 */
 class Csv_exp : public CsvModules {
 public:
-	Csv_exp(std::string str, int method, int Trial, int Gene, int Per, int k = 0) {
+	Csv_exp(std::string str, int method, int Trial, int Gene, int Per, int parent, int child, int k = 0) {
 		Dir = str;
 		Csv_Method = method;
 		Csv_Trial = Trial;
 		Csv_Gene = Gene;
 		Csv_Per = Per;
 		Csv_K = k;
+		Csv_Parent = parent;
+		Csv_Child = child;
 		Cr_P.resize(Gene / Per + 1);
 		Re_P.resize(Gene / Per + 1);
 
 		Make_CSV_Directory(method);
 		std::cout << "Csv Initialized..." << std::endl;
 	}
+	//戦略in
 	void Stra_Output_Pop(std::vector<playerTK> &Pop, int index);
+	//クラスターin
 	void SetVec_Cr_Pop(std::vector<playerTK> &Pop, int index);
+	//対戦結果
 	void SetVec_Re_Pop(std::vector<playerTK> &Pop, int index);
 	void fwrite_Cr_P();
-	void Fwrite_Re_P();
 protected:
 	int Csv_Method;
 	int Csv_Trial;
 	int Csv_Gene;
 	int Csv_Per;
 	int Csv_K;
+	int Csv_Parent;
+	int Csv_Child;
 	std::string Dir;
 	std::vector<std::vector<int>> Cr_P;
 	std::vector<std::vector<int>> Re_P;
@@ -135,7 +142,6 @@ void Csv_exp::Stra_Output_Pop(std::vector<playerTK> &Pop, int index) {
 	std::vector<std::vector<std::vector<double>>> w1_Main;
 	std::vector<std::vector<std::vector<double>>> w2_Main;
 	std::vector<std::vector<std::vector<double>>> w3_Main;
-
 	w1_Main = std::vector<std::vector<std::vector<double>>>(pop_size, std::vector<std::vector<double>>(I1, std::vector<double>(J1, 0)));
 	w2_Main = std::vector<std::vector<std::vector<double>>>(pop_size, std::vector<std::vector<double>>(I2, std::vector<double>(J2, 0)));
 	w3_Main = std::vector<std::vector<std::vector<double>>>(pop_size, std::vector<std::vector<double>>(I2, std::vector<double>(J1, 0)));
@@ -163,20 +169,18 @@ void Csv_exp::Stra_Output_Pop(std::vector<playerTK> &Pop, int index) {
 	std::stringstream File_Name;
 	std::stringstream Tmp_File_Name;
 
-	File_Name << "./" << Dir << "/" << Csv_Method << "/" << Csv_Trial << "/" << Csv_Gene / Csv_Per;
+	File_Name << "./" << Dir << "/" << Csv_Method << "/" << Csv_Trial << "/" << index;
 	//File_Name << "./" << Dir;
-
 	for (int i = 0; i < pop_size; i++) {
 		Tmp_File_Name << File_Name.str() << "/" << i << ".dat";
-		Check_Directory(Tmp_File_Name.str());
 		//ファイル書き込み
 		if ((fp_main = fopen(Tmp_File_Name.str().c_str(), "wb+")) == NULL) {
 			fprintf(stderr, "%s\n", strerror(errno));
 			exit(EXIT_FAILURE);
 		}
-		fwrite(w1_Main[i].data(), sizeof(double), I1*J1, fp_main);
-		fwrite(w2_Main[i].data(), sizeof(double), I2*J2, fp_main);
-		fwrite(w3_Main[i].data(), sizeof(double), I2*J1, fp_main);
+		fwrite(&w1_Main[i], sizeof(double), I1*J1, fp_main);
+		fwrite(&w2_Main[i], sizeof(double), I2*J2, fp_main);
+		fwrite(&w3_Main[i], sizeof(double), I2*J1, fp_main);
 
 		//クリア
 		Tmp_File_Name.str("");
@@ -223,38 +227,17 @@ void Csv_exp::fwrite_Cr_P() {
 	char fname2[50];
 	if (Csv_K == 0) {
 		//全ての個体のクラスタ番号を記録
-		sprintf(fname, "./csv/Cruster/Cruster_%d_%d_%d.csv", Csv_Method, Csv_Trial, Csv_Gene);
+		sprintf(fname, "./csv/%d/Cruster_%d_%d_%d.csv", Csv_Method, Csv_Method, Csv_Trial, Csv_Gene);
 		//クラスタ毎の個体数を記録
-		sprintf(fname2, "./csv/Cruster/Cruster2_%d_%d_%d.csv", Csv_Method, Csv_Trial, Csv_Gene);
+		sprintf(fname2, "./csv/%d/Cruster2_%d_%d_%d.csv", Csv_Method, Csv_Method, Csv_Trial, Csv_Gene);
 	}
 	else if (0 < Csv_K) {
-		sprintf(fname, "./csv/Cruster/Cruster_%d_%d_%d_%d.csv", Csv_Method, Csv_Trial, Csv_Gene, Csv_K);
-		sprintf(fname2, "./csv/Cruster/Cruster2_%d_%d_%d_%d.csv", Csv_Method, Csv_Trial, Csv_Gene, Csv_K);
+		sprintf(fname, "./csv/%d/Cruster_%d_%d_%d_%d.csv", Csv_Method, Csv_Method, Csv_Trial, Csv_Gene, Csv_K);
+		sprintf(fname2, "./csv/%d/Cruster2_%d_%d_%d_%d.csv", Csv_Method, Csv_Method, Csv_Trial, Csv_Gene, Csv_K);
 	}
 	//ファイル出力
 	csv_fwrite(std::string(fname), Cr_P);
 	csv_fwrite(std::string(fname2), tmp_Cr_P);
-}
-void Csv_exp::Fwrite_Re_P() {
-	//ファイル名設定
-	char fname[40];
-	if (Csv_Method == 0) {
-		sprintf(fname, "./csv/PopResult/%d/PopResult_%d.csv", Csv_Method, Csv_Trial);
-	}
-	else if (0 < Csv_Method) {
-		sprintf(fname, "./csv/PopResult/%d/PopResult_%d_%d.csv", Csv_Method, Csv_Trial, Csv_K);
-	}
-	//ファイル出力ストリーム
-	std::ofstream ofs(fname);
-
-	for (int i = 0; i < Csv_Gene / Csv_Per + 1; i++) {
-		ofs << Csv_Per*(i + 1) << ',';
-		int Length = int(Re_P[i].size());
-		for (int j = 0; j < Length; j++) {
-			ofs << Re_P[i][j] << ',';
-		}
-		ofs << std::endl;
-	}
 }
 
 //csvを統合するクラス
@@ -334,7 +317,7 @@ void CsvModules_Intend::Create_Data(std::vector<int> &me, int n, int trial, int 
 		std::stringstream tmp_fname;
 		std::vector<std::vector<std::vector<double>>> Input;
 
-		tmp_fname << "./csv/PopResult/" << method[i] << "/";
+		tmp_fname << "./csv/" << method[i] << "/";
 		Input = std::vector<std::vector<std::vector<double>>>(ENEMY, std::vector<std::vector<double>>(Gene / Per + 1, std::vector<double>(n, 0)));
 		for (int Opp = 0; Opp < ENEMY; Opp++) {
 			//ファイル名設定

@@ -33,31 +33,46 @@ private:
 	virtual void Cal_Fitness() = 0;
 	//このクラスと派生クラスからアクセス可能
 protected:
-	int Machup_Num;						//対戦回数
-	int Cr_Num;							//クラスター番号
-	int Opp_Num;						//対戦回数
-	int MainParent;						//主親
 	int Method_Num;						//手法比較の時に使う
+	int Pop_n;							//自集団の個体数
+	int Gene;							//世代数
+	int Per;							//間隔
+	int Pare;							//親個体数
+	int child;							//子個体数
+	int Cr_Num;							//クラスター番号
+	int Opp_Num;
 	int	Cru_K;							//クラスタリングパラメーター
+	int MainParent;						//主親
+
+	int Machup_Num;						//対戦回数
 	std::string Dir;
-	std::vector<int> SubParent;			//副親
 	std::vector<playerTK> Pop;			//進化させる集団
-	std::vector<playerTK> Child;		//子
+	std::vector<playerTK> Child;
 	std::vector<playerTK> Opponent;		//対戦相手
 };
 void Coans::Coans_Tasks(int Trial)
 {
+
+	std::cout << "手法:" << Method_Num << std::endl;
+	std::cout << "試行回数:" << Trial << std::endl;
+	std::cout << "クラスタ数:" << Cru_K << std::endl;
+	std::cout << "世代数:" << Gene << std::endl;
+	std::cout << "区切り:" << Per << std::endl;
+	std::cout << "集団個体数:" << Pop_n << std::endl;
+	std::cout << "子個体数:" << Pare << std::endl;
+	std::cout << "親個体数:" << child << std::endl;
+
 	//集団宣言
-	Pop.resize(KO);
+	Pop.resize(Pop_n);
 	init_genrand((unsigned)time(NULL)); /*乱数初期化*/
 
 	//集団初期化
-	for (int i = 0; i < KO; i++) {
+	for (int i = 0; i < Pop_n; i++) {
 		Pop[i].Init();
 		Pop[i].Init_w();
 	}
-	Make_Directory(Dir, Method_Num, Trial, KU, PER, Cru_K);
-	Csv_exp csv_exp(Dir, Method_Num, Trial, KU, PER);
+	Make_Directory(Dir, Method_Num, Trial, Gene, Per, Cru_K);
+	Csv_exp csv_exp(Dir, Method_Num, Trial, Gene, Per, Pare, child);
 
 	//初期世代の戦略を記録
 	Machup_Num = 0;
@@ -68,29 +83,30 @@ void Coans::Coans_Tasks(int Trial)
 	//Crustering();
 
 	std::cout << "Initiarized..." << std::endl;
-	for (int Gene_Loop = 1; Gene_Loop < KU+1; Gene_Loop++) {
+	csv_exp.Stra_Output_Pop(Pop, 0);
+	std::cout << "Strategy0..." << std::endl;
+
+	for (int Gene_Loop = 1; Gene_Loop < Gene+1; Gene_Loop++) {
 		Loop_Time_Start = clock();
 		std::cout << Method_Num << ":" << Trial << ":" << Cru_K << ":" << Gene_Loop;
 		std::cout << "  |  ";
 		std::cout << "1" << ',';
 		Crustering(); //クラスタリング。手法によって変わる
 		//実験用
-		if (Gene_Loop % PER == 0 || Gene_Loop == 1) {
+		if (Gene_Loop % Per == 0) {
 			std::cout << "9" << ',';
-			//集団のクラスタ番号をベクターに格納
-			//SetVec_Cr_Pop(Pop);
-			//格納したベクターをCsvクラスへ
-		}
-		else {
+			if (Method_Num == 2) {
+				csv_exp.SetVec_Cr_Pop(Pop, Gene_Loop / Per);
+			}
 		}
 		int tmpIndex;
 		int tmpSub;
-		SubParent.resize(0);
+		std::vector<int> SubParent;
 		std::cout << "2" << ',';
 		//主親選ぶ
-		MainParent = GetRand_Int(KO);
+		MainParent = GetRand_Int(Pop_n);
 		//副親を選ぶ
-		for (int i = 0; i < PARENT; i++) {
+		for (int i = 0; i < Pare; i++) {
 			if (Pop[MainParent].List1.empty()) {
 				break;
 			}
@@ -102,35 +118,12 @@ void Coans::Coans_Tasks(int Trial)
 		//副親があれば以下の処理を行う
 		if (!SubParent.empty()) {
 			//子個体生成
-			Child.resize(CHILD + 1);
-
+			Child.resize(child + 1);
+			int child_size = int(Child.size());
 			std::cout << "3" << ',';
 			//拡張XLM
 			Child[0] = Pop[MainParent];
 			ExtensionXLM(MainParent, SubParent, Pop, Child);
-			/*
-			std::vector<std::vector<double> > Child_Dis(CHILD + 1);
-			for (int i = 0; i < CHILD + 1; i++) {
-				Child_Dis[i].resize(CHILD);
-			}
-			for (int i = 0; i < CHILD+1; i++) {
-				for (int j = i+1; j < CHILD; j++) {
-					Child_Dis[i][j] = cal_kotai_distance(Child[i],Child[j]);
-					Child_Dis[j][i] = Child_Dis[i][j];
-				}
-			}
-			std::cout << std::endl;
-			for (int i = 0; i < CHILD + 1; i++) {
-				std::cout << i << ":[";
-				for (int j = 0; j < CHILD; j++) {
-					std::cout << Child_Dis[i][j] << ',';
-				}
-				std::cout << ']';
-				std::cout << std::endl;
-			}
-
-			exit(0);
-			*/
 			//対戦相手の個体を選ぶ
 			std::cout << "4" << ',';
 			Generate_Opp();
@@ -141,9 +134,9 @@ void Coans::Coans_Tasks(int Trial)
 			int opponentLength = int(Opponent.size());
 
 			for (int i = 0; i < opponentLength; i++) {
-				Opponent[i].Result.resize(CHILD+1);
+				Opponent[i].Result.resize(child_size);
 			}
-			for (int i = 0; i < CHILD+1; i++) {
+			for (int i = 0; i < child_size; i++) {
 				Child[i].Result.resize(opponentLength);
 			}
 			//ここで対戦
@@ -169,6 +162,7 @@ void Coans::Coans_Tasks(int Trial)
 			if (Gene_Loop % PER == 0) {
 				std::cout << "10" << ',';
 				//100世代毎に戦略を記録
+				csv_exp.Stra_Output_Pop(Pop, Gene_Loop / Per);
 			}
 			std::cout << "8";
 			std::cout << "  [";
@@ -177,14 +171,16 @@ void Coans::Coans_Tasks(int Trial)
 			}
 			std::cout << "]" << std::endl;
 			//集団の解以外初期化
-			for (int i = 0; i < KO; i++) {
+			for (int i = 0; i < Pop_n; i++) {
 				Pop[i].Init();
 			}
 		}
 		Loop_Time_End = clock();
 		Loop_Time = (Loop_Time_End - Loop_Time_Start) / CLOCKS_PER_SEC;
 		std::cout << "Time per gene : " << Loop_Time << " [sec]" << std::endl;
-		assert( Gene_Loop <= KU );
+	}
+	if (Method_Num == 2) {
+		csv_exp.fwrite_Cr_P();
 	}
 }
 int Coans::Get_MatchUp_Num() {
@@ -198,8 +194,16 @@ int Coans::Get_MatchUp_Num() {
 */
 class CoansMode1 : public Coans {
 public:
-	CoansMode1(std::string str) {
-		Method_Num = 1;
+	CoansMode1(std::string str, int n, int g, int g_p, int p, int c, int k = 0) {
+		Method_Num = 1;					//手法比較の時に使う
+		Pop_n = n;						//自集団の個体数
+		Gene = g;						//世代数
+		Per = g_p;						//間隔
+		Pare = p;						//親個体数
+		child = c;						//子個体数
+		Machup_Num = 0;					//対戦回数
+		Opp_Num = 0;
+		Cru_K = k;						//クラスタリングパラメーター
 		Dir = str;
 	}
 private:
@@ -249,10 +253,17 @@ void CoansMode1::Cal_Fitness() {
 */
 class CoansMode2 : public Coans {
 public:
-	CoansMode2(std::string str) {
-		Method_Num = 2;
+	CoansMode2(std::string str, int n, int g, int g_p, int p, int c, int k = 0) {
+		Method_Num = 2;					//手法比較の時に使う
+		Pop_n = n;						//自集団の個体数
+		Gene = g;						//世代数
+		Per = g_p;						//間隔
+		Pare = p;						//親個体数
+		child = c;						//子個体数
+		Machup_Num = 0;					//対戦回数
+		Opp_Num = 0;
+		Cru_K = k;						//クラスタリングパラメーター
 		Dir = str;
-		Cru_K = 0;
 	}
 private:
 	//クラスタリングに使うパラメーター
@@ -294,10 +305,17 @@ void CoansMode2::Cal_Fitness() {
 */
 class CoansMode3 : public Coans {
 public:
-	CoansMode3(std::string str) {
-		Method_Num = 3;
+	CoansMode3(std::string str, int n, int g, int g_p, int p, int c, int k = 0) {
+		Method_Num = 3;					//手法比較の時に使う
+		Pop_n = n;						//自集団の個体数
+		Gene = g;						//世代数
+		Per = g_p;						//間隔
+		Pare = p;						//親個体数
+		child = c;						//子個体数
+		Machup_Num = 0;					//対戦回数
+		Opp_Num = 0;
+		Cru_K = k;						//クラスタリングパラメーター
 		Dir = str;
-		Cru_K = 0;
 	}
 private:
 	virtual void Crustering();
@@ -337,10 +355,17 @@ void CoansMode3::Cal_Fitness() {
 */
 class CoansMode4 : public Coans {
 public:
-	CoansMode4(std::string str) {
-		Method_Num = 4;
+	CoansMode4(std::string str, int n, int g, int g_p, int p, int c, int k = 0) {
+		Method_Num = 4;					//手法比較の時に使う
+		Pop_n = n;						//自集団の個体数
+		Gene = g;						//世代数
+		Per = g_p;						//間隔
+		Pare = p;						//親個体数
+		child = c;						//子個体数
+		Machup_Num = 0;					//対戦回数
+		Opp_Num = 0;
+		Cru_K = k;						//クラスタリングパラメーター
 		Dir = str;
-		Cru_K = 0;
 	}
 private:
 	virtual void Set_Method();
@@ -441,8 +466,7 @@ void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 		Opponent[i].Init_w();
 	}
 	Make_Directory(Dir, Method_Num, Trial, Gene, Per, Cru_K);
-	Cr_Pop.resize(Pop_n);
-	Re_Pop.resize(Pop_n);
+	Csv_exp csv_exp(Dir, Method_Num, Trial, Gene, Per, Pare, Child);
 
 	//初期世代の戦略を記録
 	//任意の世代数ループ
@@ -467,13 +491,6 @@ void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 		//クラスタリング
 		MakeList(Pop, K_List1, 0, 0);
 		std::cout << "1-1" << ',';
-
-		//実験用
-		if (Gene_Loop % Per == 0 || Gene_Loop == 1) {
-			std::cout << "12" << ',';
-			//集団のクラスタ番号をベクターに格納
-			//SetVec_Cr_Pop(Pop);
-		}
 
 		int tmpIndex;
 		int tmpSub;
@@ -574,6 +591,7 @@ void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 			if (Gene_Loop % Per == 0) {
 				std::cout << "11" << ',';
 				//100世代毎に戦略を記録
+				csv_exp.Stra_Output_Pop(Pop, Gene_Loop / Per);
 			}
 			std::cout << "10" << ',';
 			std::cout << "  [";
@@ -595,7 +613,6 @@ void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 		Loop_Time_End = clock();
 		Loop_Time = (Loop_Time_End - Loop_Time_Start) / CLOCKS_PER_SEC;
 		std::cout << "Time per gene : " << Loop_Time << " [sec]" << std::endl;
-		//assert(Gene_Loop <= KU);
 	}
 }
 int	  Coans_GT2016::Get_MatchUp_Num() {

@@ -59,24 +59,7 @@ void Make_Directory(std::string str, int method, int trial, int gene, int per, i
 	}
 	std::cout << "Create Directory..." << std::endl;
 }
-//パス名を受け取ってフォルダを生成する
-void Check_Directory(std::string pass) {
-	std::vector<std::string> v;
-	std::stringstream ss(pass);
-	std::string buffer;
-	while (std::getline(ss, buffer,'/')) {
-		v.push_back(buffer);
-	}
 
-	int v_size = int(v.size());
-	std::stringstream fname;
-	fname << "./";
-	for (int i = 1; i < v_size-1; i++) {
-		fname << v[i];
-		CheckTheFolder::checkExistenceOfFolder(fname.str());
-		fname << "/";
-	}
-}
 void Make_Directory_AIT(int method, int trial) {
 	std::stringstream File_Name;
 
@@ -111,13 +94,6 @@ void Make_CSV_Directory(int method) {
 
 	File_Name << "./csv";
 	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
-	File_Name << "/Cruster";
-	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
 	File_Name << "/" << method;
 	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
-
-	Tmp_File_Name << "./csv/PopResult";
-	CheckTheFolder::checkExistenceOfFolder(Tmp_File_Name.str());
-	Tmp_File_Name << "/" << method;
-	CheckTheFolder::checkExistenceOfFolder(Tmp_File_Name.str());
 }

@@ -29,34 +29,38 @@ Main_Mode	:モード	(0: 1: 2:提案手法の学習 3:)
 Main_Method	:提案手法
 Main_Trial	:試行回数
 Main_K		:クラスタリングパラメーター(?)
-
-Main_K		:クラスタリングパラメーター(?)
 ***********************************************/
 int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	int Main_Mode	= 0;
-	int	Main_Method = 0;
+	int Main_Mode	= 2;
+	int	Main_Method = 2;
 	int Main_Trial	= 0;
-	int Main_KO		= 0;
 	int Main_K		= 0;
 	int Main_KU		= KU;
 	int Main_PER	= PER;
+	int Main_KO		= KO;
 	int	Main_PARENT = PARENT;
 	int	Main_CHILD	= CHILD;
 
 	std::vector<int> method;
 	/*
-		argv[1]:Method
-		argv[2]:Trial
-		argv[3]:k
-	*/
-	//Main_Mode = 3;
-	if (__argc < 2) {
-		cout << "Please set parameter" << endl;
-		exit(0);
-	}
+		argv[0]:.exe
+		argv[1]:mode
+		argv[2]:method
+		argv[3]:generation
+		argv[4]:trials
+		argv[5]:parent
+		argv[6]:child
+		argv[7]:nitch parameter
+		*/
 	Main_Mode = atoi(__argv[1]);
+	
+#ifdef DEBUG   // checks for a debug build  
+	Main_Mode = 2;
+#endif   //ends the conditional block  
+
 	if (Main_Mode == 1 || Main_Mode == 2) {
+		Main_Method = atoi(__argv[2]);
 		switch (__argc) {
 		case 4:
 			Main_KU = atoi(__argv[3]);
@@ -78,10 +82,16 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 			Main_CHILD = atoi(__argv[6]);
 			Main_K = atoi(__argv[7]);
 			break;
+		default:
+			break;
 		}
-		Main_Method = atoi(__argv[2]);
-		Main_Trial = atoi(__argv[3]);
-		Main_PER = Main_KU/10;
+		Main_PER = Main_KU / 10;
+		if (Main_Mode == 1) {
+			std::cout << "モード:対戦" << std::endl;
+		}
+		else if (Main_Mode == 2) {
+			std::cout << "モード:学習"  << std::endl;
+		}
 	}
 	if (Main_Mode == 3) {
 		//method.resize(1);
@@ -91,15 +101,8 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 			method[i] = atoi(__argv[i+2]);
 			//method[i] = 2;
 		}
+		std::cout << "モード:csv統合"  << std::endl;
 	}
-
-	std::cout << "Mode:" << Main_Mode << std::endl;
-	std::cout << "手法:" << Main_Method << std::endl;
-	std::cout << "試行回数:" << Main_Trial << std::endl;
-	std::cout << "クラスタ数:" << Main_K << std::endl;
-	std::cout << "世代数:" << KU << std::endl;
-	std::cout << "区切り:" << PER << std::endl;
-
 	int MatchUp_Count=0;
 
 	clock_t Start_Main = clock();
@@ -114,16 +117,15 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	}
 	//学習で記録したデータをもとに実際に対戦
 	else if (Main_Mode == 1) {
-		Match Match_0("AI", Main_Method, 0, KO, KOT, KU, PER, Main_K);
+		Match m("AI", Main_Method, 0, Main_KO, KOT, Main_KU, Main_PER, Main_K);
 		Make_CSV_Directory(Main_Method);
 
 		for (int Opp_t = 0; Opp_t < F_TRIAL; Opp_t++) {
 			//現手法vsFloreano 世代数:2000(100世代間隔) 現手法集団50 Floreano集団30
-			Match_0.Match_And_SetDATA(Main_Trial, Opp_t);
-			Match_0.File_Write_CSV(Main_Trial, Opp_t);
+			m.main_task(Main_Trial, Opp_t);
 		}
 		std::cout << "Process time:" << time << std::endl;
-		Match_0.Decide_Best(Main_Trial);
+		m.Decide_Best(Main_Trial);
 	}
 
 	//現手法学習
@@ -137,22 +139,22 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		}
 		//階層的クラスタリングを盛り込んだ手法
 		if (Main_Method == 1) {
-			CoansMode1 Mode1("AI");
+			CoansMode1 Mode1("AI", Main_KO, Main_KU, Main_PER, Main_PARENT, Main_CHILD, Main_K);
 			Mode1.Coans_Tasks(Main_Trial);
 			MatchUp_Count = Mode1.Get_MatchUp_Num();
 		}
 		//階層的クラスタリング＋List3
 		else if (Main_Method == 2) {
-			CoansMode2 Mode2("AI");
+			CoansMode2 Mode2("AI", Main_KO, Main_KU, Main_PER, Main_PARENT, Main_CHILD, Main_K);
 			Mode2.Coans_Tasks(Main_Trial);
 			MatchUp_Count = Mode2.Get_MatchUp_Num();
 		}else if (Main_Method == 3) {
-			CoansMode3 Mode3("AI");
+			CoansMode3 Mode3("AI", Main_KO, Main_KU, Main_PER, Main_PARENT, Main_CHILD, Main_K);
 			Mode3.Coans_Tasks(Main_Trial);
 			MatchUp_Count = Mode3.Get_MatchUp_Num();
 		}
 		else if (Main_Method == 4) {
-			CoansMode4 Mode4("AI");
+			CoansMode4 Mode4("AI", Main_KO, Main_KU, Main_PER, Main_K, Main_PARENT, Main_CHILD);
 			Mode4.Coans_Tasks(Main_Trial);
 			MatchUp_Count = Mode4.Get_MatchUp_Num();
 		}
