@@ -18,8 +18,8 @@
 #define F_KU	300	/*ニッチの集団数*/
 
 #define NIM		3	//ニムの山の数
-#define POLL1	1	//山1
-#define POLL2	1	//山2
-#define POLL3	1	//山3
+#define POLL1	2	//山1
+#define POLL2	2	//山2
+#define POLL3	2	//山3
 
 #define DELETE	50

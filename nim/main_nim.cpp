@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 		argv[4]:trial
 		argv[5]:nitch parameter	
 	*/
-	mode = 2;
+	mode = 5;
 	//mode = atoi(__argv[1]);
 	if (mode == 1 || mode == 2 || mode == 4) {
 		switch (__argc) {
@@ -152,6 +152,10 @@ int main(int argc, char *argv[])
 			Mode2.Stra_nitch_CSV(Main_Trial);
 		}
 		*/
+	}
+	else if (mode == 5) {
+		nim nim;
+		nim.main_task();
 	}
 
 	clock_t End_Main = clock();

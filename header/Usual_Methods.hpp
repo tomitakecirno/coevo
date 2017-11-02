@@ -98,3 +98,25 @@ void Make_CSV_Directory(int method) {
 	File_Name << "/" << method;
 	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
 }
+
+//ベクターの情報を表示するだけ
+template<class Vec>
+void show_vec_1(Vec &vec_1) 
+{
+	std::cout << "[";
+	for (auto &p : vec_1) {
+		std::cout << p << ",";
+	}
+	std::cout << "]" << std::endl;
+}
+template<class Vec2>
+void show_vec_2(Vec2 &vec_2)
+{
+	for (auto &p : vec_2) {
+		std::cout << "[";
+		for (auto &q : p) {
+			std::cout << q << ",";
+		}
+		std::cout << "]" << std::endl;
+	}
+}
