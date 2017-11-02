@@ -6,8 +6,9 @@ Csvの入出力に関するモジュール置き場
 #include <vector>
 #include <fstream>
 #include <cstdio>
-#include "Usual_Methods.hpp"
-#include "config.hpp"
+#include "config_nim.hpp"
+#include "player_nim.h"
+#include "../header/Usual_Methods.hpp"
 
 #define ENEMY 10
 
@@ -100,29 +101,26 @@ bool CsvModules::csv_fwrite(std::string fname, Vec_in &vector, int per) {
 /*
 	実験用のcsv
 */
+/*
 class Csv_exp : public CsvModules {
 public:
-	Csv_exp(std::string str, int method, int Trial, int Gene, int Per, int parent, int child, int k = 0) {
+	Csv_exp(std::string str, int method, int Trial, int Gene, int Per, int k = 0) {
 		Dir = str;
 		Csv_Method = method;
 		Csv_Trial = Trial;
 		Csv_Gene = Gene;
 		Csv_Per = Per;
 		Csv_K = k;
-		Csv_Parent = parent;
-		Csv_Child = child;
 		Cr_P.resize(Gene / Per + 1);
 		Re_P.resize(Gene / Per + 1);
 
 		Make_CSV_Directory(method);
 		std::cout << "Csv Initialized..." << std::endl;
 	}
-	//戦略in
-	void Stra_Output_Pop(std::vector<playerTK> &Pop, int index);
 	//クラスターin
-	void SetVec_Cr_Pop(std::vector<playerTK> &Pop, int index);
+	void SetVec_Cr_Pop(std::vector<playerNim> &Pop, int index);
 	//対戦結果
-	void SetVec_Re_Pop(std::vector<playerTK> &Pop, int index);
+	void SetVec_Re_Pop(std::vector<playerNim> &Pop, int index);
 	void fwrite_Cr_P();
 protected:
 	int Csv_Method;
@@ -136,49 +134,17 @@ protected:
 	std::vector<std::vector<int>> Cr_P;
 	std::vector<std::vector<int>> Re_P;
 };
-void Csv_exp::Stra_Output_Pop(std::vector<playerTK> &Pop, int index) {
-	int pop_size = int(Pop.size());
-
-	//bef = trueの時AI，falseの時AIC
-	FILE *fp_main;
-	std::stringstream File_Name;
-	std::stringstream Tmp_File_Name;
-
-	File_Name << "./" << Dir << "/" << Csv_Method << "/" << Csv_Trial << "/" << index;
-	//File_Name << "./" << Dir;
-	for (int i = 0; i < pop_size; i++) {
-		Tmp_File_Name << File_Name.str() << "/" << i << ".dat";
-		//ファイル書き込み
-		if ((fp_main = fopen(Tmp_File_Name.str().c_str(), "wb+")) == NULL) {
-			fprintf(stderr, "%s\n", strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-		Strategy_to_w(Pop[i]);
-		fwrite(w1_inout, sizeof(double), I1*J1, fp_main);
-		fwrite(w2_inout, sizeof(double), I2*J2, fp_main);
-		fwrite(w3_inout, sizeof(double), I2*J1, fp_main);
-
-		//クリア
-		Tmp_File_Name.str("");
-		Tmp_File_Name.clear(std::stringstream::goodbit);
-		fclose(fp_main);
+void Csv_exp::SetVec_Cr_Pop(std::vector<playerNim> &Pop, int index) {
+	Cr_P[index].resize(KO);
+	for (int i = 0; i < KO; i++) {
+		Cr_P[index][i] = Pop[i].get_nitch();
 	}
 }
-void Csv_exp::SetVec_Cr_Pop(std::vector<playerTK> &Pop, int index) {
-	int pop_size = int(Pop.size());
-
-	Cr_P[index].resize(pop_size);
-	for (int i = 0; i < pop_size; i++) {
-		Cr_P[index][i] = Pop[i].nitch;
-	}
-}
-void Csv_exp::SetVec_Re_Pop(std::vector<playerTK> &Pop, int index) 
+void Csv_exp::SetVec_Re_Pop(std::vector<playerNim> &Pop, int index)
 {
-	int pop_size = int(Pop.size());
-
-	Re_P[index].resize(pop_size);
-	for (int i = 0; i < pop_size; i++) {
-		Re_P[index][i] = Pop[i].nitch;
+	Re_P[index].resize(KO);
+	for (int i = 0; i < KO; i++) {
+		Re_P[index][i] = Pop[i].get_eval();
 	}
 }
 void Csv_exp::fwrite_Cr_P() {
@@ -424,14 +390,12 @@ void CsvModules_Intend::Set_Output(int me, std::vector<std::vector<std::vector<d
 		opp_name << "Opp:" << Opp;
 		for (int i = 0; i < Gene / Per + 2; i++) {
 			if (i == 0) {
-				/*
 				try {
 					Output_Per[i].at(Opp + 1) = opp_name.str();
 				}
 				catch(std::out_of_range e){
 					std::cout << e.what() << std::endl;
 				}
-				*/
 				Output_Per[i][Opp + 1] = opp_name.str();
 				Output_Per[i + (Gene / Per + 2)][Opp + 1] = opp_name.str();
 				Output_Per[i + (Gene / Per + 2) * 2][Opp + 1] = opp_name.str();
@@ -462,4 +426,4 @@ void CsvModules_Intend::cal_average(std::vector<std::vector<double>> &input, std
 	for (int i = 0; i < Gene / Per + 1; i++) {
 		output[i] = accumulate(tmp_input[i].begin(), tmp_input[i].end(), 0.0) / ENEMY;
 	}
-}
+}*/

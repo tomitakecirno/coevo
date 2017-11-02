@@ -22,9 +22,23 @@
 #define FLORET	5	/*ニッチの集団数*/
 #define F_KU	300	/*ニッチの集団数*/
 
+double w1_inout[I1][J1];
+double w2_inout[I2][J2];
+double w3_inout[I2][J1];
 
-//富田手法で使う構造体
-struct playerTK {
+struct p_data {
+	int win;
+	double eval;
+	int nitch;
+	std::vector<double> Result; //対戦結果
+	std::vector<int> List1;
+	std::vector<int> List2;
+	std::vector<int> List3;
+};
+
+//富田手法で使う構造体(格闘ゲーム)
+struct playerTK : public p_data
+{
 	playerTK() {
 		flag = 0;
 		comp_flag = 0;
@@ -65,8 +79,6 @@ public:
 	void Init_0();
 	void Init_w();
 };
-
-/* 解以外を初期化 */
 void playerTK::Init()
 {
 	x = 0;
@@ -91,8 +103,6 @@ void playerTK::Init()
 	List2.clear();
 	List3.clear();
 }
-
-/* 解を初期化 */
 void playerTK::Init_0()
 {
 	using namespace std;
@@ -118,8 +128,6 @@ void playerTK::Init_0()
 		}
 	}
 }
-
-/* 解を初期化 */
 void playerTK::Init_w()
 {
 	using namespace std;
@@ -149,6 +157,33 @@ void playerTK::Init_w()
 	}
 }
 
+struct playerTK_ex : public playerTK {
+	std::vector<int> Result_int;
+};
+
+//ニムで使うプレイヤーのクラス
+class playerNim : public p_data {
+public:
+	void Init();
+	void Init_stra();
+protected:
+	//戦略
+	std::vector<int> stra;
+};
+void playerNim::Init() {
+	win = 0;
+	eval = 0;
+	nitch = 0;
+	Result.clear();
+	List1.clear();
+	List2.clear();
+	List3.clear();
+}
+void playerNim::Init_stra() {
+	std::vector<int> nim;
+	get_nim(nim);
+	stra
+}
 /* 子個体の評価値 */
 void FitnessChild(playerTK &child, std::vector<playerTK> &oppoment, bool s2)
 {
@@ -224,6 +259,50 @@ void StrategySet_T(playerTK &oppoment) {
 		}
 	}
 }
+
+/* 自分の戦略の情報を移す関数 */
+void Strategy_to_w(const playerTK &pop) {
+	for (int i = 0; i < I1; i++) {
+		for (int j = 0; j < J1; j++) {
+			w1_inout[i][j] = pop.w1_CO[i][j];
+		}
+
+	}
+	for (int i = 0; i < I2; i++) {
+		for (int j = 0; j < J2; j++) {
+			w2_inout[i][j] = pop.w2_CO[i][j];
+
+		}
+
+	}
+	for (int i = 0; i < I2; i++) {
+		for (int j = 0; j < J1; j++) {
+			w3_inout[i][j] = pop.w3_CO[i][j];
+		}
+	}
+}
+
+/* 自分の戦略の情報を移す関数 */
+void w_to_Strategy(playerTK &pop) {
+	for (int i = 0; i < I1; i++) {
+		for (int j = 0; j < J1; j++) {
+			pop.w1_CO[i][j] = w1_inout[i][j];
+		}
+
+	}
+	for (int i = 0; i < I2; i++) {
+		for (int j = 0; j < J2; j++) {
+			pop.w2_CO[i][j] = w2_inout[i][j];
+		}
+
+	}
+	for (int i = 0; i < I2; i++) {
+		for (int j = 0; j < J1; j++) {
+			pop.w3_CO[i][j] = w3_inout[i][j];
+		}
+	}
+}
+
 
 //最良個体のインデックスを返す
 int Choice_Best_Index(std::vector<playerTK> &Child, bool random = true) {

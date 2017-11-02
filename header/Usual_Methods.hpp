@@ -36,6 +36,7 @@ void Make_Directory(std::string str, int method, int trial, int gene, int per, i
 		for (int g = 0; g < gene / per + 1; g++) {
 			Tmp_File_Name << File_Name.str() << "/" << g;
 			CheckTheFolder::checkExistenceOfFolder(Tmp_File_Name.str());
+			std::cout << Tmp_File_Name.str() << std::endl;
 			Tmp_File_Name.str("");
 			Tmp_File_Name.clear(std::stringstream::goodbit);
 		}

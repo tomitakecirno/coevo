@@ -20,10 +20,11 @@ CoansMode4	前手法：前評価方法
 class Coans{
 //公開メンバ
 public :
-	//手法のメインルーチン
-	void	Coans_Tasks(int Trial);			//現手法
-	//対戦回数を取得
-	int		Get_MatchUp_Num();
+	void	Coans_Tasks(int Trial); 	//手法のメインルーチン
+	int		Get_MatchUp_Num();			//対戦回数を取得
+	
+	//データ取りミスったときに使うやつ
+	void	Stra_nitch_CSV(int Trial);	//戦略データを読み込んで
 	//以下実験用
 //非公開メンバ
 private:
@@ -93,6 +94,11 @@ void Coans::Coans_Tasks(int Trial)
 		std::cout << "1" << ',';
 		Crustering(); //クラスタリング。手法によって変わる
 		//実験用
+		if (Gene_Loop == 1) {
+			if (Method_Num == 2) {
+				csv_exp.SetVec_Cr_Pop(Pop, 0);
+			}
+		}
 		if (Gene_Loop % Per == 0) {
 			std::cout << "9" << ',';
 			if (Method_Num == 2) {
@@ -185,6 +191,50 @@ void Coans::Coans_Tasks(int Trial)
 }
 int Coans::Get_MatchUp_Num() {
 	return Machup_Num;
+}
+void Coans::Stra_nitch_CSV(int Trial) {
+	std::cout << "モード:" << 4 << std::endl;
+	std::cout << "手法:" << Method_Num << std::endl;
+	std::cout << "試行回数:" << Trial << std::endl;
+	std::cout << "クラスタ数:" << Cru_K << std::endl;
+	std::cout << "世代数:" << Gene << std::endl;
+	std::cout << "区切り:" << Per << std::endl;
+	std::cout << "集団個体数:" << Pop_n << std::endl;
+
+	//Init
+	Pop.resize(Pop_n);
+	for (int i = 0; i < Pop_n; i++) {
+		Pop[i].Init();
+		Pop[i].Init_0();
+	}
+	Csv_exp csv_exp(Dir, Method_Num, Trial, Gene, Per, Pare, child);
+	for (int g = 0; g < Gene / Per + 1; g++) {
+		//戦略格納
+		for (int i = 0; i < Pop_n; i++) {
+			FILE *file2;
+			char fname[50];
+			if (Cru_K == 0) {
+				sprintf_s(fname, ("%s/%d/%d/%d/%d.dat"), Dir.c_str(), Method_Num, Trial, g, i);
+			}
+			else if (0 < Cru_K) {
+				sprintf_s(fname, ("%s/%d/%d/%d/%d/%d.dat"), Dir.c_str(), Method_Num, Trial, Cru_K, g, i);
+			}
+			if ((file2 = fopen(fname, "rb")) == NULL) {
+				std::cout << "Main file open error!! :" << fname << std::endl;
+				exit(0);
+			}
+			//自プレイヤーの戦略格納
+			fread(w1_inout, sizeof(double), I1 * J1, file2);
+			fread(w2_inout, sizeof(double), I2 * J2, file2);
+			fread(w3_inout, sizeof(double), I2 * J1, file2);
+			fclose(file2);
+			w_to_Strategy(Pop[i]);
+		}
+		//クラスタリング
+		Crustering();
+		csv_exp.SetVec_Cr_Pop(Pop, g);
+	}
+	csv_exp.fwrite_Cr_P();
 }
 
 /*

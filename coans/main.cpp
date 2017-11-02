@@ -32,7 +32,7 @@ Main_K		:クラスタリングパラメーター(?)
 ***********************************************/
 int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	int Main_Mode	= 2;
+	int Main_Mode	= 1;
 	int	Main_Method = 2;
 	int Main_Trial	= 0;
 	int Main_K		= 0;
@@ -55,32 +55,24 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		*/
 	Main_Mode = atoi(__argv[1]);
 	
-#ifdef DEBUG   // checks for a debug build  
-	Main_Mode = 2;
-#endif   //ends the conditional block  
-
-	if (Main_Mode == 1 || Main_Mode == 2) {
-		Main_Method = atoi(__argv[2]);
+	if (Main_Mode == 1 || Main_Mode == 2 || Main_Mode == 4) {
 		switch (__argc) {
+		case 1:
+			//Debug mode
+			Main_Method = 2;
+			Main_KU		= 20;
+			Main_Trial	= 0;
+			Main_PARENT = 4;
+			Main_CHILD	= 10;
+			break;
 		case 4:
+			Main_Method = atoi(__argv[2]);
 			Main_KU = atoi(__argv[3]);
 			break;
 		case 5:
+			Main_Method = atoi(__argv[2]);
 			Main_KU = atoi(__argv[3]);
 			Main_Trial = atoi(__argv[4]);
-			break;
-		case 7:
-			Main_KU = atoi(__argv[3]);
-			Main_Trial = atoi(__argv[4]);
-			Main_PARENT = atoi(__argv[5]);
-			Main_CHILD = atoi(__argv[6]);
-			break;
-		case 8:
-			Main_KU = atoi(__argv[3]);
-			Main_Trial = atoi(__argv[4]);
-			Main_PARENT = atoi(__argv[5]);
-			Main_CHILD = atoi(__argv[6]);
-			Main_K = atoi(__argv[7]);
 			break;
 		default:
 			break;
@@ -119,13 +111,14 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	else if (Main_Mode == 1) {
 		Match m("AI", Main_Method, 0, Main_KO, KOT, Main_KU, Main_PER, Main_K);
 		Make_CSV_Directory(Main_Method);
-
-		for (int Opp_t = 0; Opp_t < F_TRIAL; Opp_t++) {
+		if (!m.output_ni_csv(Main_Trial)) {
+			std::cout << "error : output_ni_csv" << std::endl;
+			exit(0);
+		}
+		for (int Opp_t = 0; Opp_t < 5; Opp_t++) {
 			//現手法vsFloreano 世代数:2000(100世代間隔) 現手法集団50 Floreano集団30
 			m.main_task(Main_Trial, Opp_t);
 		}
-		std::cout << "Process time:" << time << std::endl;
-		m.Decide_Best(Main_Trial);
 	}
 
 	//現手法学習
@@ -166,8 +159,14 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	}
 	//テスト
 	else if (Main_Mode == 4) {
-		Init_Test();
-		gamemode();
+		if (Main_Method == 1) {
+			CoansMode1 Mode1("AI", Main_KO, Main_KU, Main_PER, Main_PARENT, Main_CHILD);
+			Mode1.Stra_nitch_CSV(Main_Trial);
+		}
+		if (Main_Method == 2) {
+			CoansMode2 Mode2("AI", Main_KO, Main_KU, Main_PER, Main_PARENT, Main_CHILD);
+			Mode2.Stra_nitch_CSV(Main_Trial);
+		}
 	}
 
 	clock_t End_Main = clock();
