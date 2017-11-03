@@ -12,8 +12,9 @@ void AnsList2(std::vector<std::vector<int>> &IndexSave, std::vector<playerNim> &
 void AnsList3(std::vector<std::vector<int>> &IndexSave, std::vector<playerNim> &pop);
 void MakeList(std::vector<playerNim> &pop, int Para_KL1, int Para_KL2, int Para_KL3);
 int SetNitch(int nitch_number, int kotai, std::vector<playerNim> &pop);
-void ExtensionXLM(int MainPare, std::vector<int> &SubPare, std::vector<playerNim> &pop, std::vector<std::vector<int>> &child);
-void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, int count_nitch);
+void binaryEXLM(const int main_pare, const std::vector<int> &sub_pare, std::vector<playerNim> &pop, std::vector<playerNim> &child);
+void two_point_cross(const std::vector<int> &main, const std::vector<int> &sub, std::vector<std::vector<int>> &c_stra);
+void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, const int count_nitch);
 
 int cal_haming(const std::vector<int> &one, const std::vector<int> &ano)
 {
@@ -139,7 +140,6 @@ void AnsList1(std::vector<std::vector<int>> &IndexSave, std::vector<playerNim> &
 		}
 	}
 }
-
 //List2
 void AnsList2(std::vector< std::vector<int> > &IndexSave, std::vector<playerNim> &pop)
 {
@@ -158,7 +158,6 @@ void AnsList2(std::vector< std::vector<int> > &IndexSave, std::vector<playerNim>
 		}
 	}
 }
-
 //List3
 void AnsList3(std::vector< std::vector<int> > &IndexSave, std::vector<playerNim> &pop)
 {
@@ -198,47 +197,95 @@ int SetNitch(int nitch_number, int kotai, std::vector<playerNim> &pop)
 }
 
 //拡散ELM.w1,w2,w3それぞれ分けて生成する.
-void ExtensionXLM(int MainPare, std::vector<int> &SubPare, std::vector<playerNim> &pop, std::vector<playerNim> &child)
+void binaryEXLM(const int main_pare, const std::vector<int> &sub_pare, std::vector<playerNim> &pop, std::vector<playerNim> &child)
 {
-	int length = 0; //副親の数を取得
-					//w1,w2,w3それぞれ分けて取得
+	int sub_len = int(sub_pare.size());
 
-					//親の解のそれぞれのベクトルを足す
-	int subpare_len = int(SubPare.size());
+	std::vector<int> main_stra;
+	pop[main_pare].get_stra(main_stra);
 
+	std::vector<std::vector<int>> sub_stra(sub_len);
+	for (int i = 0; i < sub_len; i++) {
+		pop[ sub_pare[i] ].get_stra(sub_stra[i]);
+	}
+
+	for (int c = 1; c < CHILD / 2 + 1; c++) {
+		int rand = GetRand_Int(sub_len);
+		std::vector<std::vector<int>> child_stra(2);
+
+		two_point_cross(main_stra, sub_stra[rand], child_stra);
+
+		child[c].playerNim::put_stra(child_stra[0]);
+		child[CHILD / 2 + c].playerNim::put_stra(child_stra[1]);
+	}
 }
-
-//対戦相手を選ぶ
-void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, int count_nitch)
+void two_point_cross(const std::vector<int> &main, const std::vector<int> &sub, std::vector<std::vector<int>> &c_stra) 
 {
-	std::vector<std::vector<int>> tmpCluster(count_nitch); //インデックス入れるやつ
-	std::vector<int> tmpindex; //相手集団へ追加する個体のインデックス入れるやつ
-	//各クラスタに個体のインデックスを振り分ける
+	if (c_stra.size() < 2) {
+		std::cout << "子個体の戦略が足りません : two_point_cross" << std::endl;
+		exit(EXIT_FAILURE);
+	}
 
+	int stra_len = int(std::pow(2, POLL1 + POLL2 + POLL3));
+
+	//2点を決定
+	int one = 0;
+	int two = 0;
+	while (one == two) {
+		one = GetRand_Int(stra_len);
+		two = GetRand_Int(stra_len);
+	}
+	if (two < one) {
+		int tmp;
+		tmp = one;
+		one = two;
+		two = tmp;
+	}
+
+	//2点交叉
+	c_stra[0] = main;
+	c_stra[1] = sub;
+	for (int i = one; i <= two; i++) {
+		c_stra[0][i] = sub[i];
+		c_stra[1][i] = main[i];
+	}
+}
+//対戦相手を選ぶ
+void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, const int count_nitch)
+{
+	std::vector<int> tmpindex;
 	std::vector<int> tmp_nitch(KO);
 	for (int i = 0; i < KO; i++) {
 		tmp_nitch[i] = pop[i].get_nitch();
 	}
+	int size = 0;
+	for (int i = 0; i < count_nitch; i++) {
+		if (std::count(tmp_nitch.begin(), tmp_nitch.end(), i)) {
+			size++;
+		}
+	}
+	int tmp_size = size;
+	std::vector<std::vector<int>> tmpCluster(size); //indexを入れる
 	for (int i = 0; i < count_nitch; i++) {
 		//リサイズ
 		int count = int(std::count(tmp_nitch.begin(), tmp_nitch.end(), i));
 		if (count > 0) {
-			tmpCluster[i].resize(count);
-		}
-		//格納
-		for (int j = 0; j < KO; j++) {
-			if (tmp_nitch[j] == i) {
-				count--;
-				tmpCluster[i][count] = j;
+			size--;
+			tmpCluster[size].resize(count);
+			//格納
+			for (int j = 0; j < KO; j++) {
+				if (tmp_nitch[j] == i) {
+					count--;
+					tmpCluster[size][count] = j;
+				}
 			}
 		}
 	}
-	opp.resize(count_nitch - 1);
-	tmpindex.resize(count_nitch);
-	for (int i = 1; i < count_nitch; i++) {
+	opp.resize(tmp_size);
+	for (int i = 0; i < tmp_size; i++) {
 		int len = int(tmpCluster[i].size());
 		int rand = GetRand_Int(len);
 		int tmp_index = tmpCluster[i][rand];
-		opp[i - 1] = pop[tmp_index];
+		opp[i] = pop[tmp_index];
 	}
 }

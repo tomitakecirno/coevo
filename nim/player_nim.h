@@ -25,7 +25,7 @@ protected:
 	int win;
 	int eval;
 	std::vector<int> stra;
-	std::vector<int> Result;
+	std::vector<double> Result;
 };
 void p_data::Init() {
 	win = 0;
@@ -92,10 +92,11 @@ public:
 	int get_eval();
 	int get_nitch();
 	bool input_list(std::vector<int> &list, int n);
-	bool input_result(std::vector<int> &re);
 	bool get_list(std::vector<int> &list, int n);
-	bool get_result(std::vector<int> &re);
+	bool get_result(std::vector<double> &re);
 	bool get_stra(std::vector<int> &s);
+	bool put_stra(const std::vector<int> &s);
+	bool put_result(const std::vector<double> &r);
 protected:
 	//戦略
 	int nitch;
@@ -138,14 +139,6 @@ bool playerNim::input_list(std::vector<int> &list, int n) {
 	}
 	return true;
 }
-bool playerNim::input_result(std::vector<int> &re) {
-	if (re.empty()) {
-		std::cout << "結果のベクターが空です[IN]" << std::endl;
-		return false;
-	}
-	Result = re;
-	return true;
-}
 bool playerNim::get_list(std::vector<int> &list, int n) {
 	switch (n) {
 	case 1:
@@ -164,7 +157,7 @@ bool playerNim::get_list(std::vector<int> &list, int n) {
 	}
 	return true;
 }
-bool playerNim::get_result(std::vector<int> &re) {
+bool playerNim::get_result(std::vector<double> &re) {
 	if (Result.empty()) {
 		std::cout << "結果のベクターが空です[OUT]" << std::endl;
 		return false;
@@ -180,3 +173,22 @@ bool playerNim::get_stra(std::vector<int> &s) {
 	s = stra;
 	return true;
 }
+bool playerNim::put_stra(const std::vector<int> &s) 
+{
+	if (s.empty()) {
+		std::cout << "戦略が空です : put_stra" << std::endl;
+		return false;
+	}
+	stra = s;
+	return true;
+}
+bool playerNim::put_result(const std::vector<double> &r)
+{
+	if (r.empty()) {
+		std::cout << "結果ベクターが空です : put_result" << std::endl;
+		return false;
+	}
+	Result = r;
+	return true;
+}
+

@@ -1,12 +1,12 @@
 #pragma once
 /* #define NDEBUG */
 
-#define KO		10	//集団
+#define KO		30	//集団
 #define KOT		10	//敵
 #define PARENT	4	//親
 #define CHILD	20	//子
-#define KU		10	//世代数
-#define PER		1	//世代数
+#define KU		100	//世代数
+#define PER		10	//世代数
 
 #define K_List1	5	/*ニッチの集団数*/
 #define K_List2	2	/*ニッチの集団数*/

@@ -42,22 +42,22 @@ int main(int argc, char *argv[])
 		argv[2]:method
 		argv[3]:generation
 		argv[4]:trial
-		argv[5]:nitch parameter	
+		argv[5]:nitch parameter
 	*/
-	mode = 5;
-	//mode = atoi(__argv[1]);
+	//mode = 2;
+	mode = atoi(__argv[1]);
 	if (mode == 1 || mode == 2 || mode == 4) {
 		switch (__argc) {
 		case 1:
 			//Debug mode
-			method	= 1;
-			ku		= 10;
-			trial	= 0;
+			method = 1;
+			ku = 10;
+			trial = 0;
 			break;
 		case 5:
 			method = atoi(__argv[2]);
-			ku	   = atoi(__argv[3]);
-			trial  = atoi(__argv[4]);
+			ku = atoi(__argv[3]);
+			trial = atoi(__argv[4]);
 			break;
 		default:
 			cout << "パラメーターが足りません" << endl;
@@ -66,12 +66,12 @@ int main(int argc, char *argv[])
 			break;
 		}
 		per = ku / 10;
-if (mode == 1) {
-	std::cout << "モード:対戦" << std::endl;
-}
-else if (mode == 2) {
-	std::cout << "モード:学習" << std::endl;
-}
+		if (mode == 1) {
+			std::cout << "モード:対戦" << std::endl;
+		}
+		else if (mode == 2) {
+			std::cout << "モード:学習" << std::endl;
+		}
 	}
 	if (mode == 3) {
 		//method.resize(1);
@@ -154,39 +154,6 @@ else if (mode == 2) {
 		*/
 	}
 	else if (mode == 5) {
-		playerNim pop, opp;
-
-		pop.Init_pn();
-		pop.Init_stra();
-		opp.Init_pn();
-		opp.Init_stra();
-		double pop_win = 0, opp_win = 0;
-
-		nim nim;
-		//1回目
-		nim.input_stra_first(pop);
-		nim.input_stra_last(opp);
-		if (nim.nim_game()) {
-			pop_win += WIN_FIRST;
-			opp_win += LOSE;
-		}
-		else {
-			pop_win += LOSE;
-			opp_win += WIN_LAST;
-		}
-		//先手後手を入れ替えて2回目
-		nim.input_stra_first(opp);
-		nim.input_stra_last(pop);
-		if (nim.nim_game()) {
-			opp_win += WIN_FIRST;
-			pop_win += LOSE;
-		}
-		else {
-			opp_win += LOSE;
-			pop_win += WIN_LAST;
-		}
-		std::cout << "pop_win = " << pop_win << std::endl;
-		std::cout << "opp_win = " << opp_win << std::endl;
 	}
 
 	clock_t End_Main = clock();
