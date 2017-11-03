@@ -66,24 +66,24 @@ int main(int argc, char *argv[])
 			break;
 		}
 		per = ku / 10;
-		if (mode == 1) {
-			std::cout << "モード:対戦" << std::endl;
-		}
-		else if (mode == 2) {
-			std::cout << "モード:学習"  << std::endl;
-		}
+if (mode == 1) {
+	std::cout << "モード:対戦" << std::endl;
+}
+else if (mode == 2) {
+	std::cout << "モード:学習" << std::endl;
+}
 	}
 	if (mode == 3) {
 		//method.resize(1);
 		//method[0] = 2;
-		method_vec.resize(__argc-2);
+		method_vec.resize(__argc - 2);
 		for (int i = 0; i < __argc - 2; i++) {
-			method_vec[i] = atoi(__argv[i+2]);
+			method_vec[i] = atoi(__argv[i + 2]);
 			//method[i] = 2;
 		}
-		std::cout << "モード:csv統合"  << std::endl;
+		std::cout << "モード:csv統合" << std::endl;
 	}
-	int MatchUp_Count=0;
+	int MatchUp_Count = 0;
 
 	clock_t Start_Main = clock();
 	//実験用対戦相手学習
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 	// DIR, KO, KU, PER, K, PARENT, CHILD
 	else if (mode == 2) {
 		//現手法
-		if (method == 0) 
+		if (method == 0)
 		{
 			/*
 			Coans_GT2016 Coans_GT2016("AI", Main_KO, Main_KU, Main_PER, Main_K, Main_PARENT, Main_CHILD);
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 			*/
 		}
 		//階層的クラスタリングを盛り込んだ手法
-		if (method == 1) 
+		if (method == 1)
 		{
 			coans_mode1 Mode1("nim", ku, per, trial);
 			Mode1.main_task();
@@ -154,8 +154,39 @@ int main(int argc, char *argv[])
 		*/
 	}
 	else if (mode == 5) {
+		playerNim pop, opp;
+
+		pop.Init_pn();
+		pop.Init_stra();
+		opp.Init_pn();
+		opp.Init_stra();
+		double pop_win = 0, opp_win = 0;
+
 		nim nim;
-		nim.main_task();
+		//1回目
+		nim.input_stra_first(pop);
+		nim.input_stra_last(opp);
+		if (nim.nim_game()) {
+			pop_win += WIN_FIRST;
+			opp_win += LOSE;
+		}
+		else {
+			pop_win += LOSE;
+			opp_win += WIN_LAST;
+		}
+		//先手後手を入れ替えて2回目
+		nim.input_stra_first(opp);
+		nim.input_stra_last(pop);
+		if (nim.nim_game()) {
+			opp_win += WIN_FIRST;
+			pop_win += LOSE;
+		}
+		else {
+			opp_win += LOSE;
+			pop_win += WIN_LAST;
+		}
+		std::cout << "pop_win = " << pop_win << std::endl;
+		std::cout << "opp_win = " << opp_win << std::endl;
 	}
 
 	clock_t End_Main = clock();

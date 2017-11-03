@@ -17,9 +17,13 @@
 #define FLORET	5	/*ニッチの集団数*/
 #define F_KU	300	/*ニッチの集団数*/
 
-#define NIM		3	//ニムの山の数
-#define POLL1	2	//山1
-#define POLL2	2	//山2
-#define POLL3	2	//山3
+#define NIM			3	//ニムの山の数
+#define POLL1		3	//山1
+#define POLL2		3	//山2
+#define POLL3		3	//山3
+
+#define WIN_FIRST	2	//先手で勝った場合
+#define WIN_LAST	1.5	//後手で勝った場合
+#define LOSE		0	//負けた場合
 
 #define DELETE	50
