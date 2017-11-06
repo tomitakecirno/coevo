@@ -44,13 +44,13 @@ int main(int argc, char *argv[])
 		argv[4]:trial
 		argv[5]:nitch parameter
 	*/
-	//mode = 2;
-	mode = atoi(__argv[1]);
+	mode = 2;
+	//mode = atoi(__argv[1]);
 	if (mode == 1 || mode == 2 || mode == 4) {
 		switch (__argc) {
 		case 1:
 			//Debug mode
-			method = 1;
+			method = 2;
 			ku = 10;
 			trial = 0;
 			break;
@@ -99,38 +99,24 @@ int main(int argc, char *argv[])
 	}
 	//学習で記録したデータをもとに実際に対戦
 	else if (mode == 1) {
-		/*
-		Match m("AI", Main_Method, 0, Main_KO, KOT, Main_KU, Main_PER, Main_K);
-		Make_CSV_Directory(Main_Method);
-		if (!m.output_ni_csv(Main_Trial)) {
-			std::cout << "error : output_ni_csv" << std::endl;
-			exit(0);
-		}
-		for (int Opp_t = 0; Opp_t < 5; Opp_t++) {
-			//現手法vsFloreano 世代数:2000(100世代間隔) 現手法集団50 Floreano集団30
-			m.main_task(Main_Trial, Opp_t);
-		}
-		*/
 	}
 
 	//現手法学習
 	// DIR, KO, KU, PER, K, PARENT, CHILD
 	else if (mode == 2) {
 		//現手法
-		if (method == 0)
-		{
-			/*
-			Coans_GT2016 Coans_GT2016("AI", Main_KO, Main_KU, Main_PER, Main_K, Main_PARENT, Main_CHILD);
-			Coans_GT2016.Coans_GT2016_Tasks(Main_Trial);
-			MatchUp_Count = Coans_GT2016.Get_MatchUp_Num();
-			*/
-		}
 		//階層的クラスタリングを盛り込んだ手法
-		if (method == 1)
+		if (method == 2)
 		{
-			coans_mode1 Mode1("nim", ku, per, trial);
-			Mode1.main_task();
-			MatchUp_Count = Mode1.Get_MatchUp_Num();
+			coans_mode2 Mode2("nim", ku, per, trial);
+			Mode2.main_task();
+			MatchUp_Count = Mode2.Get_MatchUp_Num();
+		}
+		if (method == 3)
+		{
+			coans_mode3 Mode3("nim", ku, per, trial);
+			Mode3.main_task();
+			MatchUp_Count = Mode3.Get_MatchUp_Num();
 		}
 	}
 	//csv統合

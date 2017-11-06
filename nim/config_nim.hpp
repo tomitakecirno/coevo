@@ -26,4 +26,6 @@
 #define WIN_LAST	1.5	//Œãè‚ÅŸ‚Á‚½ê‡
 #define LOSE		0	//•‰‚¯‚½ê‡
 
-#define DELETE	50
+#define DELETE		50
+#define CSV_DIR		"./csv/nim"
+

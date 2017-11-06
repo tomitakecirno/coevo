@@ -24,8 +24,8 @@ public:
 		cal_optimal();
 	}
 	int nim_game();
-	void input_stra_first(playerNim &pop);
-	void input_stra_last(playerNim &opp);
+	void input_stra_first(const std::vector<int> &pop);
+	void input_stra_last(const std::vector<int> &opp);
 protected:
 	int nim_n;	//R‚Ì”
 	int stra_len;
@@ -55,6 +55,7 @@ int nim::nim_game()
 	Init_mont(); //R‚Ì‰Šú‰»
 	//show_mont();
 	int stra_index;
+	show_vec_1(nim_status);
 	while (1)
 	{
 		stra_index = choose_stra(pop_stra);
@@ -62,7 +63,6 @@ int nim::nim_game()
 		if (!update_mont(stra_index)) {
 			return 1; //‚±‚¿‚ç‚ªŸ‚Ä‚Î‚P‚ğ•Ô‚·
 		}
-
 		stra_index = choose_stra(opp_stra);
 		//std::cout << "stra_index = " << stra_index << std::endl;
 		if (!update_mont(stra_index)) {
@@ -97,7 +97,7 @@ bool nim::update_mont(int index) {
 	nim_status[1] = (index % ((POLL2 + 1)*(POLL3 + 1))) / (POLL3 + 1);
 	nim_status[2] = index % (POLL3 + 1);
 
-	//show_mont();
+	show_mont();
 
 	int sum = std::accumulate(nim_status.begin(), nim_status.end(),0);
 	if (sum) {
@@ -188,8 +188,9 @@ void nim::cal_optimal()
 void nim::cal_move_vec()
 {
 	int index;
+	nim_status_vec.assign(stra_len, 0);
 	for (int i = 0; i < NIM; i++) {
-		for (int j = 0; j < nim_status[i] + 1; j++) {
+		for (int j = 0; j < nim_status[i]; j++) {
 			switch (i) {
 			case 0:
 				index = cal_index(j, nim_status[1], nim_status[2]);
@@ -276,18 +277,27 @@ int nim::choose_stra(const std::vector<int> &stra) {
 	}
 	return index;
 }
-void nim::input_stra_first(playerNim &pop) {
-	pop.get_stra(pop_stra);
+void nim::input_stra_first(const std::vector<int> &pop) 
+{
+	pop_stra = pop;
 }
-void nim::input_stra_last(playerNim &opp) {
-	opp.get_stra(opp_stra);
+void nim::input_stra_last(const std::vector<int> &opp) 
+{
+	opp_stra = opp;
 }
-void nim::show_mont() {
+void nim::show_mont() 
+{
 	std::vector<std::vector<int>> tmp_mont_vec;
 	tmp_mont_vec = std::vector<std::vector<int>>(mont_size, std::vector<int>(NIM, 0));
 
 	generate_mont(nim_status[0], nim_status[1], nim_status[2], tmp_mont_vec);
 	std::cout << "R‚Ìó‘Ô" << std::endl;
 	show_vec_2(tmp_mont_vec);
+
+	std::cout << "vec = [";
+	for (auto &p : nim_status_vec) {
+		std::cout << p << ",";
+	}
+	std::cout << "]" << std::endl;
 	std::cout << "(0,1,2) = (" << nim_status[0] << "," << nim_status[1] << "," << nim_status[2] << ")" << std::endl << std::endl;
 }

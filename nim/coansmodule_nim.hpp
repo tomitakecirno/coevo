@@ -7,15 +7,16 @@ ANSを使った提案手法の関数まとめ
 
 template<class Vec>
 Vec cal_euclidean(const Vec &one, const Vec &ano);
-void AnsList1(std::vector<std::vector<int>> &IndexSave, std::vector<playerNim> &pop);
-void AnsList2(std::vector<std::vector<int>> &IndexSave, std::vector<playerNim> &pop);
-void AnsList3(std::vector<std::vector<int>> &IndexSave, std::vector<playerNim> &pop);
+void AnsList1(const std::vector<std::vector<int>> &IndexSave, std::vector<int> &list1, int index);
+void AnsList2(const std::vector<std::vector<int>> &IndexSave, std::vector<int> &list2, int index);
+void AnsList3(const std::vector<std::vector<int>> &IndexSave, std::vector<int> &list3, int index);
 void MakeList(std::vector<playerNim> &pop, int Para_KL1, int Para_KL2, int Para_KL3);
 int SetNitch(int nitch_number, int kotai, std::vector<playerNim> &pop);
-void binaryEXLM(const int main_pare, const std::vector<int> &sub_pare, std::vector<playerNim> &pop, std::vector<playerNim> &child);
+void binaryEXLM(const int main_pare, const std::vector<int> &sub_pare, const std::vector<playerNim> &pop, std::vector<playerNim> &child);
 void two_point_cross(const std::vector<int> &main, const std::vector<int> &sub, std::vector<std::vector<int>> &c_stra);
 void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, const int count_nitch);
 
+//ハミング距離
 int cal_haming(const std::vector<int> &one, const std::vector<int> &ano)
 {
 	int one_size = int(one.size());
@@ -32,7 +33,6 @@ int cal_haming(const std::vector<int> &one, const std::vector<int> &ano)
 	}
 	return sum;
 }
-
 template<class Vec>
 Vec cal_euclidean(const Vec &one, const Vec &ano) {
 	int one_size = int(one.size());
@@ -61,15 +61,11 @@ void MakeList(std::vector<playerNim> &pop, int Para_KL1, int Para_KL2, int Para_
 
 	/*自身以外の個体との距離を総当たりで計測.自身も含む.*/
 	/*ついでに近い順に個体の番号も取得*/
-	std::vector<int> stra1;
-	std::vector<int> stra2;
 	for (int i = 0; i < KO; i++) {
-		pop[i].get_stra(stra1);
 		DisSaveList1[i].resize(KO);
 		for (int j = 0; j < KO; j++) {
 			if (i != j) {
-				pop[j].get_stra(stra2);
-				DisSaveList1[i][j] = cal_haming(stra1, stra2);
+				DisSaveList1[i][j] = cal_haming(pop[i].stra, pop[j].stra);
 
 			}
 			else {
@@ -113,78 +109,68 @@ void MakeList(std::vector<playerNim> &pop, int Para_KL1, int Para_KL2, int Para_
 	}
 	//std::cout << "1-1-2" << ',';
 	//AnsList1
-	if(Para_KL1){
-		AnsList1(IndexSaveList1, pop);
-	}
-	if (Para_KL2) {
-		AnsList2(IndexSaveList2, pop);
-	}
-	if (Para_KL3) {
-		AnsList3(IndexSaveList3, pop);
+	for (int i = 0; i < KO; i++) {
+		if (Para_KL1) {
+			AnsList1(IndexSaveList1, pop[i].List1, i);
+		}
+		if (Para_KL2) {
+			AnsList2(IndexSaveList2, pop[i].List2, i);
+		}
+		if (Para_KL3) {
+			AnsList3(IndexSaveList3, pop[i].List3, i);
+		}
 	}
 	//std::cout << "1-1-3" << ',';
 }
 //List1
-void AnsList1(std::vector<std::vector<int>> &IndexSave, std::vector<playerNim> &pop)
+void AnsList1(const std::vector<std::vector<int>> &IndexSave, std::vector<int> &list1, int index)
 {
 	//近傍リスト1
-	for (int i = 0; i<KO; i++) {
-		if (IndexSave[i].empty()) {} //空だったら何もしない
-		else {
-			std::vector<int> tmp_list1;
-			int IndexSave_len = int(IndexSave[i].size());
-			for (int j = 0; j<IndexSave_len; j++) {
-				tmp_list1.push_back(IndexSave[i][j]);
-			}
-			pop[i].input_list(tmp_list1, 1);
+	if (IndexSave[index].empty()) {} //空だったら何もしない
+	else {
+		int IndexSave_len = int(IndexSave[index].size());
+		for (int j = 0; j < IndexSave_len; j++) {
+			list1.push_back(IndexSave[index][j]);
 		}
 	}
 }
 //List2
-void AnsList2(std::vector< std::vector<int> > &IndexSave, std::vector<playerNim> &pop)
+void AnsList2(const std::vector<std::vector<int>> &IndexSave, std::vector<int> &list2, int index)
 {
 	//近傍リスト2
-	for (int i = 0; i<KO; i++) {
-		if (IndexSave[i].empty()) {} //空だったら何もしない
-		else {
-			std::vector<int> tmp_list2;
-			int IndexSave_len = int(IndexSave[i].size());
-			for (int j = 0; j<IndexSave_len; j++) {
-				int tmp = IndexSave[i][j]; //一旦インデックスを保存
-				if (count(IndexSave[tmp].begin(), IndexSave[tmp].end(), i) != 0)
-					tmp_list2.push_back(tmp); //相手にも存在すれば近傍リストへ加える
+	if (IndexSave[index].empty()) {} //空だったら何もしない
+	else {
+		int IndexSave_len = int(IndexSave[index].size());
+		for (int j = 0; j < IndexSave_len; j++) {
+			int tmp = IndexSave[index][j]; //一旦インデックスを保存
+			if (count(IndexSave[tmp].begin(), IndexSave[tmp].end(), index) != 0) {
+				list2.push_back(tmp); //相手にも存在すれば近傍リストへ加える
 			}
-			pop[i].input_list(tmp_list2, 2);
 		}
 	}
 }
 //List3
-void AnsList3(std::vector< std::vector<int> > &IndexSave, std::vector<playerNim> &pop)
+void AnsList3(const std::vector<std::vector<int>> &IndexSave, std::vector<int> &list3, int index)
 {
 	//近傍リスト1
-	for (int i = 0; i < KO; i++) {
-		int IndexSave_len = int(IndexSave[i].size());
-		for (int j = 0; j < IndexSave_len; j++) {
-			//i=jのときは何もしない
-			if (i == j) {}
-			else {
-				std::vector<int> tmp_list3;
-				if ( count(IndexSave[j].begin(), IndexSave[j].end(), i) != 0) {
-					tmp_list3.push_back(j);
-				}
-				pop[i].input_list(tmp_list3, 3);
+	int IndexSave_len = int(IndexSave[index].size());
+	for (int j = 0; j < IndexSave_len; j++) {
+		//i=jのときは何もしない
+		if (index == j) {}
+		else {
+			if (count(IndexSave[j].begin(), IndexSave[j].end(), index) != 0) {
+				list3.push_back(j);
 			}
 		}
 	}
 }
-
 //再帰的にニッチを割り当てていく
 int SetNitch(int nitch_number, int kotai, std::vector<playerNim> &pop)
 {
 	std::vector<int> list;
-	if (pop[kotai].get_nitch() == 0) {
-		pop[kotai].input_nitch(nitch_number);
-		if (!pop[kotai].get_list(list,2)) {
+	if (pop[kotai].nitch == 0) {
+		pop[kotai].nitch = nitch_number;
+		if (!pop[kotai].List2.empty()) {
 			int list_len = int(list.size());
 			for (int i = 0; i < list_len; i++) {
 				int tmp = list[i];
@@ -197,26 +183,20 @@ int SetNitch(int nitch_number, int kotai, std::vector<playerNim> &pop)
 }
 
 //拡散ELM.w1,w2,w3それぞれ分けて生成する.
-void binaryEXLM(const int main_pare, const std::vector<int> &sub_pare, std::vector<playerNim> &pop, std::vector<playerNim> &child)
+void binaryEXLM(const int main_pare, const std::vector<int> &sub_pare, const std::vector<playerNim> &pop, std::vector<playerNim> &child)
 {
 	int sub_len = int(sub_pare.size());
 
-	std::vector<int> main_stra;
-	pop[main_pare].get_stra(main_stra);
-
 	std::vector<std::vector<int>> sub_stra(sub_len);
-	for (int i = 0; i < sub_len; i++) {
-		pop[ sub_pare[i] ].get_stra(sub_stra[i]);
-	}
 
 	for (int c = 1; c < CHILD / 2 + 1; c++) {
 		int rand = GetRand_Int(sub_len);
 		std::vector<std::vector<int>> child_stra(2);
 
-		two_point_cross(main_stra, sub_stra[rand], child_stra);
+		two_point_cross(pop[main_pare].stra, pop[sub_pare[rand]].stra, child_stra);
 
-		child[c].playerNim::put_stra(child_stra[0]);
-		child[CHILD / 2 + c].playerNim::put_stra(child_stra[1]);
+		child[c].stra			  = child_stra[0];
+		child[CHILD / 2 + c].stra = child_stra[1];
 	}
 }
 void two_point_cross(const std::vector<int> &main, const std::vector<int> &sub, std::vector<std::vector<int>> &c_stra) 
@@ -256,7 +236,7 @@ void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, c
 	std::vector<int> tmpindex;
 	std::vector<int> tmp_nitch(KO);
 	for (int i = 0; i < KO; i++) {
-		tmp_nitch[i] = pop[i].get_nitch();
+		tmp_nitch[i] = pop[i].nitch;
 	}
 	int size = 0;
 	for (int i = 0; i < count_nitch; i++) {

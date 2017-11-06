@@ -15,17 +15,17 @@
 
 class p_data {
 public:
-	void Init();
-	void Init_stra();
-	void cal_fitness();
-	bool input_stra(std::string fname);
-	bool output_stra(std::string fname);
-protected:
 	int stra_len;
 	int win;
 	int eval;
 	std::vector<int> stra;
 	std::vector<double> Result;
+
+	void Init();
+	void Init_stra();
+	void cal_fitness();
+	bool input_stra(std::string fname);
+	bool output_stra(std::string fname);
 };
 void p_data::Init() {
 	win = 0;
@@ -87,22 +87,12 @@ bool p_data::output_stra(const std::string fname)
 //ニムで使うプレイヤーのクラス
 class playerNim : public p_data {
 public:
-	void Init_pn();	//戦略初期化
-	void input_nitch(int n);
-	int get_eval();
-	int get_nitch();
-	bool input_list(std::vector<int> &list, int n);
-	bool get_list(std::vector<int> &list, int n);
-	bool get_result(std::vector<double> &re);
-	bool get_stra(std::vector<int> &s);
-	bool put_stra(const std::vector<int> &s);
-	bool put_result(const std::vector<double> &r);
-protected:
-	//戦略
 	int nitch;
 	std::vector<int> List1;
 	std::vector<int> List2;
 	std::vector<int> List3;
+
+	void Init_pn();
 };
 void playerNim::Init_pn() {
 	Init();
@@ -110,85 +100,5 @@ void playerNim::Init_pn() {
 	List1.clear();
 	List2.clear();
 	List3.clear();
-}
-void playerNim::input_nitch(int n) {
-	nitch = n;
-}
-int playerNim::get_eval() {
-	return eval;
-}
-int playerNim::get_nitch() {
-	return nitch;
-}
-bool playerNim::input_list(std::vector<int> &list, int n) {
-
-	switch (n) {
-	case 1:
-		List1 = list;
-		break;
-	case 2:
-		List2 = list;
-		break;
-	case 3:
-		List3 = list;
-		break;
-	default:
-		std::cout << "nが大きすぎます : input_list" << std::endl;
-		exit(EXIT_FAILURE);
-		break;
-	}
-	return true;
-}
-bool playerNim::get_list(std::vector<int> &list, int n) {
-	switch (n) {
-	case 1:
-		list = List1;
-		break;
-	case 2:
-		list = List2;
-		break;
-	case 3:
-		list = List3;
-		break;
-	default:
-		std::cout << "nが大きすぎます : get_list" << std::endl;
-		exit(EXIT_FAILURE);
-		break;
-	}
-	return true;
-}
-bool playerNim::get_result(std::vector<double> &re) {
-	if (Result.empty()) {
-		std::cout << "結果のベクターが空です[OUT]" << std::endl;
-		return false;
-	}
-	re = Result;
-	return true;
-}
-bool playerNim::get_stra(std::vector<int> &s) {
-	if (stra.empty()) {
-		std::cout << "戦略が空です : get_stra" << std::endl;
-		return false;
-	}
-	s = stra;
-	return true;
-}
-bool playerNim::put_stra(const std::vector<int> &s) 
-{
-	if (s.empty()) {
-		std::cout << "戦略が空です : put_stra" << std::endl;
-		return false;
-	}
-	stra = s;
-	return true;
-}
-bool playerNim::put_result(const std::vector<double> &r)
-{
-	if (r.empty()) {
-		std::cout << "結果ベクターが空です : put_result" << std::endl;
-		return false;
-	}
-	Result = r;
-	return true;
 }
 
