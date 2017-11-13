@@ -55,7 +55,6 @@ int nim::nim_game()
 	Init_mont(); //R‚Ì‰Šú‰»
 	//show_mont();
 	int stra_index;
-	show_vec_1(nim_status);
 	while (1)
 	{
 		stra_index = choose_stra(pop_stra);
@@ -69,7 +68,6 @@ int nim::nim_game()
 			return 0; //‘Šè‚ªŸ‚Ä‚Î‚O‚ğ•Ô‚·
 		}
 	}
-	exit(EXIT_FAILURE);
 }
 void nim::Init_mont() {
 	nim_status[0] = POLL1;
@@ -97,11 +95,11 @@ bool nim::update_mont(int index) {
 	nim_status[1] = (index % ((POLL2 + 1)*(POLL3 + 1))) / (POLL3 + 1);
 	nim_status[2] = index % (POLL3 + 1);
 
-	show_mont();
+	//show_mont();
 
+	cal_move_vec();
 	int sum = std::accumulate(nim_status.begin(), nim_status.end(),0);
 	if (sum) {
-		cal_move_vec();
 		return true;
 	}
 	else {

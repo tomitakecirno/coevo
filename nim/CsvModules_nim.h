@@ -76,6 +76,7 @@ bool CsvModules::csv_fwrite(std::string fname, Vec_in &vector, int per) {
 	if (!ofs.is_open())
 	{
 		// ファイルが開けなかった場合は終了する
+		std::cout << "file open error :" << fname << std::endl;
 		return false;
 	}
 	//1段目
@@ -105,6 +106,7 @@ class csvmodules_exp : public CsvModules{
 public:
 	void Create_Data(std::vector<int> &me, int n, int trial, int gene, int per);
 protected:
+	//method, generation, trial, opp
 	int method_size;
 	int Gene;
 	int Method_Trial;
@@ -112,7 +114,6 @@ protected:
 	std::vector<int> method;
 	std::vector<std::vector<std::string>> Output; // Out_Ave[世代][手法][ave/max/min]
 	std::vector<std::vector<std::string>> Output_Per; // Out_Ave[世代][手法][ave/max/min]
-
 	void Init_Output();
 	void Init_Output_Per(int me);
 	void Set_Output(int me, std::vector<std::vector<std::vector<double>>> &input);
@@ -204,8 +205,6 @@ void csvmodules_exp::Create_Data(std::vector<int> &me, int n, int trial, int gen
 		std::cout << "method:" << method[i] << " done..." << std::endl;
 	}
 }
-//ファイル読み込み(2次元ベクター)
-//ファイル出力(2次元ベクター)
 bool csvmodules_exp::OutContents(std::string filename)
 {
 	// ファイルを開

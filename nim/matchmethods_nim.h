@@ -9,20 +9,20 @@
 
 class Match {
 public:
-	Match(std::string dir, int method_p, int method_o, int t, int g, int g_p, int Cru = 0) {
-		Dir = dir;
+	Match(int method_p, int method_o, int t, int g, int g_p, int Cru = 0) {
 		gene = g;
 		per = g_p;
 		method_pop = method_p;
 		method_opp = method_o;
 		cru_k = Cru;
 		trial_pop = t;
+		loop = (g / g_p) + 1;
 
-		result = std::vector<std::vector<double>>(gene / per + 1, std::vector<double>(KOT, 0));
+		//result = std::vector<std::vector<double>>(gene / per + 1, std::vector<double>(KOT, 0));
+		Make_CSV_Directory(method_pop);
+		eval = std::vector<std::vector<double>>(loop, std::vector<double>(KO, 0));
 	}
 	void main_task(int Opp_Trial);
-	void output_re_csv(int Opp_trial);
-	bool output_ni_csv();
 private:
 	int gene;			//ê¢ë„êî
 	int per;			//ãÊêÿÇË
@@ -38,9 +38,11 @@ protected:
 	std::vector<std::vector<double>> result;
 	std::vector<std::vector<double>> eval;
 	void PvP(int Opp_Trial, int Gene);
+	void output_re_csv(int Opp_trial);
+	bool output_ni_csv();
 };
 
-void Match::PvP(int Opp_Trial, int Gene)
+void Match::PvP(int Opp_Trial, int g)
 {
 	nim nim;
 	p_data pop,opp;
@@ -49,32 +51,32 @@ void Match::PvP(int Opp_Trial, int Gene)
 	char fname[50], fname2[50];
 	for (int ai_pop = 0; ai_pop < KO; ai_pop++) {
 		//ÉvÉåÉCÉÑÅ[ÇÃêÌó™ì«Ç›çûÇ›
-		sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method_pop, trial_pop, gene, ai_pop);
+		sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method_pop, trial_pop, g, ai_pop);
 		pop.input_stra(fname);
 		pop.Result.assign(KOT, 0);
-
+		//std::cout << fname << std::endl;
 		for (int ai_opp = 0; ai_opp < KOT; ai_opp++) {
 			//ëŒêÌëäéËÇÃêÌó™ì«Ç›çûÇ›
-			sprintf(fname2, ("AIT/%d/%d/%d.dat"), method_opp, Opp_Trial, ai_opp);
+			sprintf_s(fname2, "AIT/%d/%d/%d.dat", method_opp, Opp_Trial, ai_opp);
 			opp.input_stra(fname2);
 
 			//1âÒñ⁄
 			nim.input_stra_first(pop.stra);	//êÊéË
 			nim.input_stra_last(opp.stra);	//å„éË
-			pop.Result[ai_opp] += nim.nim_game()*WIN_FIRST;
+			pop.Result[ai_opp] += nim.nim_game();
 
 			//êÊéËå„éËÇì¸ÇÍë÷Ç¶Çƒ2âÒñ⁄
 			nim.input_stra_first(opp.stra);	//êÊéË
 			nim.input_stra_last(pop.stra);	//å„éË
-			pop.Result[ai_opp] += nim.nim_game()*WIN_LAST;
+			pop.Result[ai_opp] += nim.nim_game();
 		}
-		eval[Gene][ai_pop] = std::accumulate(pop.Result.begin(), pop.Result.end(), 0.0);
+		eval[g][ai_pop] = std::accumulate(pop.Result.begin(), pop.Result.end(), 0.0);
 	}
 }
 void Match::main_task(int Opp_Trial)
 {
 	for (int g = 0; g < loop; g++) {
-		std::cout << "Opp:" << Opp_Trial << "  Generation:" << g << "   ";
+		std::cout << "Opp:" << Opp_Trial << "  Generation:" << g << "   " << std::endl;;
 		//ëŒêÌÇµÇƒåãâ Çäiî[
 		PvP(Opp_Trial, g);
 	}
@@ -89,9 +91,9 @@ bool Match::output_ni_csv()
 	std::vector<std::vector<int>> pop_nitch;
 	char fname[50];
 	if (cru_k == 0) {
-		sprintf(fname, "./csv/%d/Cruster_%d_%d_%d.csv", method_pop, method_pop, trial_pop, gene);
+		sprintf_s(fname, "./csv/%d/Cruster_%d_%d_%d.csv", method_pop, method_pop, trial_pop, gene);
 	}if (0 < cru_k) {
-		sprintf(fname, "./csv/%d/Cruster_%d_%d_%d_%d.csv", method_pop, method_pop, trial_pop, gene, cru_k);
+		sprintf_s(fname, "./csv/%d/Cruster_%d_%d_%d_%d.csv", method_pop, method_pop, trial_pop, gene, cru_k);
 	}
 	if (!csv.GetContents(fname, pop_nitch)) {
 		std::cout << std::endl;
@@ -122,7 +124,7 @@ bool Match::output_ni_csv()
 		//êÌó™ä‘ãóó£
 		std::vector<int> stra_0;
 		p_data pop;
-		int stra_len = std::pow(2, POLL1 + POLL2 + POLL3);
+		int stra_len = int(std::pow(2, POLL1 + POLL2 + POLL3));
 		stra_0.assign(stra_len, 0);
 
 		for (int i = 0; i < KO; i++) {
@@ -137,7 +139,7 @@ bool Match::output_ni_csv()
 			pop_dis[tmp_nitch][tmp_index] = cal_haming(pop.stra, stra_0);
 			index[tmp_nitch]++;
 		}
-		sprintf(fname, "./csv/%d/Distance_nitch_%d_%d_%d(%d).csv", method_pop, method_pop, trial_pop, g*per, gene);
+		sprintf_s(fname, "./csv/%d/Distance_nitch_%d_%d_%d(%d).csv", method_pop, method_pop, trial_pop, g*per, gene);
 		csv.csv_fwrite(fname, pop_dis);
 	}
 	return true;
@@ -145,9 +147,9 @@ bool Match::output_ni_csv()
 void Match::output_re_csv(int Opp_trial) {
 	char fname[50];
 	if (cru_k == 0) {
-		sprintf(fname, "./csv/%d/PopResult_%d_%d_%d_%d.csv", method_pop, method_pop, trial_pop, Opp_trial, gene);
+		sprintf_s(fname, "./csv/%d/PopResult_%d_%d_%d_%d.csv", method_pop, method_pop, trial_pop, Opp_trial, gene);
 	}if (0 < cru_k) {
-		sprintf(fname, "./csv/%d/PopResult_%d_%d_%d_%d_%d.csv", method_pop, method_pop, trial_pop, Opp_trial, gene, cru_k);
+		sprintf_s(fname, "./csv/%d/PopResult_%d_%d_%d_%d_%d.csv", method_pop, method_pop, trial_pop, Opp_trial, gene, cru_k);
 	}
 	//
 	CsvModules cm;

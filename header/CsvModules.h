@@ -9,7 +9,7 @@ Csvの入出力に関するモジュール置き場
 #include "Usual_Methods.hpp"
 #include "config.hpp"
 
-#define ENEMY 10
+#define ENEMY 5
 
 class CsvModules {
 public:

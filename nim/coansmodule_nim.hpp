@@ -199,7 +199,7 @@ void binaryEXLM(const int main_pare, const std::vector<int> &sub_pare, const std
 		child[CHILD / 2 + c].stra = child_stra[1];
 	}
 }
-void two_point_cross(const std::vector<int> &main, const std::vector<int> &sub, std::vector<std::vector<int>> &c_stra) 
+void two_point_cross(const std::vector<int> &parent1, const std::vector<int> &parent2, std::vector<std::vector<int>> &c_stra) 
 {
 	if (c_stra.size() < 2) {
 		std::cout << "qŒÂ‘Ì‚Ìí—ª‚ª‘«‚è‚Ü‚¹‚ñ : two_point_cross" << std::endl;
@@ -223,11 +223,11 @@ void two_point_cross(const std::vector<int> &main, const std::vector<int> &sub, 
 	}
 
 	//2“_Œğ³
-	c_stra[0] = main;
-	c_stra[1] = sub;
+	c_stra[0] = parent1;
+	c_stra[1] = parent2;
 	for (int i = one; i <= two; i++) {
-		c_stra[0][i] = sub[i];
-		c_stra[1][i] = main[i];
+		c_stra[0][i] = parent2[i];
+		c_stra[1][i] = parent1[i];
 	}
 }
 //‘Îí‘Šè‚ğ‘I‚Ô

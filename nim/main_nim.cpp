@@ -6,6 +6,9 @@
 #include "nim.h"
 #include "coans_nim.h"
 #include "coansmodule_nim.hpp"
+#include "Floreano_nim.h"
+#include "matchmethods_nim.h"
+
 
 using namespace std;
 
@@ -44,14 +47,14 @@ int main(int argc, char *argv[])
 		argv[4]:trial
 		argv[5]:nitch parameter
 	*/
-	mode = 2;
-	//mode = atoi(__argv[1]);
+	//mode = 0;
+	mode = atoi(__argv[1]);
 	if (mode == 1 || mode == 2 || mode == 4) {
 		switch (__argc) {
 		case 1:
 			//Debug mode
 			method = 2;
-			ku = 10;
+			ku = KU;
 			trial = 0;
 			break;
 		case 5:
@@ -85,20 +88,20 @@ int main(int argc, char *argv[])
 	}
 	int MatchUp_Count = 0;
 
-	clock_t Start_Main = clock();
+	const clock_t Start_Main = clock();
 	//実験用対戦相手学習
 	if (mode == 0) {
-		/*
-		Make_Directory_AIT(0,trial);
-		FloreMethods Flore_1;
-		for (int t = 4; t < trial; t++) {
-			Flore_1.Main_Tasks();
-			Flore_1.Fwrite_Floreano(t);
+		for (int t = 0; t < F_TRIAL; t++) {
+			floreano flore(t);
+			flore.main_task();
 		}
-		*/
 	}
 	//学習で記録したデータをもとに実際に対戦
 	else if (mode == 1) {
+		Match Match(method, 0, trial, ku, per);
+		for (int t = 0; t < 5; t++) {
+			Match.main_task(t);
+		}
 	}
 
 	//現手法学習
@@ -142,7 +145,7 @@ int main(int argc, char *argv[])
 	else if (mode == 5) {
 	}
 
-	clock_t End_Main = clock();
+	const clock_t End_Main = clock();
 	Show_Time(Start_Main, End_Main);
 	std::cout << "match_up num:" << MatchUp_Count << std::endl;
 
@@ -150,6 +153,6 @@ int main(int argc, char *argv[])
 }
 
 void Show_Time(clock_t Start, clock_t End) {
-	int time = (Start - Start) / CLOCKS_PER_SEC;
+	int time = (End - Start) / CLOCKS_PER_SEC;
 	std::cout << "Process time:" << time << "[sec]" << std::endl;
 }

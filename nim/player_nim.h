@@ -51,13 +51,13 @@ bool p_data::input_stra(const std::string fname)
 {
 	std::ifstream fin(fname);
 	if (fin.fail()) {
-		std::cout << "出力ファイルをオープンできません :" << fname << std::endl;
+		std::cout << "入力ファイルをオープンできません :" << fname << std::endl;
 		return false;
 	}
 
 	stra_len = int(std::pow(2, POLL1 + POLL2 + POLL3));
 	stra.resize(stra_len);
-	std::cout << fname << std::endl;
+	//std::cout << fname << std::endl;
 	int i = 0;
 	int tmp;
 	while (fin >> tmp) {
