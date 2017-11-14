@@ -54,7 +54,6 @@ void Match::PvP(int Opp_Trial, int g)
 		sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method_pop, trial_pop, g, ai_pop);
 		pop.input_stra(fname);
 		pop.Result.assign(KOT, 0);
-		//std::cout << fname << std::endl;
 		for (int ai_opp = 0; ai_opp < KOT; ai_opp++) {
 			//‘Îí‘ŠŽè‚Ìí—ª“Ç‚Ýž‚Ý
 			sprintf_s(fname2, "AIT/%d/%d/%d.dat", method_opp, Opp_Trial, ai_opp);
@@ -63,12 +62,22 @@ void Match::PvP(int Opp_Trial, int g)
 			//1‰ñ–Ú
 			nim.input_stra_first(pop.stra);	//æŽè
 			nim.input_stra_last(opp.stra);	//ŒãŽè
-			pop.Result[ai_opp] += nim.nim_game();
+			if (nim.nim_game()) {
+				pop.Result[ai_opp] += 1*WIN_FIRST;
+			}
+			else {
+				pop.Result[ai_opp] += 0;
+			}
 
 			//æŽèŒãŽè‚ð“ü‚ê‘Ö‚¦‚Ä2‰ñ–Ú
 			nim.input_stra_first(opp.stra);	//æŽè
 			nim.input_stra_last(pop.stra);	//ŒãŽè
-			pop.Result[ai_opp] += nim.nim_game();
+			if (nim.nim_game()) {
+				pop.Result[ai_opp] += 1 * WIN_LAST;
+			}
+			else {
+				pop.Result[ai_opp] += 0;
+			}
 		}
 		eval[g][ai_pop] = std::accumulate(pop.Result.begin(), pop.Result.end(), 0.0);
 	}
@@ -124,7 +133,7 @@ bool Match::output_ni_csv()
 		//í—ªŠÔ‹——£
 		std::vector<int> stra_0;
 		p_data pop;
-		int stra_len = int(std::pow(2, POLL1 + POLL2 + POLL3));
+		int stra_len = (POLL1 + 1)*(POLL2 + 1)*(POLL3 + 1);
 		stra_0.assign(stra_len, 0);
 
 		for (int i = 0; i < KO; i++) {

@@ -195,8 +195,13 @@ void binaryEXLM(const int main_pare, const std::vector<int> &sub_pare, const std
 
 		two_point_cross(pop[main_pare].stra, pop[sub_pare[rand]].stra, child_stra);
 
+		
 		child[c].stra			  = child_stra[0];
 		child[CHILD / 2 + c].stra = child_stra[1];
+		mutation(child[c].stra);
+		mutation(child[CHILD / 2 + c].stra);
+		child[c].Init_pn();
+		child[CHILD / 2 + c].Init_pn();;
 	}
 }
 void two_point_cross(const std::vector<int> &parent1, const std::vector<int> &parent2, std::vector<std::vector<int>> &c_stra) 
@@ -205,9 +210,7 @@ void two_point_cross(const std::vector<int> &parent1, const std::vector<int> &pa
 		std::cout << "子個体の戦略が足りません : two_point_cross" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-
-	int stra_len = int(std::pow(2, POLL1 + POLL2 + POLL3));
-
+	int stra_len = (POLL1 + 1)*(POLL2 + 1)*(POLL3 + 1);
 	//2点を決定
 	int one = 0;
 	int two = 0;
@@ -228,6 +231,15 @@ void two_point_cross(const std::vector<int> &parent1, const std::vector<int> &pa
 	for (int i = one; i <= two; i++) {
 		c_stra[0][i] = parent2[i];
 		c_stra[1][i] = parent1[i];
+	}
+}
+//突然変異
+void mutation(std::vector<int> &stra) {
+	for (int i = 0; i < STRA_LEN; i++) {
+		int rand = GetRand_Int(1000);
+		if (1 < MUTATION*rand) {
+			stra[i] = ~stra[i];
+		}
 	}
 }
 //対戦相手を選ぶ

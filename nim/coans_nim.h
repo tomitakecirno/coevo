@@ -77,6 +77,7 @@ void Coans::main_task()
 		pop[i].Init_pn();
 		pop[i].Init_stra();
 	}
+	std::cout << pop[0].stra.size() << std::endl;
 	cr_p.resize(gene / per);
 	cr_p = std::vector<std::vector<int>>(gene / per + 1, std::vector<int>(KO, 0));
 
@@ -177,16 +178,18 @@ void Coans::main_task()
 			pop[main_pare] = child[index];
 
 			//実験用 : 戦略書き出し
-			if (Gene_Loop % PER == 0) {
+			if (Gene_Loop % per == 0) {
 				std::cout << "10" << ',';
 				output_stra(Gene_Loop / per);
 			}
 			std::cout << "8";
 			std::cout << "  [";
+			/*
 			for (int c = 0; c < CHILD + 1; c++) {
 				std::cout << child[c].eval << ",";
 			}
 			std::cout << "]" << std::endl;
+			*/
 			//集団の解以外初期化
 			for (int i = 0; i < KO; i++) {
 				pop[i].Init_pn();

@@ -1,14 +1,14 @@
 #pragma once
 /* #define NDEBUG */
 
-#define KO		30		//集団
+#define KO		300		//集団
 #define KOT		30		//敵
-#define PARENT	4		//親
-#define CHILD	20		//子
-#define KU		2000	//世代数
-#define PER		200		//
+#define PARENT	40		//親
+#define CHILD	200		//子
+#define KU		10	//世代数
+#define PER		1		//
 
-#define K_List1	5	/*ニッチの集団数*/
+#define K_List1	50	/*ニッチの集団数*/
 #define K_List2	2	/*ニッチの集団数*/
 #define K_List3	2	/*ニッチの集団数*/
 #define KL1		2	/*ニッチの集団数*/
@@ -29,3 +29,6 @@
 #define DELETE		50
 #define CSV_DIR		"./csv"
 
+#define MUTATION	0.009
+
+#define STRA_LEN	6*6*6

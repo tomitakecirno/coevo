@@ -31,10 +31,11 @@ void p_data::Init() {
 	win = 0;
 	eval = 0;
 	Result.clear();
+	stra_len = (POLL1 + 1)*(POLL2 + 1)*(POLL3 + 1);
 }
 void p_data::Init_stra() 
 {
-	stra_len = int(std::pow(2, POLL1 + POLL2 + POLL3));
+	stra_len = (POLL1 + 1)*(POLL2 + 1)*(POLL3 + 1);
 	stra.resize(stra_len);
 
 	for (int i = 0; i < stra_len; i++) {
@@ -55,7 +56,7 @@ bool p_data::input_stra(const std::string fname)
 		return false;
 	}
 
-	stra_len = int(std::pow(2, POLL1 + POLL2 + POLL3));
+	stra_len = (POLL1 + 1)*(POLL2 + 1)*(POLL3 + 1);
 	stra.resize(stra_len);
 	//std::cout << fname << std::endl;
 	int i = 0;
@@ -78,12 +79,15 @@ bool p_data::output_stra(const std::string fname)
 		std::cout << "出力ファイルをオープンできません :" << fname << std::endl;
 		return false;
 	}
-	for (int i = 0; i<stra_len; i++) {
+	if (stra_len == 0) {
+		std::cout << "戦略が空です" << std::endl;
+		return false;
+	}
+	for (int i = 0; i < stra_len; i++) {
 		fout << stra[i] << " ";
 	}
 	return true;
 }
-
 //ニムで使うプレイヤーのクラス
 class playerNim : public p_data {
 public:

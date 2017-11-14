@@ -33,22 +33,26 @@ bool floreano::cross(std::vector<p_data> &tmp)
 		return false;
 	}
 	int tmp_size = int(tmp.size());
-	tmp.resize(KO);
-	for (int p = tmp_size; p < KO; p++) {
+	tmp.resize(KOT);
+	for (int p = tmp_size; p < KOT; p++) {
 		int index1 = 0;
 		int index2 = 0;
 		while (index1 == index2) {
-			index1 = GetRand_Int(KO / 5);
-			index2 = GetRand_Int(KO / 5);
+			index1 = GetRand_Int(KOT / 5);
+			index2 = GetRand_Int(KOT / 5);
 		}
 		std::vector<std::vector<int>> child(2);
 		two_point_cross(tmp[index1].stra, tmp[index2].stra, child);
 		tmp[p].stra = child[0];
-		tmp[p + 1].stra = child[0];
+		tmp[p + 1].stra = child[1];
+
+		tmp[p].stra_len = (POLL1 + 1)*(POLL2 + 1)*(POLL3 + 1);
+		tmp[p + 1].stra_len = (POLL1 + 1)*(POLL2 + 1)*(POLL3 + 1);
+
 		p++;
 	}
 	tmp_size = int(tmp.size());
-	if (tmp_size != KO) {
+	if (tmp_size != KOT) {
 		return false;
 	}
 	return true;
@@ -56,14 +60,14 @@ bool floreano::cross(std::vector<p_data> &tmp)
 void floreano::main_task(void) {
 	//初期集団生成
 
-	pop.resize(KO);
+	pop.resize(KOT);
 	opp.resize(FLORET);
 
 	init_genrand((unsigned)time(NULL));
 	//集団初期化
 
-	std::vector<int> tmp_n(KO);
-	for (int i = 0; i < KO; i++) {
+	std::vector<int> tmp_n(KOT);
+	for (int i = 0; i < KOT; i++) {
 		pop[i].Init();
 		pop[i].Init_stra();
 		tmp_n[i] = i;
@@ -83,7 +87,7 @@ void floreano::main_task(void) {
 		std::cout << "1" << ',';
 
 		/*対戦*/
-		for (int i = 0; i < KO; i++) {
+		for (int i = 0; i < KOT; i++) {
 			pop[i].Result.assign(FLORET,0);
 		}
 		std::cout << "2" << ',';
@@ -92,7 +96,7 @@ void floreano::main_task(void) {
 			opp[i].Result.resize(KO);
 		}
 		*/
-		for (int i = 0; i < KO; i++) {
+		for (int i = 0; i < KOT; i++) {
 			for (int j = 0; j < FLORET; j++) {
 				//1回目
 				nim.input_stra_first(pop[i].stra);
@@ -107,20 +111,20 @@ void floreano::main_task(void) {
 		}
 		std::cout << "3" << ',';
 		//評価値計算
-		for (int i = 0; i < KO; i++) {
+		for (int i = 0; i < KOT; i++) {
 			pop[i].cal_fitness();
 		}
 		std::cout << "3" << ',';
 		//確認用
-		std::vector<double> pop_eval(KO);
-		for (int i = 0; i < KO; i++) {
+		std::vector<double> pop_eval(KOT);
+		for (int i = 0; i < KOT; i++) {
 			pop_eval[i] = pop[i].eval;
 		}
 
-		std::vector<p_data> tmp_pop(KO / 5);
+		std::vector<p_data> tmp_pop(KOT / 5);
 		//上位1/5を残す
 		//int count_Num;
-		for (int i = 0; i < KO / 5; i++) {
+		for (int i = 0; i < KOT / 5; i++) {
 			const int index = Choice_Best_Index();
 			//cout << "index:" << index << endl;
 			tmp_pop[i] = pop[index];
@@ -135,18 +139,14 @@ void floreano::main_task(void) {
 		cross(tmp_pop);
 		pop = tmp_pop;
 		std::cout << "5" << ',';
-		for (int i = 0; i < KO; i++) {
+		for (int i = 0; i < KOT; i++) {
 			pop[i].Init();
 		}
 		for (int j = 0; j < FLORET; j++) {
 			opp[j].Init();
 		}
-		std::cout << "評価値 : [";
-		for (auto &p : pop_eval) {
-			std::cout << p << ',';
-		}
-		std::cout << "]" << std::endl;
 
+		show_vec_1(pop_eval);
 		std::cout << std::endl;
 	}
 	output_stra();
@@ -185,7 +185,7 @@ int floreano::Choice_Best_Index()
 }
 void floreano::output_stra() 
 {
-	for (int i = 0; i < KO; i++) {
+	for (int i = 0; i < KOT; i++) {
 		char fname[50];
 		sprintf_s(fname, "./AIT/%d/%d/%d.dat", method_t, trial_t, i);
 		pop[i].output_stra(fname);

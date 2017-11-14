@@ -26,6 +26,8 @@ public:
 	int nim_game();
 	void input_stra_first(const std::vector<int> &pop);
 	void input_stra_last(const std::vector<int> &opp);
+	void output_stra_first(std::vector<int> &pop);
+	void output_stra_last(std::vector<int> &pop);
 protected:
 	int nim_n;	//山の数
 	int stra_len;
@@ -46,7 +48,7 @@ protected:
 	void cal_move_vec();
 	void generate_mont(int a, int b, int c, std::vector<std::vector<int>> &mont);
 	bool update_mont(int index); //戦略情報から山の状態を更新する
-	int choose_stra(const std::vector<int> &stra);
+	int choose_stra(std::vector<int> &stra);
 	void show_mont();
 };
 
@@ -223,7 +225,7 @@ void nim::generate_mont(int a, int b, int c, std::vector<std::vector<int>> &mont
 		}
 	}
 }
-int nim::choose_stra(const std::vector<int> &stra) {
+int nim::choose_stra(std::vector<int> &stra) {
 	if (stra.empty()) {
 		std::cout << "戦略が空です : choose_stra" << std::endl;
 		exit(EXIT_FAILURE);
@@ -259,7 +261,7 @@ int nim::choose_stra(const std::vector<int> &stra) {
 			index = tmp_index[ GetRand_Int(count) ];
 		}
 	}
-	//1個もない場合,遷移可能からランダム
+	//1個もない場合は，合法手をランダムに選ぶ．その際，ランダムに選んだ手を自分の戦略に加える.
 	else {
 		tmp_stra = nim_status_vec;
 		const int tmp_count = int(std::count(tmp_stra.begin(), tmp_stra.end(), 1));
@@ -272,6 +274,12 @@ int nim::choose_stra(const std::vector<int> &stra) {
 			tmp_index[i] = int(std::distance(tmp_stra.begin(), result_t));
 		}
 		index = tmp_index[ GetRand_Int(tmp_count) ];
+		//std::cout << "index : " << index << std::endl;
+		//show_vec_1(stra);
+		if (stra[index] == 0) {
+			stra[index] = 1;
+		}
+		//show_vec_1(stra);
 	}
 	return index;
 }
@@ -279,11 +287,19 @@ void nim::input_stra_first(const std::vector<int> &pop)
 {
 	pop_stra = pop;
 }
+void nim::output_stra_first(std::vector<int> &pop)
+{ 
+	pop = pop_stra;
+}
 void nim::input_stra_last(const std::vector<int> &opp) 
 {
 	opp_stra = opp;
 }
-void nim::show_mont() 
+void nim::output_stra_last(std::vector<int> &opp)
+{
+	opp = opp_stra;
+}
+void nim::show_mont()
 {
 	std::vector<std::vector<int>> tmp_mont_vec;
 	tmp_mont_vec = std::vector<std::vector<int>>(mont_size, std::vector<int>(NIM, 0));
