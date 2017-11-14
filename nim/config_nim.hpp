@@ -15,7 +15,7 @@
 
 #define F_TRIAL	10	/*ニッチの集団数*/
 #define FLORET	5	/*ニッチの集団数*/
-#define F_KU	300	/*ニッチの集団数*/
+#define F_KU	500	/*ニッチの集団数*/
 
 #define NIM			3	//ニムの山の数
 #define POLL1		5	//山1

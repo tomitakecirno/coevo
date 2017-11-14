@@ -15,6 +15,7 @@ int SetNitch(int nitch_number, int kotai, std::vector<playerNim> &pop);
 void binaryEXLM(const int main_pare, const std::vector<int> &sub_pare, const std::vector<playerNim> &pop, std::vector<playerNim> &child);
 void two_point_cross(const std::vector<int> &main, const std::vector<int> &sub, std::vector<std::vector<int>> &c_stra);
 void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, const int count_nitch);
+void mutation(std::vector<int> &stra);
 
 //ハミング距離
 int cal_haming(const std::vector<int> &one, const std::vector<int> &ano)
@@ -234,9 +235,10 @@ void two_point_cross(const std::vector<int> &parent1, const std::vector<int> &pa
 	}
 }
 //突然変異
-void mutation(std::vector<int> &stra) {
+void mutation(std::vector<int> &stra) 
+{
 	for (int i = 0; i < STRA_LEN; i++) {
-		int rand = GetRand_Int(1000);
+		const int rand = GetRand_Int(1000);
 		if (1 < MUTATION*rand) {
 			stra[i] = ~stra[i];
 		}

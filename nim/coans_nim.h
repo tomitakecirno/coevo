@@ -97,7 +97,7 @@ void Coans::main_task()
 		const int Loop_Time_Start = clock();
 		std::cout << method << ":" << trial << ":" << ":" << Gene_Loop;
 		std::cout << "  |  ";
-		std::cout << "1" << ',';
+		//std::cout << "1" << ',';
 		Crustering(); //クラスタリング。手法によって変わる
 
 		//実験用 : csvでニッチを出力
@@ -109,7 +109,7 @@ void Coans::main_task()
 			}
 		}
 
-		std::cout << "2" << ',';
+		//std::cout << "2" << ',';
 		int tmp_index;
 		int tmp_sub;
 		std::vector<int> sub_pare;
@@ -137,16 +137,16 @@ void Coans::main_task()
 		if (!sub_pare.empty()) {
 			//子個体生成
 			child.resize(CHILD + 1);
-			std::cout << "3" << ',';
+			//std::cout << "3" << ',';
 
 			//拡張XLM
 			child[0] = pop[main_pare];
 			binaryEXLM(main_pare, sub_pare, pop, child);
 
-			std::cout << "4" << ',';
+			//std::cout << "4" << ',';
 			Generate_Opp(); //対戦相手の個体を選ぶ
 
-			std::cout << "5" << ',';
+			//std::cout << "5" << ',';
 
 			//ここで対戦
 			for (int i = 0; i < CHILD + 1; i++) {
@@ -166,23 +166,23 @@ void Coans::main_task()
 				}
 			}
 
-			std::cout << "6" << ',';
+			//std::cout << "6" << ',';
 			//適応度計算
 			for (int i = 0; i < CHILD + 1; i++) {
 				child[i].cal_fitness();
 			}
 
-			std::cout << "7" << ',';
+			//std::cout << "7" << ',';
 			//Best個体を集団へ
 			int index = Choice_Best_Index();
 			pop[main_pare] = child[index];
 
 			//実験用 : 戦略書き出し
 			if (Gene_Loop % per == 0) {
-				std::cout << "10" << ',';
+				//std::cout << "10" << ',';
 				output_stra(Gene_Loop / per);
 			}
-			std::cout << "8";
+			//std::cout << "8";
 			std::cout << "  [";
 			/*
 			for (int c = 0; c < CHILD + 1; c++) {

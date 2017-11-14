@@ -83,14 +83,14 @@ void floreano::main_task(void) {
 	//以下ループ
 	for (int e = 0; e < F_KU; e++) {
 		std::cout << method_t << ":" << trial_t << ":" << ":" << e;
-		std::cout << "  |  ";
-		std::cout << "1" << ',';
+		//std::cout << "  |  ";
+		//std::cout << "1" << ',';
 
 		/*対戦*/
 		for (int i = 0; i < KOT; i++) {
 			pop[i].Result.assign(FLORET,0);
 		}
-		std::cout << "2" << ',';
+		//std::cout << "2" << ',';
 		/*
 		for (int i = 0; i < FLORET; i++) {
 			opp[i].Result.resize(KO);
@@ -109,12 +109,12 @@ void floreano::main_task(void) {
 				pop[i].Result[j] += nim.nim_game()*WIN_LAST;
 			}
 		}
-		std::cout << "3" << ',';
+		//std::cout << "3" << ',';
 		//評価値計算
 		for (int i = 0; i < KOT; i++) {
 			pop[i].cal_fitness();
 		}
-		std::cout << "3" << ',';
+		//std::cout << "3" << ',';
 		//確認用
 		std::vector<double> pop_eval(KOT);
 		for (int i = 0; i < KOT; i++) {
@@ -131,14 +131,14 @@ void floreano::main_task(void) {
 			pop.erase(pop.begin() + index); //要素を削除
 		}
 
-		std::cout << "4" << ',';
+		//std::cout << "4" << ',';
 		//対戦相手の更新.最古の個体を置き換える
 		//e%FLORETで置き換える個体を取得できる．
 		opp[e%FLORET] = tmp_pop[0];
 		//交叉
 		cross(tmp_pop);
 		pop = tmp_pop;
-		std::cout << "5" << ',';
+		//std::cout << "5" << ',';
 		for (int i = 0; i < KOT; i++) {
 			pop[i].Init();
 		}
