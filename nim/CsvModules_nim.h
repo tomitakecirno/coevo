@@ -10,8 +10,6 @@ Csvの入出力に関するモジュール置き場
 #include "player_nim.h"
 #include "../header/Usual_Methods.hpp"
 
-#define ENEMY 10
-
 class CsvModules {
 public:
 	//ファイル読み込み
@@ -19,7 +17,9 @@ public:
 	bool GetContents(std::string filename, Vec_out &input);
 	//ファイル書き込み
 	template<class Vec_in>
-	bool csv_fwrite(std::string fname, Vec_in &vector, int per=1);
+	bool csv_fwrite(std::string fname, Vec_in &vector, int per = 1);
+	template<class Vec_in2>
+	bool csv_fwrite2(std::string fname, const Vec_in2 &vector);
 };
 template<class Vec_out>
 bool CsvModules::GetContents(std::string filename, Vec_out &input)
@@ -49,12 +49,12 @@ bool CsvModules::GetContents(std::string filename, Vec_out &input)
 		table.push_back(record);
 	}
 	table.erase(table.end() - 1);
-	
+
 	int table_len_Y = int(table.size());
 	input.resize(table_len_Y - 1);
 	for (int i = 1; i < table_len_Y; i++) {
 		int table_len_X = int(table[i].size());
-		input[i-1].resize(table_len_X - 1);
+		input[i - 1].resize(table_len_X - 1);
 		for (int j = 1; j < table_len_X; j++) {
 			input[i - 1][j - 1] = atoi(table[i][j].c_str());
 		}
@@ -97,14 +97,30 @@ bool CsvModules::csv_fwrite(std::string fname, Vec_in &vector, int per) {
 	std::cout << "file:" << fname << "...done" << std::endl;
 	return true;
 }
-
+template<class Vec_in2>
+bool CsvModules::csv_fwrite2(std::string fname, const Vec_in2 &vector) {
+	std::ofstream ofs(fname);
+	if (!ofs.is_open())
+	{
+		// ファイルが開けなかった場合は終了する
+		return false;
+	}
+	for (auto &p : vector) {
+		for (auto &q : p) {
+			ofs << q << ",";
+		}
+		ofs << std::endl;
+	}
+	return true;
+}
 /*
 	実験用のcsv
 */
 //csvを統合するクラス
-class csvmodules_exp : public CsvModules{
+class csvmodules_exp : public CsvModules {
 public:
 	void Create_Data(std::vector<int> &me, int n, int trial, int gene, int per);
+	void integration(std::vector<int> &me, int gene, int per);
 protected:
 	//method, generation, trial, opp
 	int method_size;
@@ -114,8 +130,10 @@ protected:
 	std::vector<int> method;
 	std::vector<std::vector<std::string>> Output; // Out_Ave[世代][手法][ave/max/min]
 	std::vector<std::vector<std::string>> Output_Per; // Out_Ave[世代][手法][ave/max/min]
+	std::vector<std::vector<std::string>> gene_opp_csv; // Out_Ave[世代][手法][ave/max/min]
 	void Init_Output();
 	void Init_Output_Per(int me);
+	void Init_gene_opp_csv();
 	void Set_Output(int me, std::vector<std::vector<std::vector<double>>> &input);
 	bool OutContents(std::string filename);
 	bool OutContents_Per(std::string filename);
@@ -160,6 +178,101 @@ void csvmodules_exp::Init_Output_Per(int me) {
 			int tmp = i % (Gene / Per + 2) - 1;
 			Output_Per[i][0] = std::to_string(tmp*Per);
 		}
+	}
+}
+void csvmodules_exp::Init_gene_opp_csv()
+{
+	gene_opp_csv = std::vector<std::vector<std::string>>((Gene / Per + 2) * 3 + 1, std::vector<std::string>(ENEMY + 1, " "));
+	for (int i = 0; i < (Gene / Per + 2) * 3; i++) {
+		if (i % (Gene / Per + 2) == 0) {
+			switch (i / (Gene / Per + 2)) {
+			case 0:
+				gene_opp_csv[i][0] = "Average";
+				for (int j = 0; j < ENEMY; j++) {
+					std::stringstream ss;
+					ss << "opp" << j;
+					gene_opp_csv[i][j + 1] = ss.str();
+				}
+				break;
+			case 1:
+				gene_opp_csv[i][0] = "Max";
+				for (int j = 0; j < ENEMY; j++) {
+					std::stringstream ss;
+					ss << "opp" << j;
+					gene_opp_csv[i][j + 1] = ss.str();
+				}
+				break;
+			case 2:
+				gene_opp_csv[i][0] = "Min";
+				for (int j = 0; j < ENEMY; j++) {
+					std::stringstream ss;
+					ss << "opp" << j;
+					gene_opp_csv[i][j + 1] = ss.str();
+				}
+				break;
+			default:
+				std::cerr << "Error";
+				break;
+			}
+		}
+		else {
+			int tmp = i % (Gene / Per + 2) - 1;
+			gene_opp_csv[i][0] = std::to_string(tmp*Per);
+		}
+	}
+}
+void csvmodules_exp::integration(std::vector<int> &me, int gene, int per) {
+	method_size = int(me.size());
+	method = me;
+	Gene = gene;
+	Per = per;
+
+	std::vector<std::vector<double>> input;
+	std::vector<std::vector<double>> max_vec;
+	std::vector<std::vector<double>> min_vec;
+	std::vector<std::vector<double>> ave_vec;
+
+	for (int i = 0; i < method_size; i++) {
+		std::cout << "start : " << method[i] << std::endl;
+		Init_gene_opp_csv();
+		std::stringstream ss;
+		ss << "./csv/" << method[i];
+
+		for (int j = 0; j < ENEMY; j++) {
+			std::cout << "enemy : " << j << std::endl;
+			max_vec = std::vector<std::vector<double>>(Gene / Per + 1, std::vector<double>(TRIAL, 0));
+			min_vec = std::vector<std::vector<double>>(Gene / Per + 1, std::vector<double>(TRIAL, 0));
+			ave_vec = std::vector<std::vector<double>>(Gene / Per + 1, std::vector<double>(TRIAL, 0));
+			for (int k = 0; k < TRIAL; k++) {
+				char fname[50];
+				input = std::vector<std::vector<double>>(Gene / Per + 1, std::vector<double>(KO, 0));
+				sprintf_s(fname, "%s/PopResult_%d_%d_%d_%d.csv", ss.str().c_str(), method[i], k, j, Gene);
+				if (!GetContents(fname, input)) {
+					std::cout << "ファイルが開けません :" << fname << std::endl;
+				}
+				std::cout << fname << "...open" << std::endl;
+				for (int l = 0; l < Gene / Per + 1; l++) {
+					max_vec[l][k] = *max_element(input[l].begin(), input[l].end());
+					min_vec[l][k] = *min_element(input[l].begin(), input[l].end());
+					ave_vec[l][k] = std::accumulate(input[l].begin(), input[l].end(), 0.0) / KO;
+				}
+			}
+			//show_vec_2(ave_vec);
+			for (int k = 0; k < Gene / Per + 1; k++) {
+				//平均
+				gene_opp_csv[k + 1][j + 1] = std::to_string(std::accumulate(ave_vec[k].begin(), ave_vec[k].end(), 0.0) / TRIAL);
+				//最大
+				gene_opp_csv[k + (Gene / Per + 3)][j + 1] = std::to_string(std::accumulate(max_vec[k].begin(), max_vec[k].end(), 0.0) / TRIAL);
+				//最小
+				gene_opp_csv[k + (Gene / Per + 3) * 2 - 1][j + 1] = std::to_string(std::accumulate(min_vec[k].begin(), min_vec[k].end(), 0.0) / TRIAL);
+			}
+			//show_vec_2(gene_opp_csv);
+			std::cout << "enemy : " << j << "...done" << std::endl;
+		}
+		char fname[50];
+		sprintf_s(fname, "%s/totalResult_%d_%d.csv", ss.str().c_str(), method[i], Gene);
+		csv_fwrite2(fname, gene_opp_csv);
+		std::cout << fname << "...written" << std::endl;
 	}
 }
 void csvmodules_exp::Create_Data(std::vector<int> &me, int n, int trial, int gene, int per) {

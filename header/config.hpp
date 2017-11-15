@@ -18,9 +18,10 @@
 #define TRIAL	10	/*ニッチの集団数*/
 #define KL1		2	/*ニッチの集団数*/
 
-#define F_TRIAL	10	/*ニッチの集団数*/
+#define F_TRIAL	5	/*ニッチの集団数*/
 #define FLORET	5	/*ニッチの集団数*/
 #define F_KU	300	/*ニッチの集団数*/
+#define ENEMY	5
 
 double w1_inout[I1][J1];
 double w2_inout[I2][J2];
@@ -161,29 +162,6 @@ struct playerTK_ex : public playerTK {
 	std::vector<int> Result_int;
 };
 
-//ニムで使うプレイヤーのクラス
-class playerNim : public p_data {
-public:
-	void Init();
-	void Init_stra();
-protected:
-	//戦略
-	std::vector<int> stra;
-};
-void playerNim::Init() {
-	win = 0;
-	eval = 0;
-	nitch = 0;
-	Result.clear();
-	List1.clear();
-	List2.clear();
-	List3.clear();
-}
-void playerNim::Init_stra() {
-	std::vector<int> nim;
-	get_nim(nim);
-	stra
-}
 /* 子個体の評価値 */
 void FitnessChild(playerTK &child, std::vector<playerTK> &oppoment, bool s2)
 {
@@ -316,26 +294,31 @@ int Choice_Best_Index(std::vector<playerTK> &Child, bool random = true) {
 
 	int index = 0;
 	auto max = max_element(Tmp_Eval.begin(), Tmp_Eval.end());
-	//同じ評価地の個体が複数ある場合はランダム
-	int count_Num = int(count(Tmp_Eval.begin(), Tmp_Eval.end(), *max));
-	//cout << "count_Num:" << count_Num << endl;
-	if (random) {
-		if (count_Num == 1) {
-			//インデックスを取得
-			index = int(distance(Tmp_Eval.begin(), max));
-		}
-		else if (1 < count_Num) {
-			std::vector<int> Tmp_Max_Index(count_Num);
-			Tmp_Max_Index[0] = int(distance(Tmp_Eval.begin(), max));
-			for (int j = 1; j < count_Num; j++) {
-				auto Index_Iterator = find(Tmp_Eval.begin() + Tmp_Max_Index[j - 1] + 1, Tmp_Eval.end(), *max);
-				Tmp_Max_Index[j] = int(distance(Tmp_Eval.begin(), Index_Iterator));
+	if (Tmp_Eval[0] < *max) {
+		//同じ評価地の個体が複数ある場合はランダム
+		int count_Num = int(count(Tmp_Eval.begin(), Tmp_Eval.end(), *max));
+		//cout << "count_Num:" << count_Num << endl;
+		if (random) {
+			if (count_Num == 1) {
+				//インデックスを取得
+				index = int(distance(Tmp_Eval.begin(), max));
 			}
-			index = int(Tmp_Max_Index[GetRand_Int(count_Num)]);
+			else if (1 < count_Num) {
+				std::vector<int> Tmp_Max_Index(count_Num);
+				Tmp_Max_Index[0] = int(distance(Tmp_Eval.begin(), max));
+				for (int j = 1; j < count_Num; j++) {
+					auto Index_Iterator = find(Tmp_Eval.begin() + Tmp_Max_Index[j - 1] + 1, Tmp_Eval.end(), *max);
+					Tmp_Max_Index[j] = int(distance(Tmp_Eval.begin(), Index_Iterator));
+				}
+				index = int(Tmp_Max_Index[GetRand_Int(count_Num)]);
+			}
+		}
+		else {
+			index = int(distance(Tmp_Eval.begin(), max));
 		}
 	}
 	else {
-		index = int(distance(Tmp_Eval.begin(), max));
+		index = 0;
 	}
 	return index;
 }

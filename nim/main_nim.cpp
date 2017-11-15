@@ -124,10 +124,8 @@ int main(int argc, char *argv[])
 	}
 	//csvìùçá
 	else if (mode == 3) {
-		/*
-		CsvModules_Intend Method;
-		Method.Create_Data(method, KO, Main_Trial, KU, PER);
-		*/
+		csvmodules_exp Method;
+		Method.integration(method_vec, KU, PER);
 	}
 	//ÉeÉXÉg
 	else if (mode == 4) {

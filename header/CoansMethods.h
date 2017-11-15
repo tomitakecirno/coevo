@@ -165,7 +165,7 @@ void Coans::Coans_Tasks(int Trial)
 			Pop[MainParent] = Child[Index];
 
 			//ŽÀŒ±—p
-			if (Gene_Loop % PER == 0) {
+			if (Gene_Loop % Per == 0) {
 				std::cout << "10" << ',';
 				//100¢‘ã–ˆ‚Éí—ª‚ð‹L˜^
 				csv_exp.Stra_Output_Pop(Pop, Gene_Loop / Per);

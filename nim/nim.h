@@ -108,6 +108,7 @@ bool nim::update_mont(int index) {
 		return false;
 	}
 }
+//バグあり
 int nim::cal_index(const int a, const int b, const int c) {
 	int tmp_index = a * ((POLL2 + 1) * (POLL3 + 1)) + b * (POLL1 + 1) + c * 1;
 	return tmp_index;
@@ -185,6 +186,7 @@ void nim::cal_optimal()
 	}
 //	show_vec_1(opt);
 }
+//バグあり
 void nim::cal_move_vec()
 {
 	int index;
@@ -280,6 +282,10 @@ int nim::choose_stra(std::vector<int> &stra) {
 			stra[index] = 1;
 		}
 		//show_vec_1(stra);
+	}
+	if (215 < index) {
+		std::cout << "indexが大きすぎます" << std::endl;
+		exit(EXIT_FAILURE);
 	}
 	return index;
 }

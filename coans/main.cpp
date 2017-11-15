@@ -111,9 +111,11 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	else if (Main_Mode == 1) {
 		Match m("AI", Main_Method, 0, Main_KO, KOT, Main_KU, Main_PER, Main_K);
 		Make_CSV_Directory(Main_Method);
-		if (!m.output_ni_csv(Main_Trial)) {
-			std::cout << "error : output_ni_csv" << std::endl;
-			exit(0);
+		if (Main_Method == 2) {
+			if (!m.output_ni_csv(Main_Trial)) {
+				std::cout << "error : output_ni_csv" << std::endl;
+				exit(0);
+			}
 		}
 		for (int Opp_t = 0; Opp_t < 5; Opp_t++) {
 			//現手法vsFloreano 世代数:2000(100世代間隔) 現手法集団50 Floreano集団30
@@ -155,7 +157,7 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 	//csv統合
 	else if (Main_Mode == 3) {
 		CsvModules_Intend Method;
-		Method.Create_Data(method, KO, Main_Trial, KU, PER);
+		Method.integration(method, Main_KU, Main_PER);
 	}
 	//テスト
 	else if (Main_Mode == 4) {

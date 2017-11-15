@@ -5,8 +5,8 @@
 #define KOT		30		//敵
 #define PARENT	40		//親
 #define CHILD	200		//子
-#define KU		10	//世代数
-#define PER		1		//
+#define KU		10000	//世代数
+#define PER		1000		//
 
 #define K_List1	50	/*ニッチの集団数*/
 #define K_List2	2	/*ニッチの集団数*/
@@ -32,3 +32,7 @@
 #define MUTATION	0.009
 
 #define STRA_LEN	6*6*6
+
+#define TRIAL		10
+
+#define ENEMY		5
