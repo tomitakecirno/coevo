@@ -268,7 +268,7 @@ int nim::choose_stra(std::vector<int> &stra) {
 			tmp_index[0] = int(std::distance(tmp_stra.begin(), result_t));
 
 			for (int j = 1; j < count; j++) {
-				result_t = std::find(result_t+1, tmp_stra.end(), 1);
+				result_t = std::find(result_t, tmp_stra.end(), 1);
 				tmp_index[j] = int(std::distance(tmp_stra.begin(), result_t));
 			}
 			index = tmp_index[ GetRand_Int(count) ];
@@ -285,7 +285,7 @@ int nim::choose_stra(std::vector<int> &stra) {
 		tmp_index[0] = int(std::distance(tmp_stra.begin(), result_t));
 
 		for (int i = 1; i < tmp_count; i++) {
-			result_t = std::find(result_t+1, tmp_stra.end(), 1);
+			result_t = std::find(result_t, tmp_stra.end(), 1);
 			tmp_index[i] = int(std::distance(tmp_stra.begin(), result_t));
 		}
 		index = tmp_index[ GetRand_Int(tmp_count) ];

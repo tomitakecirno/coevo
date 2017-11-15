@@ -266,7 +266,7 @@ void Coans::Crustering2() {
 	cr_num = cru_k;
 	*/
 }
-int Coans::Choice_Best_Index() 
+int Coans::Choice_Best_Index()
 {
 	std::vector<double> tmp_eval(CHILD);
 
@@ -277,28 +277,23 @@ int Coans::Choice_Best_Index()
 
 	int index = 0;
 	auto max = max_element(tmp_eval.begin(), tmp_eval.end());
-	if (tmp_eval[0] < *max) {
-		//同じ評価地の個体が複数ある場合はランダム
-		int count = int(std::count(tmp_eval.begin(), tmp_eval.end(), *max));
-		//cout << "count_Num:" << count_Num << endl;
-		if (count) {
-			if (count == 1) {
-				//インデックスを取得
-				index = int(std::distance(tmp_eval.begin(), max));
-			}
-			else if (1 < count) {
-				int rand = GetRand_Int(count);
-				auto itrater = tmp_eval.begin();
-
-				for (int j = 0; j < rand + 1; j++) {
-					itrater = std::find(itrater, tmp_eval.end(), *max);
-				}
-				index = int(std::distance(tmp_eval.begin(), itrater));
-			}
+	//同じ評価地の個体が複数ある場合はランダム
+	int count = int(std::count(tmp_eval.begin(), tmp_eval.end(), *max));
+	//cout << "count_Num:" << count_Num << endl;
+	if (count) {
+		if (count == 1) {
+			//インデックスを取得
+			index = int(std::distance(tmp_eval.begin(), max));
 		}
-	}
-	else {
-		index = 0;
+		else if (1 < count) {
+			int rand = GetRand_Int(count);
+			auto itrater = tmp_eval.begin();
+
+			for (int j = 0; j < rand + 1; j++) {
+				itrater = std::find(itrater, tmp_eval.end(), *max);
+			}
+			index = int(std::distance(tmp_eval.begin(), itrater));
+		}
 	}
 	return index;
 }
