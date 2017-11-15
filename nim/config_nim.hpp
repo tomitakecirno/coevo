@@ -1,10 +1,10 @@
 #pragma once
 /* #define NDEBUG */
 
-#define KO		300		//集団
+#define KO		100		//集団
 #define KOT		30		//敵
-#define PARENT	40		//親
-#define CHILD	200		//子
+#define PARENT	12		//親
+#define CHILD	60		//子
 #define KU		10000	//世代数
 #define PER		1000		//
 
@@ -18,9 +18,9 @@
 #define F_KU	500	/*ニッチの集団数*/
 
 #define NIM			3	//ニムの山の数
-#define POLL1		5	//山1
-#define POLL2		5	//山2
-#define POLL3		5	//山3
+#define POLL1		2	//山1
+#define POLL2		2	//山2
+#define POLL3		2	//山3
 
 #define WIN_FIRST	0.8	//先手で勝った場合
 #define WIN_LAST	1.2	//後手で勝った場合
@@ -31,7 +31,7 @@
 
 #define MUTATION	0.009
 
-#define STRA_LEN	6*6*6
+#define STRA_LEN	(POLL1+1)*(POLL2+1)*(POLL3+1)
 
 #define TRIAL		10
 

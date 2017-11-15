@@ -87,7 +87,7 @@ void nim::Init_mont() {
 	*/
 }
 bool nim::update_mont(int index) {
-	if (stra_len <= index) {
+	if (stra_len < index) {
 		std::cout << "indexが大きすぎます : " << index << std::endl;
 		exit(EXIT_FAILURE);
 	}
@@ -110,7 +110,11 @@ bool nim::update_mont(int index) {
 }
 //バグあり
 int nim::cal_index(const int a, const int b, const int c) {
-	int tmp_index = a * ((POLL2 + 1) * (POLL3 + 1)) + b * (POLL1 + 1) + c * 1;
+	if (POLL1 < a || POLL2 < b || POLL3 < c) {
+		std::cout << "パラメーターが大きすぎます :" << a << "," << b << "," << c << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	int tmp_index = a * ((POLL2 + 1) * (POLL3 + 1)) + b * (POLL3 + 1) + c * 1;
 	return tmp_index;
 }
 void nim::cal_binary_vec(const int n, std::vector<int> &input) 
@@ -243,7 +247,12 @@ int nim::choose_stra(std::vector<int> &stra) {
 		}
 	}
 	const int count = int(std::count(tmp_stra.begin(), tmp_stra.end(), 1));
-	if (count) {
+	/*
+	std::cout << "nim_status_vec :";
+	show_vec_1(nim_status_vec);
+	std::cout << "count :" << count << std::endl;
+	*/
+	if (count > 0) {
 		//1個の場合
 		if (count == 1) 
 		{
@@ -254,10 +263,12 @@ int nim::choose_stra(std::vector<int> &stra) {
 		else if (1 < count)
 		{
 			std::vector<int> tmp_index(count);
-			auto result_t = tmp_stra.begin();
 
-			for (int j = 0; j < count; j++) {
-				result_t = std::find(result_t, tmp_stra.end(), 1);
+			auto result_t = std::find(tmp_stra.begin(), tmp_stra.end(), 1);
+			tmp_index[0] = int(std::distance(tmp_stra.begin(), result_t));
+
+			for (int j = 1; j < count; j++) {
+				result_t = std::find(result_t+1, tmp_stra.end(), 1);
 				tmp_index[j] = int(std::distance(tmp_stra.begin(), result_t));
 			}
 			index = tmp_index[ GetRand_Int(count) ];
@@ -269,10 +280,12 @@ int nim::choose_stra(std::vector<int> &stra) {
 		const int tmp_count = int(std::count(tmp_stra.begin(), tmp_stra.end(), 1));
 
 		std::vector<int> tmp_index(tmp_count);
-		auto result_t = tmp_stra.begin();
 
-		for (int i = 0; i < tmp_count; i++) {
-			result_t = std::find(result_t, tmp_stra.end(), 1);
+		auto result_t = std::find(tmp_stra.begin(), tmp_stra.end(), 1);
+		tmp_index[0] = int(std::distance(tmp_stra.begin(), result_t));
+
+		for (int i = 1; i < tmp_count; i++) {
+			result_t = std::find(result_t+1, tmp_stra.end(), 1);
 			tmp_index[i] = int(std::distance(tmp_stra.begin(), result_t));
 		}
 		index = tmp_index[ GetRand_Int(tmp_count) ];
@@ -283,8 +296,16 @@ int nim::choose_stra(std::vector<int> &stra) {
 		}
 		//show_vec_1(stra);
 	}
-	if (215 < index) {
+	if (stra_len < index) {
 		std::cout << "indexが大きすぎます" << std::endl;
+		std::cout << "count : " << count << std::endl;
+		std::cout << "index : " << index << std::endl;
+		std::cout << "stra : ";
+		show_vec_1(stra);
+		std::cout << std::endl;
+		std::cout << "tmp_stra : ";
+		show_vec_1(tmp_stra);
+		std::cout << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	return index;

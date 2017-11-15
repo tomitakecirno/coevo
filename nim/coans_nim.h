@@ -16,6 +16,8 @@ CoansMode4	前手法：前評価方法
 #include "nim.h"
 #include "../header/Usual_Methods.hpp"
 
+#define TIME_PER 100
+
 /*手法のクラス*/
 class Coans{
 //公開メンバ
@@ -89,14 +91,16 @@ void Coans::main_task()
 	machup = 0;
 	//任意の世代数ループ
 	//Crustering();
-
+	int Loop_Time_Start, Loop_Time_End, Loop_Time;
 	std::cout << "Initiarized..." << std::endl;
 	output_stra(0);
 	std::cout << "Strategy0..." << std::endl;
 	for (int Gene_Loop = 1; Gene_Loop < gene + 1; Gene_Loop++) {
-		const int Loop_Time_Start = clock();
-		std::cout << method << ":" << trial << ":" << ":" << Gene_Loop;
-		std::cout << "  |  ";
+		if (Gene_Loop % TIME_PER == 0) {
+			Loop_Time_Start = clock();
+			std::cout << method << ":" << trial << ":" << Gene_Loop;
+			std::cout << "  |  ";
+		}
 		//std::cout << "1" << ',';
 		Crustering(); //クラスタリング。手法によって変わる
 
@@ -183,21 +187,22 @@ void Coans::main_task()
 				output_stra(Gene_Loop / per);
 			}
 			//std::cout << "8";
-			std::cout << "  [";
-			/*
-			for (int c = 0; c < CHILD + 1; c++) {
-				std::cout << child[c].eval << ",";
-			}
-			std::cout << "]" << std::endl;
-			*/
 			//集団の解以外初期化
 			for (int i = 0; i < KO; i++) {
 				pop[i].Init_pn();
 			}
 		}
-		const int Loop_Time_End = clock();
-		const int Loop_Time = (Loop_Time_End - Loop_Time_Start) / CLOCKS_PER_SEC;
-		std::cout << "Time per gene : " << Loop_Time << " [sec]" << std::endl;
+		if (Gene_Loop % TIME_PER == 0) {
+			std::cout << std::endl;
+			std::cout << "  [";
+			for (int c = 0; c < CHILD + 1; c++) {
+				std::cout << child[c].eval << ",";
+			}
+			std::cout << "]" << std::endl;
+			Loop_Time_End = clock();
+			Loop_Time = (Loop_Time_End - Loop_Time_Start);
+			std::cout << "   Time per gene : " << Loop_Time << " [sec]" << std::endl;	
+		}
 	}
 	if (method == 2) {
 		output_cr_pop();
@@ -272,23 +277,28 @@ int Coans::Choice_Best_Index()
 
 	int index = 0;
 	auto max = max_element(tmp_eval.begin(), tmp_eval.end());
-	//同じ評価地の個体が複数ある場合はランダム
-	int count = int(std::count(tmp_eval.begin(), tmp_eval.end(), *max));
-	//cout << "count_Num:" << count_Num << endl;
-	if (count) {
-		if (count == 1) {
-			//インデックスを取得
-			index = int(std::distance(tmp_eval.begin(), max));
-		}
-		else if (1 < count) {
-			int rand = GetRand_Int(count);
-			auto itrater = tmp_eval.begin();
-
-			for (int j = 0; j < rand + 1; j++) {
-				itrater = std::find(itrater, tmp_eval.end(), *max);				
+	if (tmp_eval[0] < *max) {
+		//同じ評価地の個体が複数ある場合はランダム
+		int count = int(std::count(tmp_eval.begin(), tmp_eval.end(), *max));
+		//cout << "count_Num:" << count_Num << endl;
+		if (count) {
+			if (count == 1) {
+				//インデックスを取得
+				index = int(std::distance(tmp_eval.begin(), max));
 			}
-			index = int(std::distance(tmp_eval.begin(), itrater));
+			else if (1 < count) {
+				int rand = GetRand_Int(count);
+				auto itrater = tmp_eval.begin();
+
+				for (int j = 0; j < rand + 1; j++) {
+					itrater = std::find(itrater, tmp_eval.end(), *max);
+				}
+				index = int(std::distance(tmp_eval.begin(), itrater));
+			}
 		}
+	}
+	else {
+		index = 0;
 	}
 	return index;
 }

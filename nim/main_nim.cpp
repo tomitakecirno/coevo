@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 		argv[4]:trial
 		argv[5]:nitch parameter
 	*/
-	//mode = 0;
+	//mode = 2;
 	mode = atoi(__argv[1]);
 	if (mode == 1 || mode == 2 || mode == 4) {
 		switch (__argc) {
@@ -62,11 +62,13 @@ int main(int argc, char *argv[])
 			ku = atoi(__argv[3]);
 			trial = atoi(__argv[4]);
 			break;
+/*
 		default:
 			cout << "パラメーターが足りません" << endl;
 			cout << "coans.exe [mode][method][generation][trial]" << endl;
 			exit(1);
 			break;
+			*/
 		}
 		per = ku / 10;
 		if (mode == 1) {
@@ -141,6 +143,8 @@ int main(int argc, char *argv[])
 		*/
 	}
 	else if (mode == 5) {
+		nim nim;
+		nim.nim_game();
 	}
 
 	const clock_t End_Main = clock();

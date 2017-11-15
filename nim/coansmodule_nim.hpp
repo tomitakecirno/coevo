@@ -240,7 +240,12 @@ void mutation(std::vector<int> &stra)
 	for (int i = 0; i < STRA_LEN; i++) {
 		const int rand = GetRand_Int(1000);
 		if (1 < MUTATION*rand) {
-			stra[i] = ~stra[i];
+			if (stra[i] == 0) {
+				stra[i] = 1;
+			}
+			else {
+				stra[i] = 0;
+			}
 		}
 	}
 }
