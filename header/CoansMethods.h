@@ -44,12 +44,15 @@ protected:
 	int Opp_Num;
 	int	Cru_K;							//クラスタリングパラメーター
 	int MainParent;						//主親
+	int trial;
 
 	int Machup_Num;						//対戦回数
 	std::string Dir;
 	std::vector<playerTK> Pop;			//進化させる集団
 	std::vector<playerTK> Child;
 	std::vector<playerTK> Opponent;		//対戦相手
+
+	void Output_stra(const int index);
 };
 void Coans::Coans_Tasks(int Trial)
 {
@@ -62,7 +65,7 @@ void Coans::Coans_Tasks(int Trial)
 	std::cout << "集団個体数:" << Pop_n << std::endl;
 	std::cout << "子個体数:" << Pare << std::endl;
 	std::cout << "親個体数:" << child << std::endl;
-
+	trial = Trial;
 	//集団宣言
 	Pop.resize(Pop_n);
 	init_genrand((unsigned)time(NULL)); /*乱数初期化*/
@@ -73,7 +76,6 @@ void Coans::Coans_Tasks(int Trial)
 		Pop[i].Init_w();
 	}
 	Make_Directory(Dir, Method_Num, Trial, Gene, Per, Cru_K);
-	Csv_exp csv_exp(Dir, Method_Num, Trial, Gene, Per, Pare, child);
 
 	//初期世代の戦略を記録
 	Machup_Num = 0;
@@ -84,7 +86,7 @@ void Coans::Coans_Tasks(int Trial)
 	//Crustering();
 
 	std::cout << "Initiarized..." << std::endl;
-	csv_exp.Stra_Output_Pop(Pop, 0);
+	Output_stra(0);
 	std::cout << "Strategy0..." << std::endl;
 
 	for (int Gene_Loop = 1; Gene_Loop < Gene+1; Gene_Loop++) {
@@ -93,18 +95,6 @@ void Coans::Coans_Tasks(int Trial)
 		std::cout << "  |  ";
 		std::cout << "1" << ',';
 		Crustering(); //クラスタリング。手法によって変わる
-		//実験用
-		if (Gene_Loop == 1) {
-			if (Method_Num == 2) {
-				csv_exp.SetVec_Cr_Pop(Pop, 0);
-			}
-		}
-		if (Gene_Loop % Per == 0) {
-			std::cout << "9" << ',';
-			if (Method_Num == 2) {
-				csv_exp.SetVec_Cr_Pop(Pop, Gene_Loop / Per);
-			}
-		}
 		int tmpIndex;
 		int tmpSub;
 		std::vector<int> SubParent;
@@ -168,7 +158,7 @@ void Coans::Coans_Tasks(int Trial)
 			if (Gene_Loop % Per == 0) {
 				std::cout << "10" << ',';
 				//100世代毎に戦略を記録
-				csv_exp.Stra_Output_Pop(Pop, Gene_Loop / Per);
+				Output_stra(Gene_Loop / Per);
 			}
 			std::cout << "8";
 			std::cout << "  [";
@@ -185,14 +175,25 @@ void Coans::Coans_Tasks(int Trial)
 		Loop_Time = (Loop_Time_End - Loop_Time_Start) / CLOCKS_PER_SEC;
 		std::cout << "Time per gene : " << Loop_Time << " [sec]" << std::endl;
 	}
-	if (Method_Num == 2) {
-		csv_exp.fwrite_Cr_P();
-	}
 }
 int Coans::Get_MatchUp_Num() {
 	return Machup_Num;
 }
+void Coans::Output_stra(const int index) {
+
+	char tmp_fname[50];
+	sprintf(tmp_fname, "./%s/%d/%d/%d/", Dir.c_str(), Method_Num, trial, index);
+
+	std::stringstream fname;
+	for (int i = 0; i < KO; i++) {
+		fname << tmp_fname << i << ".dat";
+		Pop[i].output_stra(fname.str());
+		fname.str("");
+		fname.clear(std::stringstream::goodbit);
+	}
+}
 void Coans::Stra_nitch_CSV(int Trial) {
+	/*
 	std::cout << "モード:" << 4 << std::endl;
 	std::cout << "手法:" << Method_Num << std::endl;
 	std::cout << "試行回数:" << Trial << std::endl;
@@ -235,6 +236,7 @@ void Coans::Stra_nitch_CSV(int Trial) {
 		csv_exp.SetVec_Cr_Pop(Pop, g);
 	}
 	csv_exp.fwrite_Cr_P();
+	*/
 }
 
 /*
@@ -337,8 +339,8 @@ void CoansMode2::Generate_Opp() {
 	Opp_Num = Cr_Num;
 }
 void CoansMode2::Return_Re(int Child_Num, int Opp_Num) {
-	Opponent[Opp_Num].Result[Child_Num] = player2.hp - player1.hp;
-	Child[Child_Num].Result[Opp_Num] = player1.hp - player2.hp;
+	Opponent[Opp_Num].Result[Child_Num] = (player2.hp - player1.hp) / 300;
+	Child[Child_Num].Result[Opp_Num] = (player1.hp - player2.hp) / 300;
 }
 void CoansMode2::Cal_Fitness() {
 	int Length = int(Child.size());
@@ -387,8 +389,8 @@ void CoansMode3::Generate_Opp() {
 	Opponent = Pop;
 }
 void CoansMode3::Return_Re(int Child_Num, int Opp_Num) {
-	Opponent[Opp_Num].Result[Child_Num] = player2.hp - player1.hp;
-	Child[Child_Num].Result[Opp_Num] = player1.hp - player2.hp;
+	Opponent[Opp_Num].Result[Child_Num] = (player2.hp - player1.hp) / 300;
+	Child[Child_Num].Result[Opp_Num] = (player1.hp - player2.hp) / 300;
 }
 void CoansMode3::Cal_Fitness() {
 	int Length = int(Child.size());
@@ -455,6 +457,7 @@ void CoansMode4::Cal_Fitness() {
 /*
 	卒論手法のクラス
 */
+/*
 class Coans_GT2016 {
 //公開メンバ
 public:
@@ -504,7 +507,7 @@ void  Coans_GT2016::Coans_GT2016_Tasks(int Trial)
 	//集団宣言
 	Pop.resize(Pop_n);
 	Opponent.resize(Pop_n);
-	init_genrand((unsigned)time(NULL)); /*乱数初期化*/
+	init_genrand((unsigned)time(NULL));
 
 										//集団初期化
 	for (int i = 0; i < Pop_n; i++) {
@@ -670,14 +673,11 @@ int	  Coans_GT2016::Get_MatchUp_Num() {
 }
 void  Coans_GT2016::Update_Opponent(playerTK child)
 {
-	/*いらない相手を残すと有害。勝ち数で残す個体判断しているので、余計な勝ち数がカウントされる。*/
-	/*距離が最小のニッチの重心を見つけて、ニッチ番号を取得*/
 	int Nit_Count = 0;
 	int Nit_Num = Cal_Gra_Nitch(child);
 	//一番近いクラスタの番号を入れる
 	child.nitch = Nit_Num;
 
-	/*戦闘データ初期化*/
 	for (int i = 0; i<KO; i++) {
 		if (Opponent[i].nitch == Nit_Num) {
 			Opponent[i].eval = 0;
@@ -699,7 +699,6 @@ void  Coans_GT2016::Update_Opponent(playerTK child)
 	child.flag = 0;
 	Oppc[0] = child;
 
-	/*該当するニッチの個体と子個体でリーグ戦*/
 	int Oppc_size = int(Oppc.size());
 	for (int i = 0; i < Oppc_size; i++) {
 		//自クラスタ内の個体と対戦
@@ -713,18 +712,16 @@ void  Coans_GT2016::Update_Opponent(playerTK child)
 			Machup_Num++;
 		}
 		//子個体と対戦
-		Opponent[i].flag = 1; 		/*フラグ立て*/
-		Opponent[i].comp_flag = 1; 	/*生存競争したフラグ*/
+		Opponent[i].flag = 1; 
+		Opponent[i].comp_flag = 1;
 	}
 	for (int i = 0; i < Oppc_size; i++) {
 		Oppc_Eval[i] = std::accumulate(Oppc[i].Result.begin(), Oppc[i].Result.end(), 0.0);
 	}
 
-	/*評価値の最小個体を求める*/
 	auto min = min_element(Oppc_Eval.begin(), Oppc_Eval.end());
 	int min_index = int(distance(Oppc_Eval.begin(), min));
 
-	/*削除予定の個体の枠へ子個体を入れる、または相手集団の中で子個体より弱い相手のところに入れる*/
 	int j;
 	for (int i = 0; i < Oppc_size; i++) {
 		if (min_index != i) {
@@ -734,7 +731,7 @@ void  Coans_GT2016::Update_Opponent(playerTK child)
 			Opponent[j].delete_flag = 0;
 		}
 	}
-	/*対戦データおよびニッチ番号初期化*/
+	
 	for (int i = 0; i < KO; i++) {
 		Opponent[i].flag = 0;
 		Opponent[i].eval = 0;
@@ -837,3 +834,4 @@ int   Coans_GT2016::Cal_Gra_Nitch(playerTK child)
 	auto min_Nit = int(distance(Dis_Vector.begin(), min));
 	return min_Nit;
 }
+*/

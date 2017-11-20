@@ -10,7 +10,7 @@
 
 class nim {
 public:
-	nim()
+	nim(int m)
 	{
 		nim_n = NIM;
 		nim_status.resize(NIM);
@@ -22,13 +22,17 @@ public:
 		mont_max = *max_element(nim_status.begin(), nim_status.end());
 		mont_size = mont_max;
 		cal_optimal();
+
+		mode = m;
 	}
-	int nim_game();
+	double nim_game(const int turn);
 	void input_stra_first(const std::vector<int> &pop);
 	void input_stra_last(const std::vector<int> &opp);
 	void output_stra_first(std::vector<int> &pop);
 	void output_stra_last(std::vector<int> &pop);
+	void cal_and(const std::vector<int> &binary1, const std::vector<int> &binary2, std::vector<int> &binary3);
 protected:
+	int mode;
 	int nim_n;	//山の数
 	int stra_len;
 	int mont_max;
@@ -51,8 +55,8 @@ protected:
 	int choose_stra(std::vector<int> &stra);
 	void show_mont();
 };
-
-int nim::nim_game()
+//0:プレイヤー先手，1:プレイヤー後手
+double nim::nim_game(const int turn)
 {
 	Init_mont(); //山の初期化
 	//show_mont();
@@ -60,14 +64,46 @@ int nim::nim_game()
 	while (1)
 	{
 		stra_index = choose_stra(pop_stra);
-		//std::cout << "stra_index = " << stra_index << std::endl;
-		if (!update_mont(stra_index)) {
-			return 1; //こちらが勝てば１を返す
+		if (stra_index < 0) {
+			if (turn == 0) {
+				return -1;
+			}
+			else {
+				return 0;
+			}
 		}
+		else {
+			//std::cout << "stra_index = " << stra_index << std::endl;
+			if (!update_mont(stra_index)) {
+				if (turn == 0) {
+					return 1;
+				}
+				else {
+					return 0;
+				}
+			}
+		}
+
 		stra_index = choose_stra(opp_stra);
-		//std::cout << "stra_index = " << stra_index << std::endl;
-		if (!update_mont(stra_index)) {
-			return 0; //相手が勝てば０を返す
+		if (stra_index < 0) {
+			if (turn == 0) {
+				return 0;
+			}
+			else {
+				return -1;
+			}
+		}
+		else {
+			//std::cout << "stra_index = " << stra_index << std::endl;
+			if (!update_mont(stra_index)) {
+				if (turn == 0) {
+					//先手の場合
+					return 0;
+				}
+				else {
+					return 1;
+				}
+			}
 		}
 	}
 }
@@ -77,18 +113,10 @@ void nim::Init_mont() {
 	nim_status[2] = POLL3;
 	nim_status_vec.assign(stra_len, 0);
 	cal_move_vec();
-
-	/*
-	std::cout << "Init" << std::endl;
-	std::cout << "nim_status = ";
-	show_vec_1(nim_status);
-	std::cout << "nim_status_vec = ";
-	show_vec_1(nim_status_vec);
-	*/
 }
 bool nim::update_mont(int index) {
 	if (stra_len < index) {
-		std::cout << "indexが大きすぎます : " << index << std::endl;
+		std::cout << "indexが大きすぎます->update_mont : " << index << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
@@ -108,13 +136,19 @@ bool nim::update_mont(int index) {
 		return false;
 	}
 }
-//バグあり
 int nim::cal_index(const int a, const int b, const int c) {
 	if (POLL1 < a || POLL2 < b || POLL3 < c) {
-		std::cout << "パラメーターが大きすぎます :" << a << "," << b << "," << c << std::endl;
+		std::cout << "パラメーターが大きすぎます->cal_index :" << a << "," << b << "," << c << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	int tmp_index = a * ((POLL2 + 1) * (POLL3 + 1)) + b * (POLL3 + 1) + c * 1;
+	if (stra_len < tmp_index) {
+		std::cout << "tmp_indexが大きすぎます ->cal_move_vec" << std::endl;
+		std::cout << "tmp_index:" << tmp_index << std::endl;
+		std::cout << "nim_status:";
+		show_vec_1(nim_status);
+		exit(EXIT_FAILURE);
+	}
 	return tmp_index;
 }
 void nim::cal_binary_vec(const int n, std::vector<int> &input) 
@@ -190,7 +224,6 @@ void nim::cal_optimal()
 	}
 //	show_vec_1(opt);
 }
-//バグあり
 void nim::cal_move_vec()
 {
 	int index;
@@ -214,6 +247,22 @@ void nim::cal_move_vec()
 	index = cal_index(nim_status[0], nim_status[1], nim_status[2]);
 	nim_status_vec[index] = 2;
 	//show_vec_1(nim_status_vec);
+}
+void nim::cal_and(const std::vector<int> &binary1, const std::vector<int> &binary2, std::vector<int> &binary3) 
+{
+	int bina = 0;
+	for (int i = 0; i < STRA_LEN; i++)
+	{
+		const int sum = binary1[i] + binary2[i];
+		binary3[i] = (sum + bina) % 2;
+		if (sum == 2) {
+			bina = 1;
+		}
+		else {
+			bina = 0;
+		}
+		
+	}
 }
 void nim::generate_mont(int a, int b, int c, std::vector<std::vector<int>> &mont) 
 {
@@ -247,11 +296,6 @@ int nim::choose_stra(std::vector<int> &stra) {
 		}
 	}
 	const int count = int(std::count(tmp_stra.begin(), tmp_stra.end(), 1));
-	/*
-	std::cout << "nim_status_vec :";
-	show_vec_1(nim_status_vec);
-	std::cout << "count :" << count << std::endl;
-	*/
 	if (count > 0) {
 		//1個の場合
 		if (count == 1) 
@@ -271,42 +315,36 @@ int nim::choose_stra(std::vector<int> &stra) {
 				result_t = std::find(result_t, tmp_stra.end(), 1);
 				tmp_index[j] = int(std::distance(tmp_stra.begin(), result_t));
 			}
-			index = tmp_index[ GetRand_Int(count) ];
+			const int tmp_rand = GetRand_Int(count);
+			index = tmp_index[tmp_rand];
 		}
 	}
-	//1個もない場合は，合法手をランダムに選ぶ．その際，ランダムに選んだ手を自分の戦略に加える.
+	//リペアオペレーター
 	else {
-		tmp_stra = nim_status_vec;
-		const int tmp_count = int(std::count(tmp_stra.begin(), tmp_stra.end(), 1));
-
-		std::vector<int> tmp_index(tmp_count);
-
-		auto result_t = std::find(tmp_stra.begin(), tmp_stra.end(), 1);
-		tmp_index[0] = int(std::distance(tmp_stra.begin(), result_t));
-
-		for (int i = 1; i < tmp_count; i++) {
-			result_t = std::find(result_t, tmp_stra.end(), 1);
-			tmp_index[i] = int(std::distance(tmp_stra.begin(), result_t));
+		if (mode == 1) {
+			return -1;
 		}
-		index = tmp_index[ GetRand_Int(tmp_count) ];
-		//std::cout << "index : " << index << std::endl;
-		//show_vec_1(stra);
-		if (stra[index] == 0) {
-			stra[index] = 1;
+		else {
+			tmp_stra = nim_status_vec;
+			const int tmp_count = int(std::count(tmp_stra.begin(), tmp_stra.end(), 1));
+
+			std::vector<int> tmp_index(tmp_count);
+
+			auto result_t = std::find(tmp_stra.begin(), tmp_stra.end(), 1);
+			tmp_index[0] = int(std::distance(tmp_stra.begin(), result_t));
+
+			for (int i = 1; i < tmp_count; i++) {
+				result_t = std::find(result_t + 1, tmp_stra.end(), 1);
+				tmp_index[i] = int(std::distance(tmp_stra.begin(), result_t));
+			}
+			index = tmp_index[GetRand_Int(tmp_count)];
+			//std::cout << "index : " << index << std::endl;
+			//show_vec_1(stra);
+			if (stra[index] == 0) {
+				stra[index] = 1;
+			}
+			//show_vec_1(stra);
 		}
-		//show_vec_1(stra);
-	}
-	if (stra_len < index) {
-		std::cout << "indexが大きすぎます" << std::endl;
-		std::cout << "count : " << count << std::endl;
-		std::cout << "index : " << index << std::endl;
-		std::cout << "stra : ";
-		show_vec_1(stra);
-		std::cout << std::endl;
-		std::cout << "tmp_stra : ";
-		show_vec_1(tmp_stra);
-		std::cout << std::endl;
-		exit(EXIT_FAILURE);
 	}
 	return index;
 }

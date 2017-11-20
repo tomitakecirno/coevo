@@ -13,7 +13,7 @@
 #include <fstream>
 #include <cassert>
 
-#define K_List1	5	/*ニッチの集団数*/
+#define K_List1	10	/*ニッチの集団数*/
 #define K_List2	2	/*ニッチの集団数*/
 #define TRIAL	10	/*ニッチの集団数*/
 #define KL1		2	/*ニッチの集団数*/
@@ -22,6 +22,8 @@
 #define FLORET	5	/*ニッチの集団数*/
 #define F_KU	300	/*ニッチの集団数*/
 #define ENEMY	5
+
+#define CSV_DIR "./csv"
 
 double w1_inout[I1][J1];
 double w2_inout[I2][J2];
@@ -79,6 +81,7 @@ public:
 	void Init();
 	void Init_0();
 	void Init_w();
+	void output_stra(std::string fname);
 };
 void playerTK::Init()
 {
@@ -156,6 +159,38 @@ void playerTK::Init_w()
 			w3_CO[i][j] = GetRand_Real(10);
 		}
 	}
+}
+void playerTK::output_stra(std::string fname) {
+	double tmp_w1[I1][J1];
+	double tmp_w2[I2][J2];
+	double tmp_w3[I2][J1];
+
+	for (int i = 0; i < I1; i++) {
+		for (int j = 0; j < J1; j++) {
+			tmp_w1[i][j] = w1_CO[i][j];
+		}
+	}
+	for (int i = 0; i < I2; i++) {
+		for (int j = 0; j < J2; j++) {
+			tmp_w2[i][j] = w2_CO[i][j];
+		}
+	}
+	for (int i = 0; i < I2; i++) {
+		for (int j = 0; j < J1; j++) {
+			tmp_w3[i][j] = w3_CO[i][j];
+		}
+	}
+
+	//ファイル書き込み
+	FILE *fp;
+	if ((fp = fopen(fname.c_str(), "wb+")) == NULL) {
+		fprintf(stderr, "%s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	fwrite(tmp_w1, sizeof(double), I1*J1, fp);
+	fwrite(tmp_w2, sizeof(double), I2*J2, fp);
+	fwrite(tmp_w3, sizeof(double), I2*J1, fp);
+	fclose(fp);
 }
 
 struct playerTK_ex : public playerTK {

@@ -6,8 +6,8 @@ Csvの入出力に関するモジュール置き場
 #include <vector>
 #include <fstream>
 #include <cstdio>
-#include "Usual_Methods.hpp"
 #include "config.hpp"
+#include "Usual_Methods.hpp"
 
 class CsvModules {
 public:
@@ -16,10 +16,9 @@ public:
 	bool GetContents(std::string filename, Vec_out &input);
 	//ファイル書き込み
 	template<class Vec_in>
-	bool csv_fwrite(std::string fname, Vec_in &vector, int per=1);
+	bool csv_fwrite(std::string fname, Vec_in &vector, int per = 1);
 	template<class Vec_in2>
-	bool csv_fwrite2(std::string fname, const Vec_in2 &input);
-
+	bool csv_fwrite2(std::string fname, const Vec_in2 &vector);
 };
 template<class Vec_out>
 bool CsvModules::GetContents(std::string filename, Vec_out &input)
@@ -49,12 +48,12 @@ bool CsvModules::GetContents(std::string filename, Vec_out &input)
 		table.push_back(record);
 	}
 	table.erase(table.end() - 1);
-	
+
 	int table_len_Y = int(table.size());
 	input.resize(table_len_Y - 1);
 	for (int i = 1; i < table_len_Y; i++) {
 		int table_len_X = int(table[i].size());
-		input[i-1].resize(table_len_X - 1);
+		input[i - 1].resize(table_len_X - 1);
 		for (int j = 1; j < table_len_X; j++) {
 			input[i - 1][j - 1] = atoi(table[i][j].c_str());
 		}
@@ -76,6 +75,7 @@ bool CsvModules::csv_fwrite(std::string fname, Vec_in &vector, int per) {
 	if (!ofs.is_open())
 	{
 		// ファイルが開けなかった場合は終了する
+		std::cout << "file open error :" << fname << std::endl;
 		return false;
 	}
 	//1段目
@@ -97,8 +97,7 @@ bool CsvModules::csv_fwrite(std::string fname, Vec_in &vector, int per) {
 	return true;
 }
 template<class Vec_in2>
-bool CsvModules::csv_fwrite2(std::string fname, const Vec_in2 &vector) 
-{
+bool CsvModules::csv_fwrite2(std::string fname, const Vec_in2 &vector) {
 	std::ofstream ofs(fname);
 	if (!ofs.is_open())
 	{
@@ -113,133 +112,16 @@ bool CsvModules::csv_fwrite2(std::string fname, const Vec_in2 &vector)
 	}
 	return true;
 }
-
 /*
-	実験用のcsv
+実験用のcsv
 */
-class Csv_exp : public CsvModules {
-public:
-	Csv_exp(std::string str, int method, int Trial, int Gene, int Per, int parent, int child, int k = 0) {
-		Dir = str;
-		Csv_Method = method;
-		Csv_Trial = Trial;
-		Csv_Gene = Gene;
-		Csv_Per = Per;
-		Csv_K = k;
-		Csv_Parent = parent;
-		Csv_Child = child;
-		Cr_P.resize(Gene / Per + 1);
-		Re_P.resize(Gene / Per + 1);
-
-		Make_CSV_Directory(method);
-		std::cout << "Csv Initialized..." << std::endl;
-	}
-	//戦略in
-	void Stra_Output_Pop(std::vector<playerTK> &Pop, int index);
-	//クラスターin
-	void SetVec_Cr_Pop(std::vector<playerTK> &Pop, int index);
-	//対戦結果
-	void SetVec_Re_Pop(std::vector<playerTK> &Pop, int index);
-	void fwrite_Cr_P();
-protected:
-	int Csv_Method;
-	int Csv_Trial;
-	int Csv_Gene;
-	int Csv_Per;
-	int Csv_K;
-	int Csv_Parent;
-	int Csv_Child;
-	std::string Dir;
-	std::vector<std::vector<int>> Cr_P;
-	std::vector<std::vector<int>> Re_P;
-};
-void Csv_exp::Stra_Output_Pop(std::vector<playerTK> &Pop, int index) {
-	int pop_size = int(Pop.size());
-
-	//bef = trueの時AI，falseの時AIC
-	FILE *fp_main;
-	std::stringstream File_Name;
-	std::stringstream Tmp_File_Name;
-
-	File_Name << "./" << Dir << "/" << Csv_Method << "/" << Csv_Trial << "/" << index;
-	//File_Name << "./" << Dir;
-	for (int i = 0; i < pop_size; i++) {
-		Tmp_File_Name << File_Name.str() << "/" << i << ".dat";
-		//ファイル書き込み
-		if ((fp_main = fopen(Tmp_File_Name.str().c_str(), "wb+")) == NULL) {
-			fprintf(stderr, "%s\n", strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-		Strategy_to_w(Pop[i]);
-		fwrite(w1_inout, sizeof(double), I1*J1, fp_main);
-		fwrite(w2_inout, sizeof(double), I2*J2, fp_main);
-		fwrite(w3_inout, sizeof(double), I2*J1, fp_main);
-
-		//クリア
-		Tmp_File_Name.str("");
-		Tmp_File_Name.clear(std::stringstream::goodbit);
-		fclose(fp_main);
-	}
-}
-void Csv_exp::SetVec_Cr_Pop(std::vector<playerTK> &Pop, int index) {
-	int pop_size = int(Pop.size());
-
-	Cr_P[index].resize(pop_size);
-	for (int i = 0; i < pop_size; i++) {
-		Cr_P[index][i] = Pop[i].nitch;
-	}
-}
-void Csv_exp::SetVec_Re_Pop(std::vector<playerTK> &Pop, int index) 
-{
-	int pop_size = int(Pop.size());
-
-	Re_P[index].resize(pop_size);
-	for (int i = 0; i < pop_size; i++) {
-		Re_P[index][i] = Pop[i].nitch;
-	}
-}
-void Csv_exp::fwrite_Cr_P() {
-	int Cr_P_size = int(Cr_P.size());
-	int Cr_P_size2 = int(Cr_P[0].size());
-	std::vector<std::vector<int>> tmp_Cr_P(Cr_P_size);
-
-	//クラスタ数でリサイズ
-	for (int i = 0; i < Cr_P_size; i++) {
-		auto max = *max_element(Cr_P[i].begin(), Cr_P[i].end());
-		tmp_Cr_P[i].assign(max + 1, 0);
-	}
-	//クラスタの個体数をカウント後，ベクターの0の要素を削除
-	for (int i = 0; i < Cr_P_size; i++) {
-		for (int j = 0; j < Cr_P_size2; j++) {
-			tmp_Cr_P[i][Cr_P[i][j]]++;
-		}
-		tmp_Cr_P[i].erase(std::remove(tmp_Cr_P[i].begin(), tmp_Cr_P[i].end(), 0), tmp_Cr_P[i].end());
-	}
-
-	//ファイル名設定
-	char fname[50];
-	char fname2[50];
-	if (Csv_K == 0) {
-		//全ての個体のクラスタ番号を記録
-		sprintf(fname, "./csv/%d/Cruster_%d_%d_%d.csv", Csv_Method, Csv_Method, Csv_Trial, Csv_Gene);
-		//クラスタ毎の個体数を記録
-		sprintf(fname2, "./csv/%d/Cruster2_%d_%d_%d.csv", Csv_Method, Csv_Method, Csv_Trial, Csv_Gene);
-	}
-	else if (0 < Csv_K) {
-		sprintf(fname, "./csv/%d/Cruster_%d_%d_%d_%d.csv", Csv_Method, Csv_Method, Csv_Trial, Csv_Gene, Csv_K);
-		sprintf(fname2, "./csv/%d/Cruster2_%d_%d_%d_%d.csv", Csv_Method, Csv_Method, Csv_Trial, Csv_Gene, Csv_K);
-	}
-	//ファイル出力
-	csv_fwrite(std::string(fname), Cr_P);
-	csv_fwrite(std::string(fname2), tmp_Cr_P);
-}
-
 //csvを統合するクラス
-class CsvModules_Intend : public CsvModules{
+class Csv_exp : public CsvModules {
 public:
 	void Create_Data(std::vector<int> &me, int n, int trial, int gene, int per);
 	void integration(std::vector<int> &me, int gene, int per);
 protected:
+	//method, generation, trial, opp
 	int method_size;
 	int Gene;
 	int Method_Trial;
@@ -247,8 +129,7 @@ protected:
 	std::vector<int> method;
 	std::vector<std::vector<std::string>> Output; // Out_Ave[世代][手法][ave/max/min]
 	std::vector<std::vector<std::string>> Output_Per; // Out_Ave[世代][手法][ave/max/min]
-	std::vector<std::vector<std::string>> gene_opp_csv;
-
+	std::vector<std::vector<std::string>> gene_opp_csv; // Out_Ave[世代][手法][ave/max/min]
 	void Init_Output();
 	void Init_Output_Per(int me);
 	void Init_gene_opp_csv();
@@ -258,9 +139,49 @@ protected:
 	void Cal_Ave_Max_Min(std::vector<std::vector<std::vector<double>>> &input, std::vector<std::vector<double>> &Max, std::vector<std::vector<double>> &Min, std::vector<std::vector<double>> &Ave);
 	void cal_average(std::vector<std::vector<double>> &input, std::vector<double> &output);
 };
-void CsvModules_Intend::Init_gene_opp_csv() 
+void Csv_exp::Init_Output()
 {
-	gene_opp_csv = std::vector<std::vector<std::string>>((Gene / Per + 2) * 3+1, std::vector<std::string>(ENEMY + 1, " "));
+	Output = std::vector<std::vector<std::string>>((Gene / Per + 2) * 3, std::vector<std::string>(method_size + 1, " "));
+	for (int i = 0; i < (Gene / Per + 2) * 3; i++) {
+		if (i % (Gene / Per + 2) == 0) {
+			switch (i / (Gene / Per + 2)) {
+			case 0:
+				Output[i][0] = "Average";
+				break;
+			case 1:
+				Output[i][0] = "Max";
+				break;
+			case 2:
+				Output[i][0] = "Min";
+				break;
+			default:
+				std::cerr << "Error";
+				break;
+			}
+		}
+		else {
+			int tmp = i % (Gene / Per + 2) - 1;
+			Output[i][0] = std::to_string(tmp*Per);
+		}
+	}
+}
+void Csv_exp::Init_Output_Per(int me) {
+	Output_Per = std::vector<std::vector<std::string>>((Gene / Per + 2) * 3, std::vector<std::string>(ENEMY + 1, " "));
+	std::stringstream method_name;
+	method_name << "Method:" << method[me];
+	for (int i = 0; i < (Gene / Per + 2) * 3; i++) {
+		if (i % (Gene / Per + 2) == 0) {
+			Output_Per[i][0] = method_name.str();
+		}
+		else {
+			int tmp = i % (Gene / Per + 2) - 1;
+			Output_Per[i][0] = std::to_string(tmp*Per);
+		}
+	}
+}
+void Csv_exp::Init_gene_opp_csv()
+{
+	gene_opp_csv = std::vector<std::vector<std::string>>((Gene / Per + 2) * 3 + 1, std::vector<std::string>(ENEMY + 1, " "));
 	for (int i = 0; i < (Gene / Per + 2) * 3; i++) {
 		if (i % (Gene / Per + 2) == 0) {
 			switch (i / (Gene / Per + 2)) {
@@ -299,95 +220,7 @@ void CsvModules_Intend::Init_gene_opp_csv()
 		}
 	}
 }
-void CsvModules_Intend::Init_Output() 
-{
-	Output = std::vector<std::vector<std::string>>((Gene / Per + 2) * 3, std::vector<std::string>(method_size+1, " "));
-
-	for (int i = 0; i < (Gene / Per + 2) * 3; i++) {
-		if (i % (Gene / Per + 2) == 0) {
-			switch(i / (Gene / Per + 2)){
-			case 0:
-				Output[i][0] = "Average";
-				break;
-			case 1:
-				Output[i][0] = "Max";
-				break;
-			case 2:
-				Output[i][0] = "Min";
-				break;
-			default:
-				std:: cerr << "Error";
-				break;
-			}
-		}
-		else {
-			int tmp = i % (Gene / Per + 2) - 1;
-			Output[i][0] = std::to_string(tmp*Per);
-		}
-	}
-}
-void CsvModules_Intend::Init_Output_Per(int me) 
-{
-	Output_Per = std::vector<std::vector<std::string>>((Gene / Per + 2) * 3, std::vector<std::string>(ENEMY+1, " "));
-	std::stringstream method_name;
-	method_name << "Method:" << method[me];
-	for (int i = 0; i < (Gene / Per + 2) * 3; i++) {
-		if (i % (Gene / Per + 2) == 0) {
-			Output_Per[i][0] = method_name.str();
-		}
-		else {
-			int tmp = i % (Gene / Per + 2) - 1;
-			Output_Per[i][0] = std::to_string(tmp*Per);
-		}
-	}
-}
-void CsvModules_Intend::Create_Data(std::vector<int> &me, int n, int trial, int gene, int per) 
-{
-	//世代数と個体の情報を記録するベクター
-	method_size = int(me.size());
-	method = me;
-	Method_Trial = trial;
-	Gene = gene;
-	Per = per;
-
-	Init_Output();
-	for (int i = 0; i < method_size; i++) {
-		std::cout << "method_size:" << method_size << std::endl;
-		std::cout << "method:" << method[i] << " start..." << std::endl;
-		std::stringstream tmp_fname;
-		std::vector<std::vector<std::vector<double>>> Input;
-
-		tmp_fname << "./csv/" << method[i];
-		Input = std::vector<std::vector<std::vector<double>>>(ENEMY, std::vector<std::vector<double>>(Gene / Per + 1, std::vector<double>(n, 0)));
-		for (int Opp = 0; Opp < ENEMY; Opp++) {
-			std::vector<std::vector<double>> tmp_input;
-			tmp_input = std::vector<std::vector<double>>(Gene / Per + 1, std::vector<double>(n, 0));
-			//ファイル名設定
-			char fname[50];
-			std::vector<std::vector<std::string>> table;
-			sprintf_s(fname, "  %s/PopResult_%d_%d_%d_%d.csv", tmp_fname.str().c_str(), method[i], Opp, trial, Gene);
-			std::cout << fname << "...open" << std::endl;
-			//ファイル読み込み
-			if (!GetContents(fname, Input[Opp])) {
-				std::cout << "file input error! " << std::endl;
-			}
-		}
-
-		Init_Output_Per(i);
-		Set_Output(i,Input);
-
-		char fname[50];
-		sprintf_s(fname, "%s/totalResult_%d_%d.csv", tmp_fname.str().c_str(), method[i],Gene);
-		csv_fwrite2(fname, gene_opp_csv);
-
-		std::stringstream filename_Per;
-		filename_Per << "./csv/Result_Per_Enemy_" << method[i] << ".csv";
-		OutContents_Per(filename_Per.str());
-
-		std::cout << "method:" << method[i] << " done..." << std::endl;
-	}
-}
-void CsvModules_Intend::integration(std::vector<int> &me, int gene, int per) {
+void Csv_exp::integration(std::vector<int> &me, int gene, int per) {
 	method_size = int(me.size());
 	method = me;
 	Gene = gene;
@@ -399,12 +232,13 @@ void CsvModules_Intend::integration(std::vector<int> &me, int gene, int per) {
 	std::vector<std::vector<double>> ave_vec;
 
 	for (int i = 0; i < method_size; i++) {
+		std::cout << "start : " << method[i] << std::endl;
 		Init_gene_opp_csv();
 		std::stringstream ss;
 		ss << "./csv/" << method[i];
 
 		for (int j = 0; j < ENEMY; j++) {
-			std::cout << "enemy : " << j <<std::endl;
+			std::cout << "enemy : " << j << std::endl;
 			max_vec = std::vector<std::vector<double>>(Gene / Per + 1, std::vector<double>(TRIAL, 0));
 			min_vec = std::vector<std::vector<double>>(Gene / Per + 1, std::vector<double>(TRIAL, 0));
 			ave_vec = std::vector<std::vector<double>>(Gene / Per + 1, std::vector<double>(TRIAL, 0));
@@ -419,18 +253,20 @@ void CsvModules_Intend::integration(std::vector<int> &me, int gene, int per) {
 				for (int l = 0; l < Gene / Per + 1; l++) {
 					max_vec[l][k] = *max_element(input[l].begin(), input[l].end());
 					min_vec[l][k] = *min_element(input[l].begin(), input[l].end());
-					ave_vec[l][k] = std::accumulate(input[l].begin(), input[l].end(), 0.0)/KO;
+					ave_vec[l][k] = std::accumulate(input[l].begin(), input[l].end(), 0.0) / KO;
 				}
 			}
+			//show_vec_2(ave_vec);
 			for (int k = 0; k < Gene / Per + 1; k++) {
 				//平均
-				gene_opp_csv[k + 1][j + 1] = std::to_string( std::accumulate(ave_vec[k].begin(), ave_vec[k].end(), 0.0) / TRIAL );
+				gene_opp_csv[k + 1][j + 1] = std::to_string(std::accumulate(ave_vec[k].begin(), ave_vec[k].end(), 0.0) / TRIAL);
 				//最大
-				gene_opp_csv[k + (Gene / Per + 3)][j + 1] = std::to_string( std::accumulate(max_vec[k].begin(), max_vec[k].end(), 0.0) / TRIAL);
+				gene_opp_csv[k + (Gene / Per + 3)][j + 1] = std::to_string(std::accumulate(max_vec[k].begin(), max_vec[k].end(), 0.0) / TRIAL);
 				//最小
-				gene_opp_csv[k + (Gene / Per + 3) * 2 -1][j + 1] = std::to_string( std::accumulate(min_vec[k].begin(), min_vec[k].end(), 0.0) / TRIAL);
+				gene_opp_csv[k + (Gene / Per + 3) * 2 - 1][j + 1] = std::to_string(std::accumulate(min_vec[k].begin(), min_vec[k].end(), 0.0) / TRIAL);
 			}
-			std::cout << "enemy : " << j  << "...done"<< std::endl;
+			//show_vec_2(gene_opp_csv);
+			std::cout << "enemy : " << j << "...done" << std::endl;
 		}
 		char fname[50];
 		sprintf_s(fname, "%s/totalResult_%d_%d.csv", ss.str().c_str(), method[i], Gene);
@@ -438,9 +274,50 @@ void CsvModules_Intend::integration(std::vector<int> &me, int gene, int per) {
 		std::cout << fname << "...written" << std::endl;
 	}
 }
-//ファイル読み込み(2次元ベクター)
-//ファイル出力(2次元ベクター)
-bool CsvModules_Intend::OutContents(std::string filename)
+void Csv_exp::Create_Data(std::vector<int> &me, int n, int trial, int gene, int per) {
+	//世代数と個体の情報を記録するベクター
+	method_size = int(me.size());
+	method = me;
+	Method_Trial = trial;
+	Gene = gene;
+	Per = per;
+
+	Init_Output();
+	for (int i = 0; i < method_size; i++) {
+		std::cout << "method_size:" << method_size << std::endl;
+		std::cout << "method:" << method[i] << " start..." << std::endl;
+
+		std::stringstream tmp_fname;
+		std::vector<std::vector<std::vector<double>>> Input;
+
+		tmp_fname << CSV_DIR << "/" << method[i] << "/";
+
+		Input = std::vector<std::vector<std::vector<double>>>(ENEMY, std::vector<std::vector<double>>(Gene / Per + 1, std::vector<double>(n, 0)));
+		for (int Opp = 0; Opp < ENEMY; Opp++) {
+			//ファイル名設定
+			std::stringstream fname;
+			std::vector<std::vector<std::string>> table;
+			fname << tmp_fname.str() << "PopResult_" << trial << "_" << Opp << ".csv";
+			//ファイル読み込み
+			if (!GetContents(fname.str(), Input[Opp])) {
+				std::cout << "file input error! " << std::endl;
+			}
+			fname.str("");
+			fname.clear(std::stringstream::goodbit);
+			std::cout << "   Enemy:" << Opp << " done..." << std::endl;
+		}
+
+		Init_Output_Per(i);
+		Set_Output(i, Input);
+
+		std::stringstream filename_Per;
+		filename_Per << CSV_DIR << "/Result_Per_Enemy_" << method[i] << ".csv";
+		OutContents_Per(filename_Per.str());
+
+		std::cout << "method:" << method[i] << " done..." << std::endl;
+	}
+}
+bool Csv_exp::OutContents(std::string filename)
 {
 	// ファイルを開
 	std::ofstream ofs(filename);
@@ -459,7 +336,7 @@ bool CsvModules_Intend::OutContents(std::string filename)
 	std::cout << "filename:" << filename << "...done" << std::endl;
 	return true;
 }
-bool CsvModules_Intend::OutContents_Per(std::string filename)
+bool Csv_exp::OutContents_Per(std::string filename)
 {
 	// ファイルを開く
 	std::ofstream ofs(filename);
@@ -479,13 +356,12 @@ bool CsvModules_Intend::OutContents_Per(std::string filename)
 	return true;
 }
 //最大値, 最小値, 平均取得
-void CsvModules_Intend::Cal_Ave_Max_Min(std::vector<std::vector<std::vector<double>>> &input, std::vector<std::vector<double>> &Max, std::vector<std::vector<double>> &Min, std::vector<std::vector<double>> &Ave)
+void Csv_exp::Cal_Ave_Max_Min(std::vector<std::vector<std::vector<double>>> &input, std::vector<std::vector<double>> &Max, std::vector<std::vector<double>> &Min, std::vector<std::vector<double>> &Ave)
 {
 	Max = std::vector<std::vector<double>>(ENEMY, std::vector<double>(Gene / Per + 1, 0));
 	Min = std::vector<std::vector<double>>(ENEMY, std::vector<double>(Gene / Per + 1, 0));
 	Ave = std::vector<std::vector<double>>(ENEMY, std::vector<double>(Gene / Per + 1, 0));
 
-	//世代毎の最大値，最小値，平均を格納
 	for (int i = 0; i < ENEMY; i++) {
 		for (int j = 0; j < Gene / Per + 1; j++) {
 			//最大値
@@ -495,18 +371,18 @@ void CsvModules_Intend::Cal_Ave_Max_Min(std::vector<std::vector<std::vector<doub
 
 			Max[i][j] = input[i][j][int(max)];
 			Min[i][j] = input[i][j][int(min)];
-			Ave[i][j] = accumulate(input[i][j].begin(), input[i][j].end(), 0.0)/KO;
+			Ave[i][j] = accumulate(input[i][j].begin(), input[i][j].end(), 0.0) / KO;
 		}
 	}
 }
 //書き込み用のベクターにデータをセット
-void CsvModules_Intend::Set_Output(int me, std::vector<std::vector<std::vector<double>>> &input) {
+void Csv_exp::Set_Output(int me, std::vector<std::vector<std::vector<double>>> &input) {
 	//inputから最大最小平均を求める
 	std::vector<std::vector<double>> Max;
 	std::vector<std::vector<double>> Min;
 	std::vector<std::vector<double>> Ave;
 
-	//相手毎にデータをまとめる 縦:敵，横:世代
+	//相手毎にデータをまとめる
 	Cal_Ave_Max_Min(input, Max, Min, Ave);
 	std::cout << "   Cal_Ave_Max_Min ...done" << std::endl;
 	//まとめたデータの平均をとる
@@ -525,7 +401,7 @@ void CsvModules_Intend::Set_Output(int me, std::vector<std::vector<std::vector<d
 		if (i == 0) {
 			Output[i][me + 1] = method_name.str();
 			Output[i + (Gene / Per + 2)][me + 1] = method_name.str();
-			Output[i + (Gene / Per + 2)*2][me + 1] = method_name.str();
+			Output[i + (Gene / Per + 2) * 2][me + 1] = method_name.str();
 		}
 		else {
 			Output[i][me + 1] = std::to_string(ave_Ave[i - 1]);
@@ -540,14 +416,12 @@ void CsvModules_Intend::Set_Output(int me, std::vector<std::vector<std::vector<d
 		opp_name << "Opp:" << Opp;
 		for (int i = 0; i < Gene / Per + 2; i++) {
 			if (i == 0) {
-				/*
 				try {
 					Output_Per[i].at(Opp + 1) = opp_name.str();
 				}
-				catch(std::out_of_range e){
+				catch (std::out_of_range e) {
 					std::cout << e.what() << std::endl;
 				}
-				*/
 				Output_Per[i][Opp + 1] = opp_name.str();
 				Output_Per[i + (Gene / Per + 2)][Opp + 1] = opp_name.str();
 				Output_Per[i + (Gene / Per + 2) * 2][Opp + 1] = opp_name.str();
@@ -562,7 +436,7 @@ void CsvModules_Intend::Set_Output(int me, std::vector<std::vector<std::vector<d
 	std::cout << "   Set_Output ...done" << std::endl;
 }
 //各種データを整えて平均を求める
-void CsvModules_Intend::cal_average(std::vector<std::vector<double>> &input, std::vector<double> &output) {
+void Csv_exp::cal_average(std::vector<std::vector<double>> &input, std::vector<double> &output) {
 	std::vector<std::vector<double>> tmp_input;
 
 	output = std::vector<double>(Gene / Per + 1, 0);

@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 	//学習で記録したデータをもとに実際に対戦
 	else if (mode == 1) {
 		Match Match(method, 0, trial, ku, per);
-		for (int t = 0; t < 5; t++) {
+		for (int t = 0; t < ENEMY; t++) {
 			Match.main_task(t);
 		}
 	}
@@ -123,6 +123,12 @@ int main(int argc, char *argv[])
 			Mode3.main_task();
 			MatchUp_Count = Mode3.Get_MatchUp_Num();
 		}
+		if (method == 11)
+		{
+			coans_proto_mode11 mode11("nim", ku, per, trial);
+			mode11.main_task();
+			MatchUp_Count = mode11.Get_MatchUp_Num();
+		}
 	}
 	//csv統合
 	else if (mode == 3) {
@@ -131,20 +137,10 @@ int main(int argc, char *argv[])
 	}
 	//テスト
 	else if (mode == 4) {
-		/*
-		if (Main_Method == 1) {
-			CoansMode1 Mode1("AI", Main_KO, Main_KU, Main_PER, Main_PARENT, Main_CHILD);
-			Mode1.Stra_nitch_CSV(Main_Trial);
-		}
-		if (Main_Method == 2) {
-			CoansMode2 Mode2("AI", Main_KO, Main_KU, Main_PER, Main_PARENT, Main_CHILD);
-			Mode2.Stra_nitch_CSV(Main_Trial);
-		}
-		*/
+		Match match(method, 0, trial, ku, per);
+		match.evaluation(0);
 	}
 	else if (mode == 5) {
-		nim nim;
-		nim.nim_game();
 	}
 
 	const clock_t End_Main = clock();

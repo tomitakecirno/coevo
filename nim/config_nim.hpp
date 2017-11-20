@@ -1,17 +1,17 @@
 #pragma once
 /* #define NDEBUG */
 
-#define KO		100		//集団
-#define KOT		30		//敵
-#define PARENT	12		//親
-#define CHILD	60		//子
-#define KU		10000	//世代数
-#define PER		1000		//
+#define KO		250	//集団
+#define KOT		100		//敵
+#define PARENT	40		//親
+#define CHILD	200		//子
+#define KU		5000	//世代数
+#define PER		500		//
 
-#define K_List1	50	/*ニッチの集団数*/
+#define K_List1	5	/*ニッチの集団数*/
 #define K_List2	2	/*ニッチの集団数*/
 #define K_List3	2	/*ニッチの集団数*/
-#define KL1		2	/*ニッチの集団数*/
+#define KL1		50	/*ニッチの集団数*/
 
 #define F_TRIAL	10	/*ニッチの集団数*/
 #define FLORET	5	/*ニッチの集団数*/
@@ -35,4 +35,4 @@
 
 #define TRIAL		10
 
-#define ENEMY		5
+#define ENEMY		10

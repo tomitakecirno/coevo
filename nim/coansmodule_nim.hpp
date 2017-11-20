@@ -168,13 +168,12 @@ void AnsList3(const std::vector<std::vector<int>> &IndexSave, std::vector<int> &
 //再帰的にニッチを割り当てていく
 int SetNitch(int nitch_number, int kotai, std::vector<playerNim> &pop)
 {
-	std::vector<int> list;
 	if (pop[kotai].nitch == 0) {
 		pop[kotai].nitch = nitch_number;
 		if (!pop[kotai].List2.empty()) {
-			int list_len = int(list.size());
+			const int list_len = int(pop[kotai].List2.size());
 			for (int i = 0; i < list_len; i++) {
-				int tmp = list[i];
+				int tmp = pop[kotai].List2[i];
 				SetNitch(nitch_number, tmp, pop);
 			}
 		}
@@ -199,8 +198,10 @@ void binaryEXLM(const int main_pare, const std::vector<int> &sub_pare, const std
 		
 		child[c].stra			  = child_stra[0];
 		child[CHILD / 2 + c].stra = child_stra[1];
+		/*
 		mutation(child[c].stra);
 		mutation(child[CHILD / 2 + c].stra);
+		*/
 		child[c].Init_pn();
 		child[CHILD / 2 + c].Init_pn();;
 	}

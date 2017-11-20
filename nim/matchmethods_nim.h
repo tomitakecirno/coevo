@@ -21,8 +21,11 @@ public:
 		//result = std::vector<std::vector<double>>(gene / per + 1, std::vector<double>(KOT, 0));
 		Make_CSV_Directory(method_pop);
 		eval = std::vector<std::vector<double>>(loop, std::vector<double>(KO, 0));
+		result2 = std::vector<std::vector<double>>(loop, std::vector<double>(4, 0));
+		result2 = std::vector<std::vector<double>>(loop, std::vector<double>(KO, 0));
 	}
 	void main_task(int Opp_Trial);
+	void evaluation(int g);
 private:
 	int gene;			//ê¢ë„êî
 	int per;			//ãÊêÿÇË
@@ -36,6 +39,8 @@ private:
 	std::vector<p_data> opp;
 protected:
 	std::vector<std::vector<double>> result;
+	std::vector<std::vector<double>> result2;
+	std::vector<std::vector<double>> result3;
 	std::vector<std::vector<double>> eval;
 	void PvP(int Opp_Trial, int Gene);
 	void output_re_csv(int Opp_trial);
@@ -44,8 +49,9 @@ protected:
 
 void Match::PvP(int Opp_Trial, int g)
 {
-	nim nim;
+	nim nim(1);
 	p_data pop,opp;
+
 	pop.Init();
 	opp.Init();
 	char fname[50], fname2[50];
@@ -60,20 +66,28 @@ void Match::PvP(int Opp_Trial, int g)
 			opp.input_stra(fname2);
 
 			//1âÒñ⁄
+			double value;
 			nim.input_stra_first(pop.stra);	//êÊéË
 			nim.input_stra_last(opp.stra);	//å„éË
-			if (nim.nim_game()) {
-				pop.Result[ai_opp] += 1*WIN_FIRST;
+			value = nim.nim_game(0);
+			if (0 < value) {
+				pop.Result[ai_opp] += 1;
+			}
+			if (value < 0) {
+				pop.Result[ai_opp] += 0;
 			}
 			else {
 				pop.Result[ai_opp] += 0;
 			}
-
 			//êÊéËå„éËÇì¸ÇÍë÷Ç¶Çƒ2âÒñ⁄
 			nim.input_stra_first(opp.stra);	//êÊéË
 			nim.input_stra_last(pop.stra);	//å„éË
-			if (nim.nim_game()) {
-				pop.Result[ai_opp] += 1 * WIN_LAST;
+			value = nim.nim_game(1);
+			if (0 < value) {
+				pop.Result[ai_opp] += 1;
+			}
+			if (value < 0) {
+				pop.Result[ai_opp] += 0;
 			}
 			else {
 				pop.Result[ai_opp] += 0;
@@ -92,6 +106,46 @@ void Match::main_task(int Opp_Trial)
 	std::cout << "Set Data" << std::endl;
 	output_re_csv(Opp_Trial);
 	std::cout << "Output result csv" << std::endl;
+}
+void Match::evaluation(int g) 
+{
+	std::vector<int> tmp_vec(STRA_LEN, 0);
+	tmp_vec[0] = 1;
+	std::vector<int> opp_vec(STRA_LEN, 0);
+	std::vector<int> tmp_opp_vec(STRA_LEN, 0);
+	std::vector<int> tmp_result(STRA_LEN*2, 0);
+
+	nim nim(1);
+	p_data pop;
+	int sum = 0, value = 0;
+	for (int i = 0; i < 1; i++) {
+		char fname[50];
+		sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method_pop, trial_pop, g, i);
+
+		int count = 0;
+		pop.input_stra(fname);
+		while (count != STRA_LEN*2) {
+			if (0 < count) {
+				nim.cal_and(tmp_opp_vec, tmp_vec, opp_vec);
+			}
+			show_vec_1(opp_vec);
+			/*
+			//1âÒñ⁄
+			nim.input_stra_first(pop.stra);
+			nim.input_stra_last(opp_vec);
+			tmp_result[count] = nim.nim_game(0);
+			*/
+			count++;
+			//2âÒñ⁄
+			/*
+			nim.input_stra_first(opp_vec);
+			nim.input_stra_last(pop.stra);
+			tmp_result[count] = nim.nim_game(1);
+			*/
+			count++;
+			tmp_opp_vec = opp_vec;
+		}
+	}
 }
 bool Match::output_ni_csv() 
 {

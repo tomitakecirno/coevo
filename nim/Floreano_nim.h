@@ -79,7 +79,7 @@ void floreano::main_task(void) {
 		opp[i] = pop[ tmp_n[index] ];
 		tmp_n.erase(tmp_n.begin() + index);
 	}
-	nim nim;
+	nim nim(0);
 	//ˆÈ‰ºƒ‹[ƒv
 	for (int e = 0; e < F_KU; e++) {
 		std::cout << method_t << ":" << trial_t << ":" << ":" << e;
@@ -101,12 +101,12 @@ void floreano::main_task(void) {
 				//1‰ñ–Ú
 				nim.input_stra_first(pop[i].stra);
 				nim.input_stra_last(opp[j].stra);
-				pop[i].Result[j] += nim.nim_game()*WIN_FIRST;
+				pop[i].Result[j] += nim.nim_game(0)*WIN_FIRST;
 
 				//2‰ñ–Ú
 				nim.input_stra_first(opp[j].stra);
 				nim.input_stra_last(pop[i].stra);
-				pop[i].Result[j] += nim.nim_game()*WIN_LAST;
+				pop[i].Result[j] += nim.nim_game(1)*WIN_LAST;
 			}
 		}
 		//std::cout << "3" << ',';

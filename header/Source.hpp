@@ -8,6 +8,7 @@
 
 //#include "stdafx.h"
 #pragma warning( disable:4996 )
+//#pragma warning( disable:8000 )
 #define _AFX_SECURE_NO_WARNINGS
 #define PA 20
 #define KA 50
@@ -27,13 +28,13 @@
 #define J1		30	//中間層
 #define I2		30	//        
 #define J2		13	//出力層
-#define KO		30	//個体数
-#define KOT		30	//対戦相手数
-#define KU		20000	//世代数
-#define PER		2000	//世代数
+#define KO		250	//個体数
+#define KOT		100	//対戦相手数
+#define KU		2000	//世代数
+#define PER		200	//世代数
 #define K		2	//クラスタ数
-#define PARENT	4	//親の数
-#define CHILD	20	//子供の数
+#define PARENT	5	//親の数
+#define CHILD	50	//子供の数
 #define LLL		1
 
 #define RIVAL 1		//対戦相手の対戦回数
