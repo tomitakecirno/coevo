@@ -43,6 +43,8 @@ bool floreano::cross(std::vector<p_data> &tmp)
 		}
 		std::vector<std::vector<int>> child(2);
 		two_point_cross(tmp[index1].stra, tmp[index2].stra, child);
+		mutation(child[0]);
+		mutation(child[1]);
 		tmp[p].stra = child[0];
 		tmp[p + 1].stra = child[1];
 

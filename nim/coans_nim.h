@@ -173,26 +173,26 @@ int Coans_base::Choice_Best_Index()
 	}
 
 	int index = 0;
-	auto max = max_element(tmp_eval.begin()+1, tmp_eval.end());
+	auto max = max_element(tmp_eval.begin() + 1, tmp_eval.end());
 	//主親(index = 0)より評価値の高い個体がいれば改善
-	if (tmp_eval[0] < *max) {
 		//同じ評価地の個体が複数ある場合はランダム
-		int count = int(std::count(tmp_eval.begin(), tmp_eval.end(), *max));
-		//cout << "count_Num:" << count_Num << endl;
-		if (count) {
-			if (count == 1) {
-				//インデックスを取得
-				index = int(std::distance(tmp_eval.begin(), max));
-			}
-			else if (1 < count) {
-				int rand = GetRand_Int(count);
-				auto itrater = tmp_eval.begin();
+	int count = int(std::count(tmp_eval.begin() + 1, tmp_eval.end(), *max));
+	//cout << "count_Num:" << count_Num << endl;
+	if (count) {
+		if (count == 1) {
+			//インデックスを取得
+			index = int(std::distance(tmp_eval.begin(), max));
+		}
+		else if (1 < count) {
+			std::vector<int> tmp_index(count);
+			auto index_t = tmp_eval.begin();
 
-				for (int j = 0; j < rand + 1; j++) {
-					itrater = std::find(itrater, tmp_eval.end(), *max);
-				}
-				index = int(std::distance(tmp_eval.begin(), itrater));
+			for (int j = 0; j < count; j++) {
+				index_t = std::find(index_t + 1, tmp_eval.end(), *max);
+				tmp_index[j] = int(std::distance(tmp_eval.begin(), index_t));
 			}
+			const int rand = GetRand_Int(count);
+			const int index = tmp_index[rand];
 		}
 	}
 	return index;
@@ -354,6 +354,12 @@ void Coans::main_task()
 	if (method == 2) {
 		output_cr_pop();
 	}
+	std::vector<std::vector<int>> battle_num(1);
+	battle_num[0].resize(1);
+	battle_num[0][0] = machup;
+	char fname[50];
+	sprintf_s(fname, "./%s/%d/battle_num.txt", CSV_DIR, method);
+	CsvModules::csv_fwrite2(fname, battle_num);
 }
 void Coans::Crustering1() {
 	//近傍リスト生成＆クラスタ番号割り振り

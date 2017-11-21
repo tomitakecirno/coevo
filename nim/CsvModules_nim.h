@@ -14,15 +14,15 @@ class CsvModules {
 public:
 	//ファイル読み込み
 	template<class Vec_out>
-	bool GetContents(std::string filename, Vec_out &input);
+	static bool GetContents(std::string filename, Vec_out &input);
 	//ファイル書き込み
 	template<class Vec_in>
-	bool csv_fwrite(std::string fname, Vec_in &vector, int per = 1);
+	static bool csv_fwrite(std::string fname, Vec_in &vector, int per = 1);
 	template<class Vec_in2>
-	bool csv_fwrite2(std::string fname, const Vec_in2 &vector);
+	static bool csv_fwrite2(std::string fname, const Vec_in2 &vector);
 };
 template<class Vec_out>
-bool CsvModules::GetContents(std::string filename, Vec_out &input)
+static bool CsvModules::GetContents(std::string filename, Vec_out &input)
 {
 	std::vector<std::vector<std::string>> table;
 	// ファイルを開く
@@ -62,7 +62,7 @@ bool CsvModules::GetContents(std::string filename, Vec_out &input)
 	return true;
 }
 template<class Vec_in>
-bool CsvModules::csv_fwrite(std::string fname, Vec_in &vector, int per) {
+static bool CsvModules::csv_fwrite(std::string fname, Vec_in &vector, int per) {
 	int vector_size = int(vector.size());
 
 	int max_size = 0;
@@ -98,7 +98,7 @@ bool CsvModules::csv_fwrite(std::string fname, Vec_in &vector, int per) {
 	return true;
 }
 template<class Vec_in2>
-bool CsvModules::csv_fwrite2(std::string fname, const Vec_in2 &vector) {
+static bool CsvModules::csv_fwrite2(std::string fname, const Vec_in2 &vector) {
 	std::ofstream ofs(fname);
 	if (!ofs.is_open())
 	{

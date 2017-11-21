@@ -21,11 +21,12 @@ public:
 		nim_status_vec.assign(stra_len,0);
 		mont_max = *max_element(nim_status.begin(), nim_status.end());
 		mont_size = mont_max;
-		cal_optimal();
+		//cal_optimal();
 
 		mode = m;
 	}
 	double nim_game(const int turn);
+	double nim_game_exp(const int turn);
 	void input_stra_first(const std::vector<int> &pop);
 	void input_stra_last(const std::vector<int> &opp);
 	void output_stra_first(std::vector<int> &pop);
@@ -50,6 +51,7 @@ protected:
 	void cal_xor_vec(std::vector<int> &one, std::vector<int> &ano, std::vector<int> &vec); //ベクター同士の排他的論理和
 	void cal_optimal(); //最適解を求める
 	void cal_move_vec();
+	int cal_nimsum();
 	void generate_mont(int a, int b, int c, std::vector<std::vector<int>> &mont);
 	bool update_mont(int index); //戦略情報から山の状態を更新する
 	int choose_stra(std::vector<int> &stra);
@@ -105,6 +107,101 @@ double nim::nim_game(const int turn)
 				}
 			}
 		}
+	}
+}
+double nim::nim_game_exp(const int turn)
+{
+	Init_mont(); //山の初期化
+	//show_mont();
+	int stra_index;
+	int xor_flag = 0;
+	int nim_sum;
+	int turn_count = 0;
+	while (1)
+	{
+		//先手
+		stra_index = choose_stra(pop_stra);
+		if (stra_index < 0) {
+			//turn = 0のとき味方プレイヤー，turn = 1のとき相手プレイヤー
+			if (turn == 0) {
+				return 0;
+			}
+			else {
+				return -1;
+			}
+		}
+		else {
+			if (!update_mont(stra_index)) {
+				if (turn == 0) {
+					return 1;
+				}
+				else if (turn == 1 && xor_flag == 0) {
+					return -1;
+				}
+				else {
+					return 0;
+				}
+			}
+
+			//ニム和を求める
+			nim_sum = cal_nimsum();
+			if (turn == 0) {
+				//初手でニム和が0の手をうてた場合フラグを立て，打てなかった場合その場で終了
+				if (turn_count == 0 && nim_sum == 0) {
+					xor_flag = 1;
+				}
+				else {
+					return 0;
+				}
+				//初手以降はニム和が0の手を打てなかった時点で終了
+				if (0 < turn_count && nim_sum == 1) {
+					return 0;
+				}
+			}
+		}
+		turn_count++;
+
+		//後手
+		stra_index = choose_stra(opp_stra);
+		if (stra_index < 0) {
+			if (turn == 0) {
+				return -1;
+			}
+			else {
+				return 0;
+			}
+		}
+		else {
+			//std::cout << "stra_index = " << stra_index << std::endl;
+			if (!update_mont(stra_index)) {
+				if (turn == 0) {
+					//先手の場合
+					return 0;
+				}
+				else {
+					return 1;
+				}
+			}
+			//ニム和が1のとき
+			if (nim_sum == 1) {
+				nim_sum = cal_nimsum();
+
+				if (turn == 1) {
+					nim_sum = cal_nimsum();
+					if (nim_sum == 0 && xor_flag == 0) {
+						xor_flag = 1;
+					}
+					else {
+						return 0;
+					}
+					if (xor_flag == 1 && nim_sum == 1) {
+						return 0;
+					}
+				}
+
+			}
+		}
+		turn_count++;
 	}
 }
 void nim::Init_mont() {
@@ -224,6 +321,24 @@ void nim::cal_optimal()
 	}
 //	show_vec_1(opt);
 }
+int nim::cal_nimsum() 
+{
+	std::vector<std::vector<int>> mont_vec(NIM);
+
+	for (int i = 0; i < NIM; i++) {
+		cal_binary_vec(nim_status[i], mont_vec[i]);
+	}
+	std::vector<int> sum(STRA_LEN, 0);
+	for (int i = 0; i < STRA_LEN; i++) {
+		int tmp_sum = 0;
+		for (int j = 0; j < NIM; j++) {
+			tmp_sum += mont_vec[j][i];
+		}
+		sum[i] = tmp_sum % 2;
+	}
+	const int nim_sum = (std::accumulate(sum.begin(), sum.end(), 0)) % 2;
+	return nim_sum;
+}
 void nim::cal_move_vec()
 {
 	int index;
@@ -253,8 +368,8 @@ void nim::cal_and(const std::vector<int> &binary1, const std::vector<int> &binar
 	int bina = 0;
 	for (int i = 0; i < STRA_LEN; i++)
 	{
-		const int sum = binary1[i] + binary2[i];
-		binary3[i] = (sum + bina) % 2;
+		const int sum = binary1[i] + binary2[i] + bina;
+		binary3[i] = sum % 2;
 		if (sum == 2) {
 			bina = 1;
 		}

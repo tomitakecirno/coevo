@@ -18,9 +18,9 @@
 #define F_KU	500	/*ニッチの集団数*/
 
 #define NIM			3	//ニムの山の数
-#define POLL1		2	//山1
-#define POLL2		2	//山2
-#define POLL3		2	//山3
+#define POLL1		4	//山1
+#define POLL2		4	//山2
+#define POLL3		4	//山3
 
 #define WIN_FIRST	0.8	//先手で勝った場合
 #define WIN_LAST	1.2	//後手で勝った場合
@@ -29,7 +29,7 @@
 #define DELETE		50
 #define CSV_DIR		"./csv"
 
-#define MUTATION	0.009
+#define MUTATION	1/((POLL1+1)*(POLL2+1)*(POLL3+1))
 
 #define STRA_LEN	(POLL1+1)*(POLL2+1)*(POLL3+1)
 

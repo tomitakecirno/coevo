@@ -47,8 +47,8 @@ int main(int argc, char *argv[])
 		argv[4]:trial
 		argv[5]:nitch parameter
 	*/
-	//mode = 2;
-	mode = atoi(__argv[1]);
+	mode = 4;
+	//mode = atoi(__argv[1]);
 	if (mode == 1 || mode == 2 || mode == 4) {
 		switch (__argc) {
 		case 1:
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 	//ƒeƒXƒg
 	else if (mode == 4) {
 		Match match(method, 0, trial, ku, per);
-		match.evaluation(0);
+		match.evaluation();
 	}
 	else if (mode == 5) {
 	}

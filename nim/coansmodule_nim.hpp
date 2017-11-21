@@ -198,10 +198,8 @@ void binaryEXLM(const int main_pare, const std::vector<int> &sub_pare, const std
 		
 		child[c].stra			  = child_stra[0];
 		child[CHILD / 2 + c].stra = child_stra[1];
-		/*
 		mutation(child[c].stra);
 		mutation(child[CHILD / 2 + c].stra);
-		*/
 		child[c].Init_pn();
 		child[CHILD / 2 + c].Init_pn();;
 	}

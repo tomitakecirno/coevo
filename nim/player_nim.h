@@ -56,17 +56,14 @@ bool p_data::input_stra(const std::string fname)
 		return false;
 	}
 
-	stra_len = (POLL1 + 1)*(POLL2 + 1)*(POLL3 + 1);
-	stra.resize(stra_len);
 	//std::cout << fname << std::endl;
-	int i = 0;
+	int count = 0;
 	int tmp;
 	while (fin >> tmp) {
-		stra[i] = tmp;
-		i++;
+		stra.push_back(tmp);
 	}
 
-	if (i + 1 == stra_len) {
+	if (count + 1 == STRA_LEN) {
 		std::cout << "size error" << std::endl;
 		return false;
 	}
