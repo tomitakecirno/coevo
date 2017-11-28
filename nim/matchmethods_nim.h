@@ -43,7 +43,6 @@ protected:
 	std::vector<std::vector<double>> result3;
 	std::vector<std::vector<double>> eval;
 	void PvP(int Opp_Trial, int Gene);
-	int PvP2(int g);
 	void output_re_csv(int Opp_trial);
 	bool output_ni_csv();
 };
@@ -108,147 +107,55 @@ void Match::main_task(int Opp_Trial)
 	output_re_csv(Opp_Trial);
 	std::cout << "Output result csv" << std::endl;
 }
-int Match::PvP2(int g) {
-	nim nim(1);
-	p_data pop, opp;
-	std::vector<int> eval(KO);
-
-	pop.Init();
-	opp.Init();
-	char fname[50], fname2[50];
-	for (int ai_pop = 0; ai_pop < KO; ai_pop++) {
-		//ƒvƒŒƒCƒ„[‚Ìí—ª“Ç‚Ýž‚Ý
-		sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method_pop, trial_pop, g, ai_pop);
-		pop.input_stra(fname);
-		pop.Result.assign(KO, 0);
-		for (int ai_opp = 0; ai_opp < KO; ai_opp++) {
-			//‘Îí‘ŠŽè‚Ìí—ª“Ç‚Ýž‚Ý
-			sprintf_s(fname2, "./nim/%d/%d/%d/%d.dat", method_pop, trial_pop, g, ai_opp);
-			opp.input_stra(fname2);
-
-			//1‰ñ–Ú
-			double value;
-			nim.input_stra_first(pop.stra);	//æŽè
-			nim.input_stra_last(opp.stra);	//ŒãŽè
-			value = nim.nim_game(0);
-			if (0 < value) {
-				pop.Result[ai_opp] += 1;
-			}
-			if (value < 0) {
-				pop.Result[ai_opp] += 0;
-			}
-			else {
-				pop.Result[ai_opp] += 0;
-			}
-			//æŽèŒãŽè‚ð“ü‚ê‘Ö‚¦‚Ä2‰ñ–Ú
-			nim.input_stra_first(opp.stra);	//æŽè
-			nim.input_stra_last(pop.stra);	//ŒãŽè
-			value = nim.nim_game(1);
-			if (0 < value) {
-				pop.Result[ai_opp] += 1;
-			}
-			if (value < 0) {
-				pop.Result[ai_opp] += 0;
-			}
-			else {
-				pop.Result[ai_opp] += 0;
-			}
-		}
-		eval[ai_pop] = int(std::accumulate(pop.Result.begin(), pop.Result.end(), 0.0));
-	}
-	auto max = max_element(eval.begin(), eval.end());
-	int index = int(std::distance(eval.begin(), max));
-	return index;
-}
 void Match::evaluation() 
 {
-	std::vector<int> tmp_vec(STRA_LEN, 0);
-	tmp_vec[0] = 1;
-	std::vector<int> opp_vec(STRA_LEN, 0);
-	std::vector<int> tmp_opp_vec(STRA_LEN, 0);
-
-	std::vector<std::vector<double>> result_total;
-	result_total = std::vector<std::vector<double>>(12, std::vector<double>(KO + 1, 0));
-	for (int i = 0; i < 11; i++) {
-		result_total[i + 1][0] = i*(KU / 10);
-	}
-	std::vector<std::vector<double>> result_0;
-	std::vector<std::vector<double>> result_1;
-	result_0 = result_total;
-	result_1 = result_total;
-
 	nim nim(1);
 	p_data pop;
-	int sum = 0, value = 0, count = 0;
-	for (int t = 0; t < TRIAL; t++) {
-		for (int i = 0; i < 11; i++) {
-			const int index = PvP2(i);
-			char fname[50];
-			sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method_pop, t, i, index);
-			std::cout << "filename : " << fname << std::endl;
-
-			int binary_count = 0;
-			std::vector<__int64> battle_count(2, 0);
-			std::vector<__int64> win_count(2, 0);
-			std::vector<__int64> value(2, 0);
-			pop.input_stra(fname);
-			while (binary_count < STRA_LEN) {
-				nim.cal_and(tmp_opp_vec, tmp_vec, opp_vec);
-				show_vec_1(opp_vec);
-
-				//1‰ñ–Ú
-				nim.input_stra_first(pop.stra);
-				nim.input_stra_last(opp_vec);
-				value[0] = int(nim.nim_game(0));
-
-				//2‰ñ–Ú
-				nim.input_stra_first(opp_vec);
-				nim.input_stra_last(pop.stra);
-				value[1] = int(nim.nim_game(1));
-
-				for (int j = 0; j < 2; j++) {
-					if (value[j] == 1) {
-						win_count[j]++;
-						battle_count[j]++;
-					}
-					else if (value[j] == 0) {
-						battle_count[j]++;
-					}
-				}
-
-				tmp_opp_vec = opp_vec;
-				binary_count = int(std::count(opp_vec.begin(), opp_vec.end(), 1));
-				//std::cout << "binary_count:" << binary_count << std::endl;
-			}
-			int sum_w = std::accumulate(win_count.begin(), win_count.end(), 0);
-			int sum_b = std::accumulate(battle_count.begin(), battle_count.end(), 0);
-
-			result_0[i + 1][0] = t;
-			result_1[i + 1][0] = t;
-			result_total[i + 1][0] = t;
-
-			result_0[i + 1][t + 1] = win_count[0] / battle_count[0] * 100;
-			result_1[i + 1][t + 1] = win_count[1] / battle_count[1] * 100;
-			result_total[i + 1][t + 1] = sum_w / sum_b * 100;
-		}
-	}
-	show_vec_2(result_0);
-	show_vec_2(result_1);
-	show_vec_2(result_total);
-
 	char fname[50];
-	CsvModules csv;
-	sprintf_s(fname, "./%s/%d/result_0.csv", CSV_DIR, method_pop);
-	csv.csv_fwrite2(fname, result_0);
-	sprintf_s(fname, "./%s/%d/result_1.csv", CSV_DIR, method_pop);
-	csv.csv_fwrite2(fname, result_1);
-	sprintf_s(fname, "./%s/%d/result_total.csv", CSV_DIR, method_pop);
-	csv.csv_fwrite2(fname, result_total);
+	std::vector<int> folder(TRIAL);
+
+	for (int t = 0; t < TRIAL; t++) {
+		int folder_num = 0;
+		while (1) {
+			sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method_pop, t, folder_num, 0);
+			std::ifstream ifs(fname);
+			if (ifs.fail()) {
+				break;
+			}
+			else {
+				folder_num++;
+			}
+		}
+		folder[t] = folder_num;
+	}
+	auto max = max_element(folder.begin(), folder.end());
+	std::vector<std::vector<double>> result_total;
+	result_total = std::vector<std::vector<double>>(*max, std::vector<double>(TRIAL, 0));
+
+	for (int t = 0; t < TRIAL; t++) {
+		const double start = clock();
+		for (int f = 0; f < folder[t]; f++) {
+			std::cout << t << ":" << f << ":" << " ..." << std::endl;
+			sprintf_s(fname, "./nim/%d/%d/%d/best.dat", method_pop, t, f);
+
+			if (!pop.input_stra(fname)) {
+				exit(EXIT_FAILURE);
+			}
+			//std::cout << "pop_stra:";
+			//show_vec_1(pop.stra);
+			nim.input_stra_first(pop.stra);
+			result_total[f][t] = nim.nim_evaluation()*100;
+			std::cout << "result :" << result_total[f][t] << std::endl;
+		}
+		const double end = clock();
+		const double time = (end - start) / CLOCKS_PER_SEC;
+	}
+	sprintf_s(fname, "./csv/%d/currect_%d_%d.csv", method_pop, method_pop, BATTLE_PER);
+	CsvModules::csv_fwrite(fname, result_total, BATTLE_PER);
 }
 bool Match::output_ni_csv() 
 {
 	std::cout << "output_ni_csv..." << std::endl;
-	CsvModules csv;
 	std::vector<std::vector<int>> pop_nitch;
 	char fname[50];
 	if (cru_k == 0) {
@@ -256,7 +163,7 @@ bool Match::output_ni_csv()
 	}if (0 < cru_k) {
 		sprintf_s(fname, "./csv/%d/Cruster_%d_%d_%d_%d.csv", method_pop, method_pop, trial_pop, gene, cru_k);
 	}
-	if (!csv.GetContents(fname, pop_nitch)) {
+	if (!CsvModules::GetContents(fname, pop_nitch)) {
 		std::cout << std::endl;
 		std::cout << "input error : " << fname << std::endl;
 		return false;
@@ -301,7 +208,7 @@ bool Match::output_ni_csv()
 			index[tmp_nitch]++;
 		}
 		sprintf_s(fname, "./csv/%d/Distance_nitch_%d_%d_%d(%d).csv", method_pop, method_pop, trial_pop, g*per, gene);
-		csv.csv_fwrite(fname, pop_dis);
+		CsvModules::csv_fwrite(fname, pop_dis);
 	}
 	return true;
 }
@@ -313,6 +220,5 @@ void Match::output_re_csv(int Opp_trial) {
 		sprintf_s(fname, "./csv/%d/PopResult_%d_%d_%d_%d_%d.csv", method_pop, method_pop, trial_pop, Opp_trial, gene, cru_k);
 	}
 	//
-	CsvModules cm;
-	cm.csv_fwrite(std::string(fname), eval, per);
+	CsvModules::csv_fwrite(std::string(fname), eval, per);
 }

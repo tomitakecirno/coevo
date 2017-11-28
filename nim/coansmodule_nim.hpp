@@ -181,7 +181,6 @@ int SetNitch(int nitch_number, int kotai, std::vector<playerNim> &pop)
 	}
 	return 0;
 }
-
 //ŠgUELM.w1,w2,w3‚»‚ê‚¼‚ê•ª‚¯‚Ä¶¬‚·‚é.
 void binaryEXLM(const int main_pare, const std::vector<int> &sub_pare, const std::vector<playerNim> &pop, std::vector<playerNim> &child)
 {

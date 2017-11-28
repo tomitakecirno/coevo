@@ -26,7 +26,7 @@ public:
 		mode = m;
 	}
 	double nim_game(const int turn);
-	double nim_game_exp(const int turn);
+	double nim_evaluation();
 	void input_stra_first(const std::vector<int> &pop);
 	void input_stra_last(const std::vector<int> &opp);
 	void output_stra_first(std::vector<int> &pop);
@@ -109,100 +109,49 @@ double nim::nim_game(const int turn)
 		}
 	}
 }
-double nim::nim_game_exp(const int turn)
+double nim::nim_evaluation()
 {
-	Init_mont(); //山の初期化
 	//show_mont();
 	int stra_index;
-	int xor_flag = 0;
-	int nim_sum;
-	int turn_count = 0;
-	while (1)
-	{
-		//先手
-		stra_index = choose_stra(pop_stra);
-		if (stra_index < 0) {
-			//turn = 0のとき味方プレイヤー，turn = 1のとき相手プレイヤー
-			if (turn == 0) {
-				return 0;
-			}
-			else {
-				return -1;
-			}
-		}
-		else {
-			if (!update_mont(stra_index)) {
-				if (turn == 0) {
-					return 1;
-				}
-				else if (turn == 1 && xor_flag == 0) {
-					return -1;
-				}
-				else {
-					return 0;
-				}
-			}
+	double optimal_c = 0;
+	double battle_c = 0;
+	//cal_optimal();
+	//int count = int(std::count(opt.begin(), opt.end(), 1));
+	//std::cout << "最適手 :" << count << std::endl;
+	std::vector<std::vector<int>> mont;
+	for (int i = 0; i < POLL1 + 1; i++) {
+		for (int j = 0; j < POLL2 + 1; j++) {
+			for (int k = 0; k < POLL3 + 1; k++) {
+				nim_status = { i,j,k };
+				int nim_sum = cal_nimsum();
+				//ニム和が0でないときに評価
+				if (nim_sum != 0) {
+					//generate_mont(nim_status[0], nim_status[1], nim_status[2], mont);
+					cal_move_vec(); //遷移可能状態を格納
+					//show_vec_1(pop_stra);
+					//show_vec_1(nim_status_vec);
+					stra_index = choose_stra(pop_stra); //戦略を選ぶ
+					//std::cout << "stra_index : " << stra_index << std::endl;
+					if (stra_index != -1) {
+						nim_status[0] = stra_index / ((POLL2 + 1)*(POLL3 + 1));
+						nim_status[1] = (stra_index % ((POLL2 + 1)*(POLL3 + 1))) / (POLL3 + 1);
+						nim_status[2] = stra_index % (POLL3 + 1);
 
-			//ニム和を求める
-			nim_sum = cal_nimsum();
-			if (turn == 0) {
-				//初手でニム和が0の手をうてた場合フラグを立て，打てなかった場合その場で終了
-				if (turn_count == 0 && nim_sum == 0) {
-					xor_flag = 1;
-				}
-				else {
-					return 0;
-				}
-				//初手以降はニム和が0の手を打てなかった時点で終了
-				if (0 < turn_count && nim_sum == 1) {
-					return 0;
-				}
-			}
-		}
-		turn_count++;
-
-		//後手
-		stra_index = choose_stra(opp_stra);
-		if (stra_index < 0) {
-			if (turn == 0) {
-				return -1;
-			}
-			else {
-				return 0;
-			}
-		}
-		else {
-			//std::cout << "stra_index = " << stra_index << std::endl;
-			if (!update_mont(stra_index)) {
-				if (turn == 0) {
-					//先手の場合
-					return 0;
-				}
-				else {
-					return 1;
-				}
-			}
-			//ニム和が1のとき
-			if (nim_sum == 1) {
-				nim_sum = cal_nimsum();
-
-				if (turn == 1) {
-					nim_sum = cal_nimsum();
-					if (nim_sum == 0 && xor_flag == 0) {
-						xor_flag = 1;
+						//generate_mont(nim_status[0], nim_status[1], nim_status[2], mont);
+						nim_sum = cal_nimsum();
+						if (nim_sum == 0) {
+							optimal_c++;
+						}
 					}
-					else {
-						return 0;
-					}
-					if (xor_flag == 1 && nim_sum == 1) {
-						return 0;
-					}
+					battle_c++;
 				}
-
 			}
 		}
-		turn_count++;
 	}
+	std::cout << "optimal_c : " << optimal_c << std::endl;
+	std::cout << "battle_c : " << battle_c << std::endl;
+
+	return optimal_c / battle_c;
 }
 void nim::Init_mont() {
 	nim_status[0] = POLL1;
@@ -283,33 +232,13 @@ void nim::cal_xor_vec(std::vector<int> &one, std::vector<int> &ano, std::vector<
 void nim::cal_optimal()
 {
 	opt.assign(stra_len,0);
-	std::vector<std::vector<int>> mont;
-	mont = std::vector<std::vector<int>>(mont_size, std::vector<int>(NIM, 0));
-
 	for (int i = 0; i < POLL1 + 1; i++) {
 		for (int j = 0; j < POLL2 + 1; j++) {
 			for (int k = 0; k < POLL3 + 1; k++) {
-				generate_mont(i, j, k, mont);
-				//show_vec_2(mont);
-
-				std::vector<int> tmp_xor_sum;
-				std::vector<int> xor_sum;
-				tmp_xor_sum = mont[0];
-				for (int i = 1; i < mont_size; i++) {
-					cal_xor_vec(tmp_xor_sum, mont[i], xor_sum);
-					tmp_xor_sum = xor_sum;
-				}
-				for (int i = 1; i < NIM; i++) {
-					if (xor_sum[i - 1] == xor_sum[i]) {
-						xor_sum[i] = 0;
-					}
-					else {
-						xor_sum[i] = 1;
-					}
-				}
-				if (xor_sum[NIM - 1] == 0) {
-					//最適解に加える
-					int index = i * (POLL2*POLL3) + j * POLL3 + k * 1;
+				nim_status = { i,j,k };
+				int num_sum = cal_nimsum();
+				if (num_sum == 0) {
+					int index = i * (POLL2*POLL3) + j * POLL3 + k * 1; //最適解に加える
 					if (stra_len < index) {
 						std::cout << "戦略のサイズを超えています : index = " << index << std::endl;
 						exit(EXIT_FAILURE);
@@ -336,7 +265,7 @@ int nim::cal_nimsum()
 		}
 		sum[i] = tmp_sum % 2;
 	}
-	const int nim_sum = (std::accumulate(sum.begin(), sum.end(), 0)) % 2;
+	int nim_sum = int(std::accumulate(sum.begin(), sum.end(), 0));
 	return nim_sum;
 }
 void nim::cal_move_vec()
@@ -381,12 +310,9 @@ void nim::cal_and(const std::vector<int> &binary1, const std::vector<int> &binar
 }
 void nim::generate_mont(int a, int b, int c, std::vector<std::vector<int>> &mont) 
 {
-	if (mont.empty()) {
-		std::cout << "montが空です : generate_mont" << std::endl;
-		exit(EXIT_FAILURE);
-	}
 	std::vector<int> tmp_nim_status = { a,b,c };
 	const auto max = *max_element(tmp_nim_status.begin(), tmp_nim_status.end());
+	mont = std::vector<std::vector<int>>(max, std::vector<int>(NIM, 0));
 	for (int i = 1; i < max+1; i++) {
 		for (int j = 0; j < NIM; j++) {
 			if (i <= tmp_nim_status[j]) {
@@ -394,6 +320,7 @@ void nim::generate_mont(int a, int b, int c, std::vector<std::vector<int>> &mont
 			}
 		}
 	}
+	show_vec_2(mont);
 }
 int nim::choose_stra(std::vector<int> &stra) {
 	if (stra.empty()) {
@@ -413,7 +340,10 @@ int nim::choose_stra(std::vector<int> &stra) {
 	const int count = int(std::count(tmp_stra.begin(), tmp_stra.end(), 1));
 	if (count > 0) {
 		//1個の場合
-		if (count == 1) 
+		auto result_t = std::find(tmp_stra.begin(), tmp_stra.end(), 1);
+		index = int(std::distance(tmp_stra.begin(), result_t));
+		/*
+		if (count == 1)
 		{
 			auto result_t = std::find(tmp_stra.begin(), tmp_stra.end(), 1);
 			index = int(std::distance(tmp_stra.begin(), result_t));
@@ -433,6 +363,7 @@ int nim::choose_stra(std::vector<int> &stra) {
 			const int tmp_rand = GetRand_Int(count);
 			index = tmp_index[tmp_rand];
 		}
+		*/
 	}
 	//リペアオペレーター
 	else {

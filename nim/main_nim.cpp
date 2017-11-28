@@ -47,15 +47,18 @@ int main(int argc, char *argv[])
 		argv[4]:trial
 		argv[5]:nitch parameter
 	*/
-	mode = 4;
-	//mode = atoi(__argv[1]);
-	if (mode == 1 || mode == 2 || mode == 4) {
+	//mode = 5;
+	mode = atoi(__argv[1]);
+	if (mode == 1 || mode == 2 || mode == 4 || mode == 5) {
 		switch (__argc) {
 		case 1:
 			//Debug mode
 			method = 2;
 			ku = KU;
 			trial = 0;
+			break;
+		case 3:
+			method = atoi(__argv[2]);
 			break;
 		case 5:
 			method = atoi(__argv[2]);
@@ -70,7 +73,7 @@ int main(int argc, char *argv[])
 			break;
 			*/
 		}
-		per = ku / 10;
+		per = PER;
 		if (mode == 1) {
 			std::cout << "モード:対戦" << std::endl;
 		}
@@ -88,7 +91,7 @@ int main(int argc, char *argv[])
 		}
 		std::cout << "モード:csv統合" << std::endl;
 	}
-	int MatchUp_Count = 0;
+	__int64 MatchUp_Count = 0;
 
 	const clock_t Start_Main = clock();
 	//実験用対戦相手学習
@@ -125,9 +128,6 @@ int main(int argc, char *argv[])
 		}
 		if (method == 11)
 		{
-			coans_proto_mode11 mode11("nim", ku, per, trial);
-			mode11.main_task();
-			MatchUp_Count = mode11.Get_MatchUp_Num();
 		}
 	}
 	//csv統合
@@ -137,10 +137,14 @@ int main(int argc, char *argv[])
 	}
 	//テスト
 	else if (mode == 4) {
-		Match match(method, 0, trial, ku, per);
-		match.evaluation();
+		Coans_exp exp;
+		for (int t = 0; t < TRIAL; t++) {
+			exp.main_task("nim", method, KU, PER, t);
+		}
 	}
 	else if (mode == 5) {
+		Match match(method, 0, trial, KU, PER);
+		match.evaluation();
 	}
 
 	const clock_t End_Main = clock();

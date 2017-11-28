@@ -59,13 +59,10 @@ bool p_data::input_stra(const std::string fname)
 	//std::cout << fname << std::endl;
 	int count = 0;
 	int tmp;
-	while (fin >> tmp) {
-		stra.push_back(tmp);
-	}
-
-	if (count + 1 == STRA_LEN) {
-		std::cout << "size error" << std::endl;
-		return false;
+	stra.resize(STRA_LEN);
+	while (fin >> tmp && count < STRA_LEN) {
+		stra[count] = tmp;
+		count++;
 	}
 	return true;
 }
@@ -76,11 +73,14 @@ bool p_data::output_stra(const std::string fname)
 		std::cout << "出力ファイルをオープンできません :" << fname << std::endl;
 		return false;
 	}
-	if (stra_len == 0) {
+	int stra_size = int(stra.size());
+	if (stra_size == 0) {
 		std::cout << "戦略が空です" << std::endl;
 		return false;
 	}
-	for (int i = 0; i < stra_len; i++) {
+	//std::cout << fname << std::endl;
+	//show_vec_1(stra);
+	for (int i = 0; i < stra_size; i++) {
 		fout << stra[i] << " ";
 	}
 	return true;
