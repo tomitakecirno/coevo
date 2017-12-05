@@ -34,7 +34,7 @@
 #define PER		200	//世代数
 #define K		2	//クラスタ数
 #define PARENT	5	//親の数
-#define CHILD	50	//子供の数
+#define CHILD	100	//子供の数
 #define LLL		1
 
 #define RIVAL 1		//対戦相手の対戦回数

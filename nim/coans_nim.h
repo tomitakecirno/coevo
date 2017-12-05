@@ -236,8 +236,7 @@ void Coans_base::cal_best(int g)
 		for (int j = i; j < KO; j++) {
 			//1‰ñ–Ú
 			double value;
-			nim2.input_stra_first(pop[i].stra);	//æŽè
-			nim2.input_stra_last(pop[j].stra);	//ŒãŽè
+			nim2.input_stra(pop[i].stra, pop[j].stra);
 			value = nim2.nim_game(0);
 			if (value == 1) {
 				pop[i].Result[j] += WIN_FIRST;
@@ -246,8 +245,7 @@ void Coans_base::cal_best(int g)
 				pop[j].Result[i] += WIN_LAST;
 			}
 			//æŽèŒãŽè‚ð“ü‚ê‘Ö‚¦‚Ä2‰ñ–Ú
-			nim2.input_stra_first(pop[j].stra);		//æŽè
-			nim2.input_stra_last(pop[i].stra);		//ŒãŽè
+			nim2.input_stra(pop[j].stra, pop[i].stra);
 			value = nim2.nim_game(1);
 			if (value == 0) {
 				pop[i].Result[j] += WIN_LAST;
@@ -378,13 +376,11 @@ void Coans::main_task()
 				for (int j = 0; j < opp_num; j++) {
 					//std::cout << "(c,r) = " << "(" << i << "," << j << ")" << std::endl;
 					//1‰ñ–Ú
-					nim.input_stra_first(child[i].stra);	//æŽè
-					nim.input_stra_last(opp[j].stra);		//ŒãŽè
+					nim.input_stra(child[i].stra, opp[j].stra);	//æŽè
 					child[i].Result[j] += nim.nim_game(0)*WIN_FIRST;
 					machup++;
 					//æŽèŒãŽè‚ð“ü‚ê‘Ö‚¦‚Ä2‰ñ–Ú
-					nim.input_stra_first(opp[j].stra);		//æŽè
-					nim.input_stra_last(child[i].stra);		//ŒãŽè
+					nim.input_stra(opp[j].stra, child[i].stra);	//æŽè
 					child[i].Result[j] += nim.nim_game(1)*WIN_LAST;
 					machup++;
 				}

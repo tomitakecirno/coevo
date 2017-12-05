@@ -6,7 +6,6 @@
 #include "nim.h"
 #include "coans_nim.h"
 #include "coansmodule_nim.hpp"
-#include "Floreano_nim.h"
 #include "matchmethods_nim.h"
 
 
@@ -94,15 +93,8 @@ int main(int argc, char *argv[])
 	__int64 MatchUp_Count = 0;
 
 	const clock_t Start_Main = clock();
-	//実験用対戦相手学習
-	if (mode == 0) {
-		for (int t = 0; t < F_TRIAL; t++) {
-			floreano flore(t);
-			flore.main_task();
-		}
-	}
 	//学習で記録したデータをもとに実際に対戦
-	else if (mode == 1) {
+	if (mode == 1) {
 		Match Match(method, 0, trial, ku, per);
 		for (int t = 0; t < ENEMY; t++) {
 			Match.main_task(t);

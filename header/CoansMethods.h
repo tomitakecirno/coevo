@@ -89,7 +89,7 @@ void Coans::Coans_Tasks(int Trial)
 	Output_stra(0);
 	std::cout << "Strategy0..." << std::endl;
 
-	for (int Gene_Loop = 1; Gene_Loop < Gene+1; Gene_Loop++) {
+	for (int Gene_Loop = 1; Gene_Loop < Gene + 1; Gene_Loop++) {
 		Loop_Time_Start = clock();
 		std::cout << Method_Num << ":" << Trial << ":" << Cru_K << ":" << Gene_Loop;
 		std::cout << "  |  ";
@@ -106,7 +106,7 @@ void Coans::Coans_Tasks(int Trial)
 			if (Pop[MainParent].List1.empty()) {
 				break;
 			}
-			tmpIndex = GetRand_Int( int(Pop[MainParent].List1.size()) );
+			tmpIndex = GetRand_Int(int(Pop[MainParent].List1.size()));
 			tmpSub = Pop[MainParent].List1[tmpIndex];
 			SubParent.push_back(tmpSub); //要素を追加
 			Pop[MainParent].List1.erase(Pop[MainParent].List1.begin() + tmpIndex); //追加した要素を削除
@@ -114,8 +114,7 @@ void Coans::Coans_Tasks(int Trial)
 		//副親があれば以下の処理を行う
 		if (!SubParent.empty()) {
 			//子個体生成
-			Child.resize(child + 1);
-			int child_size = int(Child.size());
+			Child.resize(CHILD + 1);
 			std::cout << "3" << ',';
 			//拡張XLM
 			Child[0] = Pop[MainParent];
@@ -130,13 +129,14 @@ void Coans::Coans_Tasks(int Trial)
 			int opponentLength = int(Opponent.size());
 
 			for (int i = 0; i < opponentLength; i++) {
-				Opponent[i].Result.resize(child_size);
+				Opponent[i].Result.resize(CHILD + 1);
 			}
-			for (int i = 0; i < child_size; i++) {
+			for (int i = 0; i < CHILD + 1; i++) {
 				Child[i].Result.resize(opponentLength);
 			}
 			//ここで対戦
-			for (int r = 0; r < opponentLength; r++) {//相手ループ
+			const double time_start = clock();
+			for (int r = 0; r < 1; r++) {//相手ループ
 				StrategySet_T(Opponent[r]);
 				for (int c = 0; c < CHILD + 1; c++) {//集団ループ
 					StrategySet_M(Child[c]);
@@ -145,6 +145,10 @@ void Coans::Coans_Tasks(int Trial)
 					Return_Re(c, r);
 				}
 			}
+			const double time_end = clock();
+			const double time = time_end - time_start;
+			std::cout << std::endl << "対戦回数 : " << Machup_Num << std::endl;
+			std::cout << "対戦時間 : " << time / CLOCKS_PER_SEC << "[sec]" << std::endl;
 			std::cout << "6" << ',';
 			//適応度計算
 			Cal_Fitness();
@@ -161,11 +165,13 @@ void Coans::Coans_Tasks(int Trial)
 				Output_stra(Gene_Loop / Per);
 			}
 			std::cout << "8";
+			/*
 			std::cout << "  [";
 			for (int c = 0; c < CHILD + 1; c++) {
 				std::cout << Child[c].eval << ",";
 			}
 			std::cout << "]" << std::endl;
+			*/
 			//集団の解以外初期化
 			for (int i = 0; i < Pop_n; i++) {
 				Pop[i].Init();

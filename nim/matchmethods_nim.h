@@ -67,8 +67,7 @@ void Match::PvP(int Opp_Trial, int g)
 
 			//1‰ñ–Ú
 			double value;
-			nim.input_stra_first(pop.stra);	//æè
-			nim.input_stra_last(opp.stra);	//Œãè
+			nim.input_stra(pop.stra, opp.stra);	//æè
 			value = nim.nim_game(0);
 			if (0 < value) {
 				pop.Result[ai_opp] += 1;
@@ -80,8 +79,7 @@ void Match::PvP(int Opp_Trial, int g)
 				pop.Result[ai_opp] += 0;
 			}
 			//æèŒãè‚ğ“ü‚ê‘Ö‚¦‚Ä2‰ñ–Ú
-			nim.input_stra_first(opp.stra);	//æè
-			nim.input_stra_last(pop.stra);	//Œãè
+			nim.input_stra(opp.stra, pop.stra);	//æè
 			value = nim.nim_game(1);
 			if (0 < value) {
 				pop.Result[ai_opp] += 1;
@@ -143,7 +141,7 @@ void Match::evaluation()
 			}
 			//std::cout << "pop_stra:";
 			//show_vec_1(pop.stra);
-			nim.input_stra_first(pop.stra);
+			//nim.input_stra_first(pop.stra);
 			result_total[f][t] = nim.nim_evaluation()*100;
 			std::cout << "result :" << result_total[f][t] << std::endl;
 		}

@@ -7,6 +7,7 @@
 #include "config_nim.hpp"
 #include "player_nim.h"
 #include "../header/Usual_Methods.hpp"
+#include "NeuralNetwork.hpp"
 
 class nim {
 public:
@@ -27,11 +28,7 @@ public:
 	}
 	double nim_game(const int turn);
 	double nim_evaluation();
-	void input_stra_first(const std::vector<int> &pop);
-	void input_stra_last(const std::vector<int> &opp);
-	void output_stra_first(std::vector<int> &pop);
-	void output_stra_last(std::vector<int> &pop);
-	void cal_and(const std::vector<int> &binary1, const std::vector<int> &binary2, std::vector<int> &binary3);
+	void input_stra(const std::vector<double> &pop, const std::vector<double> &opp);
 protected:
 	int mode;
 	int nim_n;	//山の数
@@ -42,19 +39,18 @@ protected:
 	std::vector<int> nim_status_vec; //0:遷移不可能 1:遷移可能 2:現在の状態
 	std::vector<int> opt;			 //最適解
 
-	std::vector<int> pop_stra;
-	std::vector<int> opp_stra;
+	std::vector<double> pop_stra;
+	std::vector<double> opp_stra;
 
 	void Init_mont();
 	int cal_index(const int a, const int b, const int c);
 	void cal_binary_vec(const int n, std::vector<int> &input); //10進数を2進数のベクターに変換する
 	void cal_xor_vec(std::vector<int> &one, std::vector<int> &ano, std::vector<int> &vec); //ベクター同士の排他的論理和
-	void cal_optimal(); //最適解を求める
 	void cal_move_vec();
 	int cal_nimsum();
 	void generate_mont(int a, int b, int c, std::vector<std::vector<int>> &mont);
 	bool update_mont(int index); //戦略情報から山の状態を更新する
-	int choose_stra(std::vector<int> &stra);
+	int choose_stra(std::vector<double> &stra);
 	void show_mont();
 };
 //0:プレイヤー先手，1:プレイヤー後手
@@ -229,27 +225,6 @@ void nim::cal_xor_vec(std::vector<int> &one, std::vector<int> &ano, std::vector<
 		}
 	}
 }
-void nim::cal_optimal()
-{
-	opt.assign(stra_len,0);
-	for (int i = 0; i < POLL1 + 1; i++) {
-		for (int j = 0; j < POLL2 + 1; j++) {
-			for (int k = 0; k < POLL3 + 1; k++) {
-				nim_status = { i,j,k };
-				int num_sum = cal_nimsum();
-				if (num_sum == 0) {
-					int index = i * (POLL2*POLL3) + j * POLL3 + k * 1; //最適解に加える
-					if (stra_len < index) {
-						std::cout << "戦略のサイズを超えています : index = " << index << std::endl;
-						exit(EXIT_FAILURE);
-					}
-					opt[index] = 1;
-				}
-			}
-		}
-	}
-//	show_vec_1(opt);
-}
 int nim::cal_nimsum() 
 {
 	std::vector<std::vector<int>> mont_vec(NIM);
@@ -292,22 +267,6 @@ void nim::cal_move_vec()
 	nim_status_vec[index] = 2;
 	//show_vec_1(nim_status_vec);
 }
-void nim::cal_and(const std::vector<int> &binary1, const std::vector<int> &binary2, std::vector<int> &binary3) 
-{
-	int bina = 0;
-	for (int i = 0; i < STRA_LEN; i++)
-	{
-		const int sum = binary1[i] + binary2[i] + bina;
-		binary3[i] = sum % 2;
-		if (sum == 2) {
-			bina = 1;
-		}
-		else {
-			bina = 0;
-		}
-		
-	}
-}
 void nim::generate_mont(int a, int b, int c, std::vector<std::vector<int>> &mont) 
 {
 	std::vector<int> tmp_nim_status = { a,b,c };
@@ -322,7 +281,7 @@ void nim::generate_mont(int a, int b, int c, std::vector<std::vector<int>> &mont
 	}
 	show_vec_2(mont);
 }
-int nim::choose_stra(std::vector<int> &stra) {
+int nim::choose_stra(std::vector<double> &stra) {
 	if (stra.empty()) {
 		std::cout << "戦略が空です : choose_stra" << std::endl;
 		exit(EXIT_FAILURE);
@@ -394,21 +353,50 @@ int nim::choose_stra(std::vector<int> &stra) {
 	}
 	return index;
 }
-void nim::input_stra_first(const std::vector<int> &pop) 
+void nim::input_stra(const std::vector<double> &pop, const std::vector<double> &opp)
 {
-	pop_stra = pop;
-}
-void nim::output_stra_first(std::vector<int> &pop)
-{ 
-	pop = pop_stra;
-}
-void nim::input_stra_last(const std::vector<int> &opp) 
-{
-	opp_stra = opp;
-}
-void nim::output_stra_last(std::vector<int> &opp)
-{
-	opp = opp_stra;
+	NN::NeuralNetwork<9, 10, 1> nn_pop;
+	NN::NeuralNetwork<9, 10, 1> nn_opp;
+
+	Eigen::VectorXd vec;
+	
+	vec = Eigen::STL2Vec(pop);
+	nn_pop.setWeight(vec); //重みセット
+
+	vec = Eigen::STL2Vec(opp);
+	nn_opp.setWeight(vec); //重みセット
+
+	std::vector<int> poll1(3);
+	std::vector<int> poll2(3);
+	std::vector<int> poll3(3);
+
+	std::vector<int> input_vec(9);
+	pop_stra.resize(STRA_LEN);
+	opp_stra.resize(STRA_LEN);
+
+	int len = 0;
+	for (int i = 0; i < POLL3; i++) {
+		cal_binary_vec(i, poll3);
+
+		for (int j = 0; j < POLL2; j++) {
+			cal_binary_vec(j, poll2);
+
+			for (int k = 0; k < POLL1; k++, len++) {
+				cal_binary_vec(k, poll1);
+
+				for (int l = 0; l < 3; l++) {
+					input_vec[l + 0] = poll1[l];
+					input_vec[l + 3] = poll2[l];
+					input_vec[l + 6] = poll3[l];
+				}
+				nn_pop.setInput(input_vec); //入力
+				nn_opp.setInput(input_vec); //入力
+
+				pop_stra[len] = nn_pop.getOutPut(); //出力
+				opp_stra[len] = nn_opp.getOutPut(); //出力
+			}
+		}
+	}
 }
 void nim::show_mont()
 {

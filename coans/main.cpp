@@ -53,14 +53,15 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		argv[6]:child
 		argv[7]:nitch parameter
 		*/
-	Main_Mode = atoi(__argv[1]);
+	Main_Mode = 2;
+	//Main_Mode = atoi(__argv[1]);
 	
 	if (Main_Mode == 1 || Main_Mode == 2 || Main_Mode == 4) {
 		switch (__argc) {
 		case 1:
 			//Debug mode
 			Main_Method = 2;
-			Main_KU		= 20;
+			Main_KU		= 1;
 			Main_Trial	= 0;
 			Main_PARENT = 4;
 			Main_CHILD	= 10;
@@ -77,7 +78,7 @@ int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmd
 		default:
 			break;
 		}
-		Main_PER = Main_KU / 10;
+		//Main_PER = Main_KU / 10;
 		if (Main_Mode == 1) {
 			std::cout << "ƒ‚[ƒh:‘Îí" << std::endl;
 		}
