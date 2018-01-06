@@ -142,7 +142,7 @@ void Match::evaluation()
 			//std::cout << "pop_stra:";
 			//show_vec_1(pop.stra);
 			//nim.input_stra_first(pop.stra);
-			result_total[f][t] = nim.nim_evaluation()*100;
+			result_total[f][t] = nim.nim_evaluation(pop.stra)*100;
 			std::cout << "result :" << result_total[f][t] << std::endl;
 		}
 		const double end = clock();
@@ -188,7 +188,7 @@ bool Match::output_ni_csv()
 		}
 
 		//í—ªŠÔ‹——£
-		std::vector<int> stra_0;
+		std::vector<double> stra_0;
 		p_data pop;
 		int stra_len = (POLL1 + 1)*(POLL2 + 1)*(POLL3 + 1);
 		stra_0.assign(stra_len, 0);
@@ -202,7 +202,7 @@ bool Match::output_ni_csv()
 			sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method_pop, trial_pop, gene, i);
 			pop.input_stra(fname);
 
-			pop_dis[tmp_nitch][tmp_index] = cal_haming(pop.stra, stra_0);
+			pop_dis[tmp_nitch][tmp_index] = cal_euclidean(pop.stra, stra_0);
 			index[tmp_nitch]++;
 		}
 		sprintf_s(fname, "./csv/%d/Distance_nitch_%d_%d_%d(%d).csv", method_pop, method_pop, trial_pop, g*per, gene);

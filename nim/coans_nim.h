@@ -15,6 +15,7 @@ CoansMode4	前手法：前評価方法
 #include "coansmodule_nim.hpp"
 #include "nim.h"
 #include "../header/Usual_Methods.hpp"
+#include "CrusteringMethod_nim.h"
 
 #define TIME_PER 100
 
@@ -40,8 +41,7 @@ protected:
 	std::vector<playerNim> child;
 	std::vector<playerNim> opp;
 
-	void Choice_Best_Index(std::vector<int> &index_vec); //一番良い個体のインデックスを返す
-	void sub_servive(const std::vector<int> subpare, std::vector<int> &index_vec);
+	int Choice_Best_Index(); //一番良い個体のインデックスを返す
 
 	//実験用
 	std::vector<std::vector<int>> cr_p;
@@ -49,6 +49,7 @@ protected:
 	void output_stra(int g);
 	void output_cr_pop();
 	void cal_best(int g);
+	void cal_rate();
 };
 __int64 Coans_base::Get_MatchUp_Num() {
 	return machup;
@@ -166,64 +167,38 @@ void Coans_base::output_cr_pop()
 	}
 	std::cout << "ccr_pop csv done..." << std::endl;
 }
-void Coans_base::Choice_Best_Index(std::vector<int> &index_vec)
+int Coans_base::Choice_Best_Index()
 {
-	std::vector<double> tmp_eval(CHILD);
-	int index_size = int(index_vec.size());
+	const int child_len = int(child.size());
+	std::vector<double> tmp_eval(child_len);
+	//const int index_size = int(index_vec.size());
 
 	//一旦格納
-	for (int i = 0; i < CHILD; i++) {
+	for (int i = 0; i < child_len; i++) {
 		tmp_eval[i] = child[i].eval;
 	}
-	for (int i = 0; i < index_size; i++) {
-		int index = 0;
-		auto max = max_element(tmp_eval.begin() + 1, tmp_eval.end());
-		//主親(index = 0)より評価値の高い個体がいれば改善
-		//同じ評価地の個体が複数ある場合はランダム
-		int count = int(std::count(tmp_eval.begin() + 1, tmp_eval.end(), *max));
-		//cout << "count_Num:" << count_Num << endl;
-		if (count) {
-			if (count == 1) {
-				//インデックスを取得
-				index = int(std::distance(tmp_eval.begin(), max));
-			}
-			else if (1 < count) {
-				std::vector<int> tmp_index(count);
-				auto index_t = tmp_eval.begin();
-
-				for (int j = 0; j < count; j++) {
-					index_t = std::find(index_t + 1, tmp_eval.end(), *max);
-					tmp_index[j] = int(std::distance(tmp_eval.begin(), index_t));
-				}
-				const int rand = GetRand_Int(count);
-				const int index = tmp_index[rand];
-			}
-		}
-		index_vec[i] = index;
-		tmp_eval[index] = -10000;
+	auto max = max_element(tmp_eval.begin() + 1, tmp_eval.end());
+	int index;
+	//主親(index = 0)より評価値の高い個体がいれば改善
+	//同じ評価地の個体が複数ある場合はランダム
+	const int count = int(std::count(tmp_eval.begin() + 1, tmp_eval.end(), *max));
+	//cout << "count_Num:" << count_Num << endl;
+	if (count == 1) {
+		//インデックスを取得
+		index = int(std::distance(tmp_eval.begin(), max));
 	}
-}
-void Coans_base::sub_servive(const std::vector<int> subpare, std::vector<int> &index_vec)
-{
-	const int index_size = int(index_vec.size());
-	const int sub_size = int(subpare.size());
+	else if (1 < count) {
+		std::vector<int> tmp_index(count);
+		auto index_t = tmp_eval.begin();
 
-	for (int i = 1; i < index_size; i++) {
-
-		int child_index = index_vec[i];
-		std::vector<double> dis(sub_size);
-
-		for (int j = 0; j < sub_size; j++) {
-			const int sub_index = subpare[j];
-			dis[j] = cal_haming(pop[sub_index].stra, child[child_index].stra);
+		for (int j = 0; j < count; j++) {
+			index_t = std::find(index_t + 1, tmp_eval.end(), *max);
+			tmp_index[j] = int(std::distance(tmp_eval.begin(), index_t));
 		}
-
-		auto min = min_element(dis.begin(), dis.end());
-		int min_index = int(std::distance(dis.begin(), min));
-		if (pop[subpare[min_index]].eval < child[child_index].eval) {
-			pop[subpare[min_index]] = child[child_index];
-		}
+		const int rand = GetRand_Int(count);
+		index = tmp_index[rand];
 	}
+	return index;
 }
 void Coans_base::cal_best(int g) 
 {
@@ -256,21 +231,29 @@ void Coans_base::cal_best(int g)
 		}
 	}
 	for (int i = 0; i < KO; i++) {
-		sum_eval[i] = std::accumulate(pop[i].Result.begin(), pop[i].Result.end(), 0.0);
+		pop[i].cal_fitness();
+		sum_eval[i] = pop[i].eval;
 	}
-	//show_vec_1(sum_eval);
-	auto max_t = max_element(sum_eval.begin(), sum_eval.end());
+	const auto max_t = max_element(sum_eval.begin(), sum_eval.end());
 	const int max_index = int(std::distance(sum_eval.begin(), max_t));
 	char max_name[50];
 	sprintf_s(max_name, "./nim/%d/%d/%d/best.dat", method, trial, g);
 	pop[max_index].output_stra(max_name);
-
-	std::cout << "　best written ... " << std::endl;
-	//show_vec_1(pop[max_index].stra);
-	//p_data opp;
-	//opp.input_stra(max_name);
-	//show_vec_1(opp.stra);
-	//exit(0);
+	nim2.nim_evaluation(pop[max_index].stra);
+}
+void Coans_base::cal_rate() 
+{
+	nim nim2(1);
+	std::vector<double> sum_eval(KO);
+	for (int i = 0; i < KO; i++) {
+		sum_eval[i] = nim2.nim_evaluation(pop[i].stra)*100;
+	}
+	const auto max = max_element(sum_eval.begin(), sum_eval.end());
+	const auto min = min_element(sum_eval.begin(), sum_eval.end());
+	const double ave = std::accumulate(sum_eval.begin(), sum_eval.end(), 0.0)/KO;
+	std::cout << "　max currect : " << *max << " %" << std::endl;
+	std::cout << "　min currect : " << *min << " %" << std::endl;
+	std::cout << "　ave currect : " << ave << " %" << std::endl;
 }
 
 class Coans : public Coans_base{
@@ -280,7 +263,6 @@ public :
 private:
 	virtual void Crustering() = 0;
 	virtual void Generate_Opp() = 0;
-	virtual void child_select(int main, const std::vector<int> &sub) = 0;
 protected :
 	void Crustering1();
 	void Crustering2();
@@ -299,137 +281,108 @@ void Coans::main_task()
 	std::cout << "子個体数:" << PARENT << std::endl;
 	std::cout << "親個体数:" << CHILD << std::endl;
 
-	//集団宣言
-	pop.resize(KO);
-	init_genrand((unsigned)time(NULL)); /*乱数初期化*/
-
 	//集団初期化
+	pop.resize(KO);
 	for (int i = 0; i < KO; i++) {
 		pop[i].Init_pn();
 		pop[i].Init_stra();
 	}
 	std::cout << pop[0].stra.size() << std::endl;
-	cr_p.resize(gene / per);
+
 	cr_p = std::vector<std::vector<int>>(gene / per + 1, std::vector<int>(KO, 0));
-
 	nim nim(2); //ニムのクラス定義
-	//Csv_exp csv_exp(dir, method, trial, gene, per);
 
-	//任意の世代数ループ
-	//Crustering();
-	int Loop_Time_Start, Loop_Time_End, Loop_Time;
 	std::cout << "Initiarized..." << std::endl;
 	output_stra(0);
+	cal_rate();
 	std::cout << "Strategy0..." << std::endl;
 
-	Loop_Time_Start = clock();
 	machup = 0;
 	int machup_index = 1;
+	double loop_start = clock();
+
 	for (int Gene_Loop = 1; Gene_Loop < gene + 1; Gene_Loop++) {
-		if (Gene_Loop % TIME_PER == 0) {
-			std::cout << method << ":" << trial << ":" << Gene_Loop << std::endl;
-		}
-		//std::cout << "1" << ',';
+
 		Crustering(); //クラスタリング。手法によって変わる
 
-		//実験用 : csvでニッチを出力
-		if (Gene_Loop % per == 0) {
-			if (method == 2) {
-				for (int i = 0; i < KO; i++) {
-					cr_p[Gene_Loop / per][i] = pop[i].nitch;
-				}
-			}
-		}
-
-		//std::cout << "2" << ',';
 		//主親選ぶ
-		const int main_pare = GetRand_Int(KO);
-		//副親を選ぶ
+		const int main = GetRand_Int(KO);
 
 		//副親があれば以下の処理を行う
-		if (pop[main_pare].List1.empty()) {
+		if (pop[main].List1.empty()) {
 			std::cout << "list1が空です main_tasks" << std::endl;
 			exit(EXIT_FAILURE);
 		}
 		else  {
-			//子個体生成
-			std::vector<int> sub_pare;
-			sub_pare = pop[main_pare].List1;
-			child.resize(CHILD + 1);
-			//std::cout << "3" << ',';
+			std::vector<int> sub(PARENT);
+			std::vector<int> tmp_list = pop[main].List1;
 
-			//拡張XLM
-			child[0] = pop[main_pare];
-			binaryEXLM(main_pare, sub_pare, pop, child);
-
-			//std::cout << "4" << ',';
-			Generate_Opp(); //対戦相手の個体を選ぶ
-
-			//std::cout << "5" << ',';
-			if (Gene_Loop % TIME_PER == 0) {
-				std::cout << "　opp_num = " << opp_num << std::endl;
+			for (int i = 0; i < PARENT; i++) {
+				const int index = GetRand_Int(int(tmp_list.size()));
+				sub[i] = tmp_list[index];
+				tmp_list.erase(tmp_list.begin() + index);
 			}
+
+			child.resize(CHILD + 1);
+			//拡張XLM
+			child[0] = pop[main];
+			ExtensionXLM(main, sub, pop, child);
+
+			Generate_Opp(); //対戦相手の個体を選ぶ
 
 			//ここで対戦
 			for (int i = 0; i < CHILD + 1; i++) {
 				child[i].Result.assign(opp_num, 0);
-				for (int j = 0; j < opp_num; j++) {
+				for (int j = 0; j < opp_num; j++, machup += 2) {
 					//std::cout << "(c,r) = " << "(" << i << "," << j << ")" << std::endl;
 					//1回目
 					nim.input_stra(child[i].stra, opp[j].stra);	//先手
 					child[i].Result[j] += nim.nim_game(0)*WIN_FIRST;
-					machup++;
 					//先手後手を入れ替えて2回目
 					nim.input_stra(opp[j].stra, child[i].stra);	//先手
 					child[i].Result[j] += nim.nim_game(1)*WIN_LAST;
-					machup++;
 				}
 			}
-
-			//std::cout << "6" << ',';
 			//適応度計算
 			for (int i = 0; i < CHILD + 1; i++) {
 				child[i].cal_fitness();
 			}
-			//std::cout << "7" << ',';
 			//Best個体を集団へ
-			child_select(main_pare, sub_pare);
-
+			const int index = Choice_Best_Index();
+			if (WIN_RATE <= (child[index].eval/opp_num)*100 ) {
+				pop[main] = child[index];
+			}
 			//実験用 : 戦略書き出し
 			if ( BATTLE_PER*machup_index < machup ) {
-				//std::cout << "10" << ',';
+				const double loop_end = clock();
+				printf("%d:%d:%d/%d:%I64d　...%d[sec]\n", method, trial, Gene_Loop, KU, machup, int((loop_end - loop_start) / CLOCKS_PER_SEC));
+
 				output_stra(machup_index);
 				cal_best(machup_index);
-				std::cout << "　output strategies : " << machup_index << std::endl;
-				std::cout << "　mach_up : " << machup << std::endl;
+				cal_rate();
 				machup_index++;
+				loop_start = clock();
 			}
-			//std::cout << "8";
 			//集団の解以外初期化
 			for (int i = 0; i < KO; i++) {
 				pop[i].Init_pn();
 			}
 		}
-		if (Gene_Loop % TIME_PER == 0) {
-			Loop_Time_End = clock();
-			Loop_Time = (Loop_Time_End - Loop_Time_Start);
-			std::cout << "　Time per gene : " << Loop_Time/CLOCKS_PER_SEC << " [sec]" << std::endl;
-			Loop_Time_Start = clock();
-		}
-	}
-	if (method == 2) {
-		output_cr_pop();
 	}
 }
 void Coans::Crustering1() {
 	//近傍リスト生成＆クラスタ番号割り振り
-	MakeList(pop, K_List1, K_List2, 0);
+	MakeList(pop, K_List1, 0, 0);
+	/*
 	cr_num = 1;
 	for (int i = 0; i < KO; i++) {
 		if (SetNitch(cr_num, i, pop) == 1) {
 			cr_num++;
 		}
 	}
+	*/
+	Cru_Upgma(pop);
+	cr_num = K_UPGMA;
 }
 void Coans::Crustering2() {
 	//近傍リスト生成
@@ -467,13 +420,11 @@ public:
 		trial = t;
 		machup = 0;					//対戦回数
 		cru_k = k;						//クラスタリングパラメーター
-		sel_child = 1;
 	}
 private:
 	//クラスタリングに使うパラメーター
 	virtual void Crustering();
 	virtual void Generate_Opp();
-	virtual void child_select(int main, const std::vector<int> &sub);
 };
 void coans_mode2::Crustering() {
 	//近傍リスト生成
@@ -485,12 +436,6 @@ void coans_mode2::Generate_Opp()
 {
 	Generate_Opp_per();
 }
-void coans_mode2::child_select(int main, const std::vector<int> &sub)
-{
-	std::vector<int> index_vec(sel_child);
-	Choice_Best_Index(index_vec);
-	pop[main] = child[index_vec[0]];
-}
 
 /*
 	method3
@@ -498,6 +443,7 @@ void coans_mode2::child_select(int main, const std::vector<int> &sub)
 	対戦相手	:集団全体
 	評価		:ニムの評価に基づく
 */
+
 class coans_mode3 : public Coans {
 public:
 	coans_mode3(std::string str, int g, int g_p, int t, int k = 0) {
@@ -508,92 +454,340 @@ public:
 		trial = t;
 		machup = 0;					//対戦回数
 		cru_k = k;						//クラスタリングパラメーター
-		sel_child = 1;
 	}
 private:
 	//クラスタリングに使うパラメーター
 	virtual void Crustering();
 	virtual void Generate_Opp();
-	virtual void child_select(int main, const std::vector<int> &sub);
 };
 void coans_mode3::Crustering() {
 	//近傍リスト生成
-	//MakeList(Pop, true, false, false);
+	MakeList(pop, K_List1, false, false);
 	//クラスタ番号割り振り
-	Crustering1();
+	//Crustering1();
 }
 void coans_mode3::Generate_Opp()
 {
 	Generate_Opp_all();
 }
-void coans_mode3::child_select(int main, const std::vector<int> &sub)
-{
-	std::vector<int> index_vec(sel_child);
-	Choice_Best_Index(index_vec);
-	pop[main] = child[index_vec[0]];
-}
 
-/*
-method3
-主親		:ランダム
-対戦相手	:集団全体
-評価		:ニムの評価に基づく
-*/
-class coans_mode4 : public Coans {
+class Coans_s : public Coans_base {
+	//公開メンバ
 public:
-	coans_mode4(std::string str, int g, int g_p, int t, int k = 0) {
-		dir = str;
-		method = 3;
-		gene = g;						//世代数
-		per = g_p;						//間隔
-		trial = t;
-		machup = 0;					//対戦回数
-		cru_k = k;						//クラスタリングパラメーター
-		sel_child = K_List1;
-	}
+	void main_task(); 	//手法のメインルーチン
+	void exp_upgma();
 private:
-	//クラスタリングに使うパラメーター
-	virtual void Crustering();
-	virtual void Generate_Opp();
-	virtual void child_select(int main, const std::vector<int> &sub);
-};
-void coans_mode4::Crustering() {
-	//近傍リスト生成
-	//MakeList(Pop, true, false, false);
-	//クラスタ番号割り振り
-	Crustering1();
-}
-void coans_mode4::Generate_Opp()
-{
-	Generate_Opp_all();
-}
-void coans_mode4::child_select(int main, const std::vector<int> &sub)
-{
-	std::vector<int> index_vec(sel_child);
-	Choice_Best_Index(index_vec);
-	pop[main] = child[index_vec[0]];
-	sub_servive(sub, index_vec);
-}
+	virtual void Crustering() = 0;
+	virtual void Generate_Opp() = 0;
+protected:
+	std::vector<playerNim> local_s;
 
-//全数対戦のみ
-class Coans_exp : public Coans_base {
-public:
-	void main_task(std::string str, int m, int g, int g_p, int t);
+	void child2sub(const std::vector<int> &subpare, const std::vector<playerNim> &child);
+	void create_pop();
+	void create_pop_with_sol();
+	void cal_fitness_alfa(std::vector<int>& sub, std::vector<playerNim>& child);
+	int get_best();
+	double cal_dispersion(const std::vector<int> &index);
+	void ans_nitch();
 };
-void Coans_exp::main_task(std::string str, int m, int g, int g_p, int t) 
-{
-	dir = str;
-	method = m;
-	gene = g;						//世代数
-	per = g_p;						//間隔
-	trial = t;
-	machup = 0;					//対戦回数
+void Coans_s::main_task() {
+	std::cout << "手法:" << method << std::endl;
+	std::cout << "世代数:" << gene << std::endl;
+	std::cout << "試行回数:" << trial << std::endl;
+	std::cout << "集団個体数:" << KO << std::endl;
+	std::cout << "子個体数:" << CHILD << std::endl;
+	int save_index = 0;
+	for (int cycle1 = 0; cycle1 < CYCLE; cycle1++) {
+		std::cout << "reboot" << std::endl;
+		if (!local_s.empty()) {
+			create_pop_with_sol();
+		}
+		else {
+			create_pop();
+		}
+		cal_rate();
+
+		machup = 0;
+		int machup_index = 1;
+
+		output_stra(save_index);
+		double loop_start = clock();
+		while (machup < END_GA) {
+			Crustering(); //クラスタリング
+			//主親
+			const int main = GetRand_Int(KO);
+			//副親があれば以下の処理を行う
+			if (pop[main].List1.empty()) {
+				std::cout << "list1が空です main_tasks" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			else {
+				std::vector<int> sub(PARENT);
+				std::vector<int> tmp_list1;
+				tmp_list1 = pop[main].List1;
+				for (int i = 0; i < PARENT; i++) {
+					const int index = GetRand_Int(int(tmp_list1.size()));
+					sub[i] = tmp_list1[index];
+					tmp_list1.erase(tmp_list1.begin() + index);
+				}
+
+				child.resize(CHILD + 1);
+				//拡張XLM
+				child[0] = pop[main];
+				ExtensionXLM(main, sub, pop, child);
+				//EXLM_S(main, sub, pop, child);
+				Generate_Opp(); //対戦相手の個体を選ぶ
+
+				nim nim(2); //ニムのクラス定義
+				for (int c = 0; c < CHILD + 1; c++) {
+					child[c].Result.assign(opp_num, 0);
+				}
+				for (auto &pi : sub) {
+					pop[pi].Result.assign(opp_num, 0);
+				}
+				for (int i = 0; i < opp_num; i++) {
+					for (int c = 0; c < CHILD + 1; c++, machup += 2) {
+						//std::cout << "(c,r) = " << "(" << i << "," << j << ")" << std::endl;
+						//1回目
+						nim.input_stra(child[c].stra, opp[i].stra);	//先手
+						child[c].Result[i] += nim.nim_game(0)*WIN_FIRST;
+						//先手後手を入れ替えて2回目
+						nim.input_stra(opp[i].stra, child[c].stra);	//先手
+						child[c].Result[i] += nim.nim_game(1)*WIN_LAST;
+					}
+					for (auto &pi : sub) {
+						nim.input_stra(pop[pi].stra, opp[i].stra);	//先手
+						pop[pi].Result[i] += nim.nim_game(0)*WIN_FIRST;
+						//先手後手を入れ替えて2回目
+						nim.input_stra(opp[i].stra, pop[pi].stra);	//先手
+						pop[pi].Result[i] += nim.nim_game(1)*WIN_LAST;
+						machup += 2;
+					}
+				}
+				//適応度計算
+				/*
+				for (int i = 0; i < CHILD + 1; i++) {
+					child[i].cal_fitness();
+				}
+				*/
+				cal_fitness_alfa(sub, child);
+				//Best個体を集団へ
+				const int index = Choice_Best_Index();
+				if (index != 0) {
+					if (child[0].eval < child[index].eval) {
+						pop[main] = child[index];
+					}
+				}
+				child2sub(sub, child);
+				//実験用 : 戦略書き出し
+				if (BATTLE_PER*machup_index < machup) {
+					const double loop_end = clock();
+					printf("%d:%d:%I64d/%d　...%d[sec]\n", method, trial, machup, END_GA, int((loop_end - loop_start) / CLOCKS_PER_SEC));
+					std::cout << "max rate :" << child[index].eval << std::endl;
+
+					output_stra(save_index);
+					cal_rate();
+					machup_index++;
+					save_index++;
+					loop_start = clock();
+				}
+				//集団の解以外初期化
+				for (int i = 0; i < KO; i++) {
+					pop[i].Init_pn();
+				}
+			}
+		}
+		const int max_index = get_best();
+		local_s.push_back(pop[max_index]);
+	}
 	
+}
+void Coans_s::child2sub(const std::vector<int> &subpare, const std::vector<playerNim> &child)
+{
+	for (auto &pi : subpare) {
+		std::vector<double> dis(CHILD);
+
+		for (int j = 1; j < CHILD + 1; j++) {
+			dis[j - 1] = cal_euclidean(pop[pi].stra, child[j].stra);
+		}
+		const auto min = min_element(dis.begin(), dis.end());
+		const int min_index = int(std::distance(dis.begin(), min));
+
+		if (pop[pi].eval < child[min_index + 1].eval) {
+			pop[pi] = child[min_index + 1];
+		}
+	}
+}
+void Coans_s::create_pop() 
+{
+	//戦略生成
+	std::vector<p_data> tmp_pop(KO_L);
+	for (int i = 0; i < KO_L; i++) {
+		tmp_pop[i].Init_stra();
+	}
+	//総当たりで距離を求める
+	int n = KO_L;
+	std::vector<double> dis;
+	while (KO < n) {
+		dis.resize(n*n);
+		for (int i = 0; i < n; i++) {
+			for (int j = i; j < n; j++) {
+				if (i == j) {
+					dis[i*n + j] = 10000;
+				}
+				else {
+					dis[i*n + j] = cal_euclidean(tmp_pop[i].stra, tmp_pop[j].stra);
+					dis[j*n + i] = dis[i*n + j];
+				}
+			}
+		}
+		const auto min = min_element(dis.begin(), dis.end());
+		const int index = int(std::distance(dis.begin(), min));
+		const int pair[2] = { index / n, index % n };
+		const int de_index = pair[ GetRand_Int(2) ];
+		tmp_pop.erase(tmp_pop.begin() + de_index);
+		n--;
+	}
+	std::cout << tmp_pop.size() << std::endl;
+	pop.resize(KO);
+	for (int i = 0; i < KO; i++) {
+		pop[i].stra = tmp_pop[i].stra;
+		pop[i].Init_pn();
+	}
+}
+void Coans_s::create_pop_with_sol()
+{
+	const int sol_len = int(local_s.size());
+
+	std::vector<p_data> tmp_pop(KO_L + sol_len);
+	for (int i = 0; i < KO_L; i++) {
+		tmp_pop[i].Init_stra();
+	}
+	for (int i = 0; i < sol_len; i++) {
+		tmp_pop[KO_L + i].stra = local_s[i].stra;
+	}
+
+	int n = KO_L;
+	std::vector<double> dis;
+	while (KO < n) {
+		dis.resize(n*n + sol_len*n);
+		for (int i = 0; i < n; i++) {
+			for (int j = i; j < n; j++) {
+				if (i == j) {
+					dis[i*n + j] = 10000;
+				}
+				else {
+					dis[i*n + j] = cal_euclidean(tmp_pop[i].stra, tmp_pop[j].stra);
+					dis[j*n + i] = dis[i*n + j];
+				}
+			}
+		}
+		for (int i = 0; i < sol_len; i++) {
+			for (int j = 0; j < n; j++) {
+				dis[n*n + i*j] = cal_euclidean(tmp_pop[n+i].stra, tmp_pop[j].stra);
+			}
+		}
+		const auto min = min_element(dis.begin(), dis.end());
+		const int index = int(std::distance(dis.begin(), min));
+
+		int de_index;
+		if (n*n <= index) {
+			de_index = index % n;
+		}
+		else {
+			const int pair[2] = { index / n, index % n };
+			de_index = pair[GetRand_Int(2)];
+		}
+		tmp_pop.erase(tmp_pop.begin() + de_index);
+
+		n--;
+	}
+	std::cout << tmp_pop.size() << std::endl;
+	pop.resize(KO);
+	for (int i = 0; i < KO; i++) {
+		pop[i].stra = tmp_pop[i].stra;
+		pop[i].Init_pn();
+	}
+}
+void Coans_s::cal_fitness_alfa(std::vector<int>& sub, std::vector<playerNim>& child)
+{
+	for (int i = 0; i < opp_num; i++) {
+		opp[i].cal_fitness();
+	}
+	const int child_len = int(child.size());
+	for (int i = 0; i < child_len; i++) {
+		child[i].eval = 0;
+		for (int j = 0; j < opp_num; j++) {
+			child[i].eval += child[i].Result[j] + opp[j].eval*ALFA;
+		}
+	}
+	for (auto &pi : sub) {
+		for (int j = 0; j < opp_num; j++) {
+			pop[pi].eval += pop[pi].Result[j] + opp[j].eval*ALFA;
+		}
+	}
+}
+double Coans_s::cal_dispersion(const std::vector<int> &index)
+{
+	double sum = 0;
+	for (auto &pi : index) {
+		sum += pop[pi].eval;
+	}
+
+	const double ave = sum / index.size();
+
+	double disper = 0;
+	for (auto &pi : index) {
+		double tmp_disper = (pop[pi].eval - ave) * (pop[pi].eval - ave);
+		disper += tmp_disper;
+	}
+	return disper;
+}
+int Coans_s::get_best()
+{
+	nim nim2(1);
+	for (int i = 0; i < KO; i++) {
+		pop[i].Result.assign(KO, 0);
+	}
+
+	for (int i = 0; i < KO; i++) {
+		for (int j = i; j < KO; j++) {
+			//1回目
+			double value;
+			nim2.input_stra(pop[i].stra, pop[j].stra);
+			value = nim2.nim_game(0);
+			if (value == 1) {
+				pop[i].Result[j] += WIN_FIRST;
+			}
+			else {
+				pop[j].Result[i] += WIN_LAST;
+			}
+			//先手後手を入れ替えて2回目
+			nim2.input_stra(pop[j].stra, pop[i].stra);
+			value = nim2.nim_game(1);
+			if (value == 0) {
+				pop[i].Result[j] += WIN_LAST;
+			}
+			else {
+				pop[j].Result[i] += WIN_FIRST;
+			}
+		}
+	}
+	std::vector<double> sum_eval(KO);
+	for (int i = 0; i < KO; i++) {
+		pop[i].cal_fitness();
+		sum_eval[i] = pop[i].eval;
+	}
+	const auto max_t = max_element(sum_eval.begin(), sum_eval.end());
+	const int max_index = int(std::distance(sum_eval.begin(), max_t));
+	return max_index;
+}
+void Coans_s::exp_upgma()
+{
 	int folder_num = 0;
 	char fname[50];
-	//フォルダ数を取得
 	while (1) {
-		sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method, trial, folder_num, 0);
+		sprintf_s(fname, "./nim/%d/%d/%d/0.dat", method, 0, folder_num);
 		std::ifstream ifs(fname);
 		if (ifs.fail()) {
 			break;
@@ -602,25 +796,114 @@ void Coans_exp::main_task(std::string str, int m, int g, int g_p, int t)
 			folder_num++;
 		}
 	}
+
+	std::vector<std::vector<double>> cr_ave(folder_num);
+	std::vector<std::vector<double>> cr_max(folder_num);
+	std::vector<std::vector<double>> cr_min(folder_num);
+	std::vector<std::vector<double>> cr_num(folder_num);
+	std::vector<std::vector<double>> cr_disper(folder_num);
+
+	std::cout << "folder : " << folder_num << std::endl;
+
 	pop.resize(KO);
-	//全数対戦
+	nim nim2(1);
 	for (int f = 0; f < folder_num; f++) {
-		std::cout << "trial:" << trial << "  " << "folder:" << f << std::endl;
-		double start = clock();
 		for (int i = 0; i < KO; i++) {
-			sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method, trial, f, i);
-			if (!pop[i].input_stra(fname)) {
+			char fname[50];
+			sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method, 0, f, i);
+			pop[i].input_stra(fname);
+			pop[i].Init_pn();
+			pop[i].eval = nim2.nim_evaluation(pop[i].stra) * 100;
+		}
+		std::vector<double> dis(KO);
+		for (int i = 0; i < KO; i++) {
+			dis[i] = cal_euclidean(pop[0].stra, pop[i].stra);
+		}
+		ans_nitch();
+		std::vector<int> cr_pop(KO);
+		for (int i = 0; i < KO; i++) {
+			cr_pop[i] = pop[i].nitch; //ニッチ番号
+		}
+
+		const int cr_len = *max_element(cr_pop.begin(), cr_pop.end()) - 1;
+		std::vector<int> cr_count(cr_len, 0);
+		std::vector<std::vector<int>> cr_index(cr_len);
+		std::vector<std::vector<double>> cr_eval(cr_len);
+
+		cr_ave[f].resize(cr_len);
+		cr_max[f].resize(cr_len);
+		cr_min[f].resize(cr_len);
+		cr_num[f].resize(cr_len);
+		cr_disper[f].resize(cr_len);
+
+		for (int i = 0; i < cr_len; i++) {
+			int count = int(std::count(cr_pop.begin(), cr_pop.end(), i + 1));
+			if (count == 0) {
 				exit(EXIT_FAILURE);
 			}
-		}
-		cal_best(f);
-		double end = clock();
+			cr_num[f][i] = count;
 
-		double time = end - start;
-		std::cout << "　" << time / CLOCKS_PER_SEC << "[sec]" << std::endl;
+			//cr_index[i].resize(count);
+			cr_eval[i].resize(count);
+			for (int j = 0; j < KO; j++) {
+				if (pop[j].nitch == i + 1) {
+					count--;
+					cr_index[i][count] = j;
+					cr_eval[i][count] = pop[j].eval;
+				}
+			}
+			cr_disper[f][i] = cal_dispersion(cr_index[i]);
+			cr_max[f][i] = *max_element(cr_eval[i].begin(), cr_eval[i].end());
+			cr_min[f][i] = *min_element(cr_eval[i].begin(), cr_eval[i].end());
+			cr_ave[f][i] = double(std::accumulate(cr_eval[i].begin(), cr_eval[i].end(), 0.0) / cr_eval[i].size());
+		}
+		std::cout << "folder : " << f << "...end" << std::endl;
+	}
+
+	show_vec_1(cr_ave[folder_num - 1]);
+	show_vec_1(cr_min[folder_num - 1]);
+	show_vec_1(cr_max[folder_num - 1]);
+	//char fname[50];
+	CsvModules::csv_fwrite("./csv/4/ave_4.csv", cr_ave);
+	CsvModules::csv_fwrite("./csv/4/max_4.csv", cr_max);
+	CsvModules::csv_fwrite("./csv/4/min_4.csv", cr_min);
+	CsvModules::csv_fwrite("./csv/4/num_4.csv", cr_num);
+	CsvModules::csv_fwrite("./csv/4/disper_4.csv", cr_disper);
+}
+void Coans_s::ans_nitch() {
+	MakeList(pop, 0, K_List2, 0);
+	int cr_para = 1;
+	for (int i = 0; i < KO; i++) {
+		if (SetNitch(cr_para, i, pop) == 1) {
+			cr_para++;
+		}
 	}
 }
 
+class mode4 : public Coans_s {
+public:
+	mode4(std::string str, int t) {
+		dir = str;
+		method = 4;
+		trial = t;
+		machup = 0;					//対戦回数
+		local_s.clear();
+	}
+private:
+	virtual void Crustering();
+	virtual void Generate_Opp();
+};
+void mode4::Crustering() {
+	//近傍リスト生成
+	MakeList(pop, K_List1, 0, 0);
+	Cru_Upgma(pop);
+	cr_num = K_UPGMA;
+}
+void mode4::Generate_Opp()
+{
+	choice_oppoment(pop, opp, cr_num);
+	opp_num = int(opp.size());
+}
 /*
 
 卒論手法のクラス

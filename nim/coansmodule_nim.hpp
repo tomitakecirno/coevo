@@ -6,56 +6,36 @@ ANSを使った提案手法の関数まとめ
 #include "player_nim.h"
 
 template<class Vec>
-Vec cal_euclidean(const Vec &one, const Vec &ano);
+double cal_euclidean(const Vec &one, const Vec &ano);
 void AnsList1(const std::vector<std::vector<int>> &IndexSave, std::vector<int> &list1, int index);
 void AnsList2(const std::vector<std::vector<int>> &IndexSave, std::vector<int> &list2, int index);
 void AnsList3(const std::vector<std::vector<int>> &IndexSave, std::vector<int> &list3, int index);
 void MakeList(std::vector<playerNim> &pop, int Para_KL1, int Para_KL2, int Para_KL3);
 int SetNitch(int nitch_number, int kotai, std::vector<playerNim> &pop);
-void binaryEXLM(const int main_pare, const std::vector<int> &sub_pare, const std::vector<playerNim> &pop, std::vector<playerNim> &child);
-void two_point_cross(const std::vector<int> &main, const std::vector<int> &sub, std::vector<std::vector<int>> &c_stra);
+void ExtensionXLM(const int main_pare, const std::vector<int> &sub_pare, std::vector<playerNim> &pop, std::vector<playerNim> &child);
 void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, const int count_nitch);
-void mutation(std::vector<int> &stra);
 
-//ハミング距離
-int cal_haming(const std::vector<int> &one, const std::vector<int> &ano)
-{
-	int one_size = int(one.size());
-	int ano_size = int(ano.size());
-	if (one_size != ano_size) {
-		std::cout << "ベクターのサイズが違います" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-	int sum = 0;
-	for (int i = 0; i < one_size; i++) {
-		if (one[i] != ano[i]) {
-			sum++;
-		}
-	}
-	return sum;
-}
 template<class Vec>
-Vec cal_euclidean(const Vec &one, const Vec &ano) {
+double cal_euclidean(const Vec &one, const Vec &ano) {
 	int one_size = int(one.size());
 	int ano_size = int(ano.size());
 	if (one_size != ano_size) {
 		std::cout << "ベクターのサイズが違います" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	int sum = 0;
+	double sum = 0;
 	for (int i = 0; i < one_size; i++) {
 		sum += (one[i] - ano[i]) * (one[i] - ano[i]);
 	}
-	return sqrt(sum);
+	return std::sqrt(sum);
 }
-
 //近傍リストを作る
 void MakeList(std::vector<playerNim> &pop, int Para_KL1, int Para_KL2, int Para_KL3)
 {
 	using namespace std;
-	vector<vector<int>>	DisSaveList1(KO);
-	vector<vector<int>>	DisSaveList2(KO);
-	vector<vector<int>>	DisSaveList3(KO);
+	vector<vector<double>>	DisSaveList1(KO);
+	vector<vector<double>>	DisSaveList2(KO);
+	vector<vector<double>>	DisSaveList3(KO);
 	vector<vector<int>>	IndexSaveList1(KO); //K番目以内の個体を記録しておく
 	vector<vector<int>>	IndexSaveList2(KO); //K番目以内の個体を記録しておく
 	vector<vector<int>>	IndexSaveList3(KO); //K番目以内の個体を記録しておく
@@ -66,7 +46,7 @@ void MakeList(std::vector<playerNim> &pop, int Para_KL1, int Para_KL2, int Para_
 		DisSaveList1[i].resize(KO);
 		for (int j = 0; j < KO; j++) {
 			if (i != j) {
-				DisSaveList1[i][j] = cal_haming(pop[i].stra, pop[j].stra);
+				DisSaveList1[i][j] = cal_euclidean(pop[i].stra, pop[j].stra);
 
 			}
 			else {
@@ -181,72 +161,120 @@ int SetNitch(int nitch_number, int kotai, std::vector<playerNim> &pop)
 	}
 	return 0;
 }
-//拡散ELM.w1,w2,w3それぞれ分けて生成する.
-void binaryEXLM(const int main_pare, const std::vector<int> &sub_pare, const std::vector<playerNim> &pop, std::vector<playerNim> &child)
+//EXLM
+void ExtensionXLM(const int main_pare, const std::vector<int> &sub_pare, std::vector<playerNim> &pop, std::vector<playerNim> &child)
 {
-	int sub_len = int(sub_pare.size());
+	const int sub_len = int(sub_pare.size());
 
-	std::vector<std::vector<int>> sub_stra(sub_len);
+	//重心から親に対するベクトルを求める
+	std::vector<std::vector<double>> sub_delta(sub_len);
+	for (int i = 0; i<sub_len; i++) {
+		sub_delta[i].resize(W_SIZE);
+		for (int j = 0; j < W_SIZE; j++) {
+			sub_delta[i][j] = pop[sub_pare[i]].stra[j] - pop[main_pare].stra[j];
+		}
+	}
 
-	for (int c = 1; c < CHILD / 2 + 1; c++) {
-		int rand = GetRand_Int(sub_len);
-		std::vector<std::vector<int>> child_stra(2);
-
-		two_point_cross(pop[main_pare].stra, pop[sub_pare[rand]].stra, child_stra);
-
-		
-		child[c].stra			  = child_stra[0];
-		child[CHILD / 2 + c].stra = child_stra[1];
-		mutation(child[c].stra);
-		mutation(child[CHILD / 2 + c].stra);
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::normal_distribution<> dist(0.0, 1.0 / (std::sqrt(PARENT)));
+	//子個体の戦略生成
+	for (int c = 1; c < CHILD + 1; c++) {
+		//初期化
 		child[c].Init_pn();
-		child[CHILD / 2 + c].Init_pn();;
+		child[c].stra.resize(W_SIZE);
+		for (int i = 0; i < PARENT; i++) {
+			const double coe = dist(mt);
+			for (int j = 0; j < W_SIZE; j++) {
+				child[c].stra[j] += sub_delta[i][j] * coe;
+			}
+		}
+		//show_vec_1(child[c].stra);
 	}
 }
-void two_point_cross(const std::vector<int> &parent1, const std::vector<int> &parent2, std::vector<std::vector<int>> &c_stra) 
+//斎藤さんのEXLM
+void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::vector<playerNim> &pop, std::vector<playerNim> &child)
 {
-	if (c_stra.size() < 2) {
-		std::cout << "子個体の戦略が足りません : two_point_cross" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-	int stra_len = (POLL1 + 1)*(POLL2 + 1)*(POLL3 + 1);
-	//2点を決定
-	int one = 0;
-	int two = 0;
-	while (one == two) {
-		one = GetRand_Int(stra_len);
-		two = GetRand_Int(stra_len);
-	}
-	if (two < one) {
-		int tmp;
-		tmp = one;
-		one = two;
-		two = tmp;
-	}
+	const int sub_len = int(sub_pare.size());
+	
+	std::vector<p_data> sub_2(sub_len*2);
+	for (int i = 0; i < sub_len; i++) {
+		sub_2[i].stra = pop[sub_pare[i]].stra;
 
-	//2点交叉
-	c_stra[0] = parent1;
-	c_stra[1] = parent2;
-	for (int i = one; i <= two; i++) {
-		c_stra[0][i] = parent2[i];
-		c_stra[1][i] = parent1[i];
+		sub_2[i + sub_len].stra.resize(W_SIZE);
+		for (int j = 0; j < W_SIZE; j++) {
+			const double tmp_w = pop[sub_pare[i]].stra[j] - pop[main_pare].stra[j];
+			sub_2[i + sub_len].stra[j] = pop[main_pare].stra[j] - tmp_w;
+		}
 	}
-}
-//突然変異
-void mutation(std::vector<int> &stra) 
-{
-	for (int i = 0; i < STRA_LEN; i++) {
-		const int rand = GetRand_Int(1000);
-		if (1 < MUTATION*rand) {
-			if (stra[i] == 0) {
-				stra[i] = 1;
+	std::vector<double> tmp_eval(sub_len * 2, 0);
+	nim nim(2);
+	for (int i = 0; i < sub_len*2; i++) {
+		for (int j = i; j < sub_len*2; j++) {
+			//先行
+			nim.input_stra(sub_2[i].stra, sub_2[j].stra);
+			if (nim.nim_game(0)) {
+				tmp_eval[i] += WIN_FIRST;
 			}
 			else {
-				stra[i] = 0;
+				tmp_eval[j] += WIN_LAST;
+			}
+			//後攻
+			nim.input_stra(sub_2[j].stra, sub_2[i].stra);
+			if (nim.nim_game(1)) {
+				tmp_eval[j] += WIN_FIRST;
+			}
+			else {
+				tmp_eval[i] += WIN_LAST;
 			}
 		}
 	}
+	std::vector<int> max_sub(sub_len);
+	for (int i = 0; i < sub_len; i++) {
+		const auto max = max_element(tmp_eval.begin(), tmp_eval.end());
+		const int index = int(std::distance(tmp_eval.begin(), max));
+		max_sub[i] = index;
+		tmp_eval[index] = -10000;
+	}
+	//重心を求める
+	double sub_max_g[W_SIZE] = { 0 };
+	for (int i = 0; i < W_SIZE; i++) {
+		for (auto &pi : max_sub) {
+			sub_max_g[i] += sub_2[pi].stra[i];
+		}
+		sub_max_g[i] /= sub_len;
+	}
+	//各副親から主親に対するベクトルを求める
+	std::vector<std::vector<double>> sub_delta(sub_len * 2);
+	for (int i = 0; i < sub_len * 2; i++) {
+		sub_delta[i].resize(W_SIZE);
+		for (int j = 0; j < W_SIZE; j++) {
+			sub_delta[i][j] = sub_2[i].stra[j] - pop[main_pare].stra[j];
+		}
+	}
+
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::normal_distribution<> dist(0.0, 1.0 / (std::sqrt(sub_len * 2)));
+	//子個体の戦略生成
+	for (int c = 1; c < CHILD + 1; c++) {
+		//初期化
+		child[c].Init_pn();
+		child[c].stra.resize(W_SIZE);
+		for (int i = 0; i < sub_len * 2; i++) {
+			const double coe = dist(mt);
+			for (int j = 0; j < W_SIZE; j++) {
+				child[c].stra[j] += sub_delta[i][j] * coe;
+			}
+		}
+		//重心をスライド
+		for (int i = 0; i < W_SIZE; i++) {
+			child[c].stra[i] += sub_max_g[i];
+		}
+		//show_vec_1(child[c].stra);
+	}
 }
+
 //対戦相手を選ぶ
 void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, const int count_nitch)
 {

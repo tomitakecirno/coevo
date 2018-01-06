@@ -3,6 +3,7 @@
 ニムで必要になるクラス
 -------------------------*/
 #include <iostream>
+#include <random>
 #include <fstream>
 #include <vector>
 #include <algorithm>
@@ -15,11 +16,14 @@
 
 class p_data {
 public:
-	int stra_len;
-	int win;
-	int eval;
-	std::vector<int> stra;
+	double eval;
+	std::vector<double> stra;
 	std::vector<double> Result;
+
+	p_data() {
+		Init();
+		Init_stra();
+	}
 
 	void Init();
 	void Init_stra();
@@ -28,25 +32,35 @@ public:
 	bool output_stra(std::string fname);
 };
 void p_data::Init() {
-	win = 0;
 	eval = 0;
 	Result.clear();
-	stra_len = (POLL1 + 1)*(POLL2 + 1)*(POLL3 + 1);
 }
 void p_data::Init_stra() 
 {
-	stra_len = (POLL1 + 1)*(POLL2 + 1)*(POLL3 + 1);
-	stra.resize(stra_len);
+	std::random_device rd;
+	std::mt19937 mt(rd());
 
-	for (int i = 0; i < stra_len; i++) {
-		stra[i] = GetRand_Int(2);
+	int len = 0;
+	stra.resize(W_SIZE);
+
+	std::uniform_real_distribution<> dist_w1(
+		-std::sqrt(6. / ((INPUT + 1) + MIDDLE)),
+		std::sqrt(6. / ((INPUT + 1) + MIDDLE))
+	);
+	std::uniform_real_distribution<> dist_w2(
+		-std::sqrt(6. / ((MIDDLE + 1) + OUTPUT)),
+		std::sqrt(6. / ((MIDDLE + 1) + OUTPUT))
+	);
+	for (int i = 0; i < INPUT*MIDDLE; i++, len++) {
+		stra[len] = dist_w1(mt);
+	}
+	for (int i = 0; i < MIDDLE*OUTPUT; i++, len++) {
+		stra[len] = dist_w2(mt);
 	}
 }
 void p_data::cal_fitness()
 {
-	int sum = std::accumulate(Result.begin(), Result.end(), 0);
-	eval = 0;
-	eval = sum;
+	eval = std::accumulate(Result.begin(), Result.end(), 0.0);
 }
 bool p_data::input_stra(const std::string fname)
 {
@@ -59,8 +73,8 @@ bool p_data::input_stra(const std::string fname)
 	//std::cout << fname << std::endl;
 	int count = 0;
 	int tmp;
-	stra.resize(STRA_LEN);
-	while (fin >> tmp && count < STRA_LEN) {
+	stra.resize(W_SIZE);
+	while (fin >> tmp && count < W_SIZE) {
 		stra[count] = tmp;
 		count++;
 	}
@@ -80,8 +94,8 @@ bool p_data::output_stra(const std::string fname)
 	}
 	//std::cout << fname << std::endl;
 	//show_vec_1(stra);
-	for (int i = 0; i < stra_size; i++) {
-		fout << stra[i] << " ";
+	for (auto &pi : stra) {
+		fout << pi << " ";
 	}
 	return true;
 }
@@ -89,6 +103,7 @@ bool p_data::output_stra(const std::string fname)
 class playerNim : public p_data {
 public:
 	int nitch;
+	int lose;
 	std::vector<int> List1;
 	std::vector<int> List2;
 	std::vector<int> List3;

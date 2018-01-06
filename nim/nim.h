@@ -27,8 +27,9 @@ public:
 		mode = m;
 	}
 	double nim_game(const int turn);
-	double nim_evaluation();
+	double nim_evaluation(const std::vector<double>& stra);
 	void input_stra(const std::vector<double> &pop, const std::vector<double> &opp);
+	void test(const std::vector<double>& stra);
 protected:
 	int mode;
 	int nim_n;	//山の数
@@ -44,13 +45,14 @@ protected:
 
 	void Init_mont();
 	int cal_index(const int a, const int b, const int c);
-	void cal_binary_vec(const int n, std::vector<int> &input); //10進数を2進数のベクターに変換する
+	void cal_binary_vec(const int n, std::vector<int> &input, const int size = STRA_LEN); //10進数を2進数のベクターに変換する
 	void cal_xor_vec(std::vector<int> &one, std::vector<int> &ano, std::vector<int> &vec); //ベクター同士の排他的論理和
 	void cal_move_vec();
 	int cal_nimsum();
 	void generate_mont(int a, int b, int c, std::vector<std::vector<int>> &mont);
 	bool update_mont(int index); //戦略情報から山の状態を更新する
-	int choose_stra(std::vector<double> &stra);
+	int choose_stra(const std::vector<double> &stra);
+	void vec2evalvec(const std::vector<double>& stra, std::vector<double>& eval_vec);
 	void show_mont();
 };
 //0:プレイヤー先手，1:プレイヤー後手
@@ -59,53 +61,34 @@ double nim::nim_game(const int turn)
 	Init_mont(); //山の初期化
 	//show_mont();
 	int stra_index;
+
+	std::vector<int> save_index;
 	while (1)
 	{
 		stra_index = choose_stra(pop_stra);
-		if (stra_index < 0) {
+		if (turn == 0) {
+			//save_index.push_back(stra_index);
+		}
+		if (!update_mont(stra_index)) {
 			if (turn == 0) {
-				return -1;
+				//show_vec_1(save_index);
+				return 1;
 			}
-			else {
+			else
 				return 0;
-			}
 		}
-		else {
-			//std::cout << "stra_index = " << stra_index << std::endl;
-			if (!update_mont(stra_index)) {
-				if (turn == 0) {
-					return 1;
-				}
-				else {
-					return 0;
-				}
-			}
-		}
-
 		stra_index = choose_stra(opp_stra);
-		if (stra_index < 0) {
+		if (!update_mont(stra_index)) {
 			if (turn == 0) {
+				//show_vec_1(save_index);
 				return 0;
 			}
-			else {
-				return -1;
-			}
-		}
-		else {
-			//std::cout << "stra_index = " << stra_index << std::endl;
-			if (!update_mont(stra_index)) {
-				if (turn == 0) {
-					//先手の場合
-					return 0;
-				}
-				else {
-					return 1;
-				}
-			}
+			else
+				return 1;
 		}
 	}
 }
-double nim::nim_evaluation()
+double nim::nim_evaluation(const std::vector<double>& stra)
 {
 	//show_mont();
 	int stra_index;
@@ -115,6 +98,7 @@ double nim::nim_evaluation()
 	//int count = int(std::count(opt.begin(), opt.end(), 1));
 	//std::cout << "最適手 :" << count << std::endl;
 	std::vector<std::vector<int>> mont;
+	vec2evalvec(stra, pop_stra);
 	for (int i = 0; i < POLL1 + 1; i++) {
 		for (int j = 0; j < POLL2 + 1; j++) {
 			for (int k = 0; k < POLL3 + 1; k++) {
@@ -122,12 +106,8 @@ double nim::nim_evaluation()
 				int nim_sum = cal_nimsum();
 				//ニム和が0でないときに評価
 				if (nim_sum != 0) {
-					//generate_mont(nim_status[0], nim_status[1], nim_status[2], mont);
 					cal_move_vec(); //遷移可能状態を格納
-					//show_vec_1(pop_stra);
-					//show_vec_1(nim_status_vec);
 					stra_index = choose_stra(pop_stra); //戦略を選ぶ
-					//std::cout << "stra_index : " << stra_index << std::endl;
 					if (stra_index != -1) {
 						nim_status[0] = stra_index / ((POLL2 + 1)*(POLL3 + 1));
 						nim_status[1] = (stra_index % ((POLL2 + 1)*(POLL3 + 1))) / (POLL3 + 1);
@@ -144,9 +124,9 @@ double nim::nim_evaluation()
 			}
 		}
 	}
-	std::cout << "optimal_c : " << optimal_c << std::endl;
-	std::cout << "battle_c : " << battle_c << std::endl;
-
+	//std::cout << "optimal_c : " << optimal_c << std::endl;
+	//std::cout << "battle_c : " << battle_c << std::endl;
+	//std::cout << "　currect : " << (optimal_c/battle_c)*100 << " %" << std::endl;
 	return optimal_c / battle_c;
 }
 void nim::Init_mont() {
@@ -193,22 +173,22 @@ int nim::cal_index(const int a, const int b, const int c) {
 	}
 	return tmp_index;
 }
-void nim::cal_binary_vec(const int n, std::vector<int> &input) 
+void nim::cal_binary_vec(const int n, std::vector<int> &input, const int size) 
 {
 	int zero_len = 0;
-	input.assign(stra_len,0);
+	input.assign(size, 0);
 
 	int syou = n;
 	int amari;
 	while (0 < syou) {
 		amari = syou % 2;
 		syou = syou / 2;
-		input[stra_len - zero_len - 1] = amari;
+		input[size - zero_len - 1] = amari;
 		zero_len++;
 	}
-	if (zero_len < stra_len) {
-		for (int i = zero_len; i < stra_len; i++) {
-			input[stra_len - zero_len - 1] = 0;
+	if (zero_len < size) {
+		for (int i = zero_len; i < size; i++) {
+			input[size - zero_len - 1] = 0;
 		}
 	}
 }
@@ -281,122 +261,80 @@ void nim::generate_mont(int a, int b, int c, std::vector<std::vector<int>> &mont
 	}
 	show_vec_2(mont);
 }
-int nim::choose_stra(std::vector<double> &stra) {
+int nim::choose_stra(const std::vector<double> &stra) 
+{
 	if (stra.empty()) {
 		std::cout << "戦略が空です : choose_stra" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	int index;
-	std::vector<int> tmp_stra(stra_len);
+	std::vector<double> tmp_stra(stra_len);
 	for (int i = 0; i < stra_len; i++) {
-		if (nim_status_vec[i] == 1 && stra[i] == 1) {
-			tmp_stra[i] = 1;
+		if (nim_status_vec[i] == 1) {
+			tmp_stra[i] = stra[i];
 		}
 		else {
-			tmp_stra[i] = 0;
+			tmp_stra[i] = 1000;
 		}
 	}
-	const int count = int(std::count(tmp_stra.begin(), tmp_stra.end(), 1));
-	if (count > 0) {
-		//1個の場合
-		auto result_t = std::find(tmp_stra.begin(), tmp_stra.end(), 1);
-		index = int(std::distance(tmp_stra.begin(), result_t));
-		/*
-		if (count == 1)
-		{
-			auto result_t = std::find(tmp_stra.begin(), tmp_stra.end(), 1);
-			index = int(std::distance(tmp_stra.begin(), result_t));
-		}
-		//複数ある場合
-		else if (1 < count)
-		{
-			std::vector<int> tmp_index(count);
-
-			auto result_t = std::find(tmp_stra.begin(), tmp_stra.end(), 1);
-			tmp_index[0] = int(std::distance(tmp_stra.begin(), result_t));
-
-			for (int j = 1; j < count; j++) {
-				result_t = std::find(result_t, tmp_stra.end(), 1);
-				tmp_index[j] = int(std::distance(tmp_stra.begin(), result_t));
-			}
-			const int tmp_rand = GetRand_Int(count);
-			index = tmp_index[tmp_rand];
-		}
-		*/
-	}
-	//リペアオペレーター
-	else {
-		if (mode == 1) {
-			return -1;
-		}
-		else {
-			tmp_stra = nim_status_vec;
-			const int tmp_count = int(std::count(tmp_stra.begin(), tmp_stra.end(), 1));
-
-			std::vector<int> tmp_index(tmp_count);
-
-			auto result_t = std::find(tmp_stra.begin(), tmp_stra.end(), 1);
-			tmp_index[0] = int(std::distance(tmp_stra.begin(), result_t));
-
-			for (int i = 1; i < tmp_count; i++) {
-				result_t = std::find(result_t + 1, tmp_stra.end(), 1);
-				tmp_index[i] = int(std::distance(tmp_stra.begin(), result_t));
-			}
-			index = tmp_index[GetRand_Int(tmp_count)];
-			//std::cout << "index : " << index << std::endl;
-			//show_vec_1(stra);
-			if (stra[index] == 0) {
-				stra[index] = 1;
-			}
-			//show_vec_1(stra);
-		}
-	}
+	const auto min = min_element(tmp_stra.begin(), tmp_stra.end());
+	const int index = int(std::distance(tmp_stra.begin(), min));
 	return index;
 }
 void nim::input_stra(const std::vector<double> &pop, const std::vector<double> &opp)
 {
-	NN::NeuralNetwork<9, 10, 1> nn_pop;
-	NN::NeuralNetwork<9, 10, 1> nn_opp;
+	vec2evalvec(pop, pop_stra);
+	vec2evalvec(opp, opp_stra);
+}
+void nim::vec2evalvec(const std::vector<double>& stra, std::vector<double>& eval_vec)
+{
+	NN::NeuralNetwork<INPUT, MIDDLE, OUTPUT> nn;
 
-	Eigen::VectorXd vec;
-	
-	vec = Eigen::STL2Vec(pop);
-	nn_pop.setWeight(vec); //重みセット
+	const auto s = stra.size();
+	Eigen::VectorXd vec = Eigen::VectorXd::Zero(s);
+	for (auto i = 0U; i < s; ++i) {
+		vec[i] = stra[i];
+	}
+	nn.setWeight(vec); //重みセット
 
-	vec = Eigen::STL2Vec(opp);
-	nn_opp.setWeight(vec); //重みセット
+	std::vector<int> poll1(3, 0);
+	std::vector<int> poll2(3, 0);
+	std::vector<int> poll3(3, 0);
+	std::vector<int> input_vec(9, 0);
 
-	std::vector<int> poll1(3);
-	std::vector<int> poll2(3);
-	std::vector<int> poll3(3);
-
-	std::vector<int> input_vec(9);
-	pop_stra.resize(STRA_LEN);
-	opp_stra.resize(STRA_LEN);
-
+	eval_vec.resize(STRA_LEN);
 	int len = 0;
-	for (int i = 0; i < POLL3; i++) {
-		cal_binary_vec(i, poll3);
+	for (int i = 0; i < POLL3 + 1; i++) {
+		cal_binary_vec(i, poll3, 3);
+		//show_vec_1(poll3);
 
-		for (int j = 0; j < POLL2; j++) {
-			cal_binary_vec(j, poll2);
+		for (int j = 0; j < POLL2 + 1; j++) {
+			cal_binary_vec(j, poll2, 3);
 
-			for (int k = 0; k < POLL1; k++, len++) {
-				cal_binary_vec(k, poll1);
+			for (int k = 0; k < POLL1 + 1; k++, len++) {
+				cal_binary_vec(k, poll1, 3);
 
 				for (int l = 0; l < 3; l++) {
 					input_vec[l + 0] = poll1[l];
 					input_vec[l + 3] = poll2[l];
 					input_vec[l + 6] = poll3[l];
 				}
-				nn_pop.setInput(input_vec); //入力
-				nn_opp.setInput(input_vec); //入力
-
-				pop_stra[len] = nn_pop.getOutPut(); //出力
-				opp_stra[len] = nn_opp.getOutPut(); //出力
+				for (int l = 0; l < 9; l++) {
+					if (input_vec[l] == 0) {
+						input_vec[l] = -1;
+					}
+				}
+				//show_vec_1(input_vec);
+				nn.setInput(input_vec); //入力
+				eval_vec[len] = nn.getOutPut(); //出力
 			}
 		}
 	}
+	//show_vec_1(eval_vec);
+}
+void nim::test(const std::vector<double>& stra) {
+	show_vec_1(stra);
+	vec2evalvec(stra, pop_stra);
+	show_vec_1(pop_stra);
 }
 void nim::show_mont()
 {

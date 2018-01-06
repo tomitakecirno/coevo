@@ -46,13 +46,13 @@ int main(int argc, char *argv[])
 		argv[4]:trial
 		argv[5]:nitch parameter
 	*/
-	//mode = 5;
+	//mode = 6;
 	mode = atoi(__argv[1]);
 	if (mode == 1 || mode == 2 || mode == 4 || mode == 5) {
 		switch (__argc) {
 		case 1:
 			//Debug mode
-			method = 2;
+			method = 4;
 			ku = KU;
 			trial = 0;
 			break;
@@ -94,16 +94,10 @@ int main(int argc, char *argv[])
 
 	const clock_t Start_Main = clock();
 	//学習で記録したデータをもとに実際に対戦
-	if (mode == 1) {
-		Match Match(method, 0, trial, ku, per);
-		for (int t = 0; t < ENEMY; t++) {
-			Match.main_task(t);
-		}
-	}
 
 	//現手法学習
 	// DIR, KO, KU, PER, K, PARENT, CHILD
-	else if (mode == 2) {
+	if (mode == 2) {
 		//現手法
 		//階層的クラスタリングを盛り込んだ手法
 		if (method == 2)
@@ -118,8 +112,10 @@ int main(int argc, char *argv[])
 			Mode3.main_task();
 			MatchUp_Count = Mode3.Get_MatchUp_Num();
 		}
-		if (method == 11)
+		if (method == 4)
 		{
+			mode4 m4("nim", trial);
+			m4.main_task();
 		}
 	}
 	//csv統合
@@ -127,18 +123,14 @@ int main(int argc, char *argv[])
 		csvmodules_exp Method;
 		Method.integration(method_vec, KU, PER);
 	}
-	//テスト
-	else if (mode == 4) {
-		Coans_exp exp;
-		for (int t = 0; t < TRIAL; t++) {
-			exp.main_task("nim", method, KU, PER, t);
-		}
-	}
-	else if (mode == 5) {
+	else if (mode == 1) {
 		Match match(method, 0, trial, KU, PER);
 		match.evaluation();
 	}
-
+	else if (mode == 6) {
+		mode4 m4("nim", trial);
+		m4.exp_upgma();
+	}
 	const clock_t End_Main = clock();
 	Show_Time(Start_Main, End_Main);
 	std::cout << "match_up num:" << MatchUp_Count << std::endl;

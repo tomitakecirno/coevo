@@ -16,8 +16,8 @@ void Show_Vector_2(std::vector<std::vector<double> > &Vec_Dis);
 	//int Cal_Vec_Length(int Pop_Size);
 
 void Cru_Upgma(std::vector<playerTK> &Pop, int k) {
-	int Pop_Length = int(Pop.size());				//自集団のサイズ
-	int N = Pop_Length;								//現在のクラスタの数
+	const int Pop_Length = int(Pop.size());				//自集団のサイズ
+	const int N = Pop_Length;								//現在のクラスタの数
 
 	//距離Matrix
 	std::vector<std::vector<double> > Vec_Dis(Pop_Length);	//距離を格納

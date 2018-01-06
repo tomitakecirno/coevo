@@ -6,16 +6,13 @@
 #include "config_nim.hpp"
 #include <math.h>
 #include <forward_list>
-#include "coansmodule.hpp"
+#include "coansmodule_nim.hpp"
 
 //double Cal_Uclidean(std::vector<double> &a, std::vector<double> &b);
 double Range_Ward(double D_io, double D_jo, double D_ij, int N_i, int N_j, int N_o);
-void Show_Vector_1(std::vector<int> &Vec_Dis);
-void Show_Vector_2(std::vector<std::vector<double> > &Vec_Dis);
-	//int Cal_Vec_Length(int Pop_Size);
 
-void Cru_Upgma(std::vector<playerTK> &Pop, int k) {
-	int Pop_Length = int(Pop.size());				//自集団のサイズ
+void Cru_Upgma(std::vector<playerNim> &Pop) {
+	const int Pop_Length = int(Pop.size());				//自集団のサイズ
 	int N = Pop_Length;								//現在のクラスタの数
 
 	//距離Matrix
@@ -23,26 +20,26 @@ void Cru_Upgma(std::vector<playerTK> &Pop, int k) {
 	std::vector<int> Group_Index(Pop_Length);	//個体のクラスタ番号
 	std::vector<int> Group_Num(Pop_Length);		//クラスタ毎の個体数
 
-	std::cout << "1-1" << ',';
+	//std::cout << "1-1" << ',';
 	for (int i = 0; i < Pop_Length; i++) {
 		Vec_Dis[i].resize(Pop_Length);
 		Group_Index[i] = i;
 		Group_Num[i] = 1;
 	}
-	std::cout << "1-2" << ',';
+	//std::cout << "1-2" << ',';
 	//距離Matrix生成
 	for (int i = 0; i < Pop_Length; i++) {
 		Vec_Dis[i][i] = 10000;
-		for (int j = i+1; j < Pop_Length; j++) {
+		for (int j = i + 1; j < Pop_Length; j++) {
 			//距離計算
-			Vec_Dis[i][j] = cal_kotai_distance(Pop[i], Pop[j]);
-			assert( 0 <= Vec_Dis[i][j] );
+			Vec_Dis[i][j] = cal_euclidean(Pop[i].stra, Pop[j].stra);
+			assert(0 <= Vec_Dis[i][j]);
 			Vec_Dis[j][i] = Vec_Dis[i][j];
 		}
 	}
-	std::cout << "1-3" << ',';
+	//std::cout << "1-3" << ',';
 	//クラスタの数が既定数以下になったら終了
-	while (N > k) {
+	while (N > K_UPGMA) {
 		//最小値を求める
 		auto Min = min_element(Vec_Dis[0].begin(), Vec_Dis[0].end());
 		double Min_Value = *Min;
@@ -100,7 +97,7 @@ void Cru_Upgma(std::vector<playerTK> &Pop, int k) {
 		//std::cout << "Vec_Dis:";
 		//Show_Vector_2(Vec_Dis);
 	}
-	std::cout << "1-4" << ',';
+	//std::cout << "1-4" << ',';
 	for (int i = 0; i < Pop_Length; i++) {
 		assert(Group_Index[i] < KO);
 		assert(0 <= Group_Index[i]);

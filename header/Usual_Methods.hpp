@@ -9,8 +9,12 @@
 //©‘R”—”¶¬
 int GetRand_Int(int pGetMax)
 {
-	const double getrand_int32Max = 4294967296; // genrand_int32() ‚ÌÅ‘å’lBœZ‚Ì‚½‚ßdouble
-	return int(genrand_int32() / getrand_int32Max * pGetMax);
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_int_distribution<> dist(0, pGetMax - 1);
+
+	const int rand = dist(mt);
+	return rand;
 }
 
 //À”—”¶¬
