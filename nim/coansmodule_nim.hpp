@@ -29,6 +29,17 @@ double cal_euclidean(const Vec &one, const Vec &ano) {
 	}
 	return std::sqrt(sum);
 }
+double cal_cal_dispersion(const std::vector<double> &eval) 
+{
+	const double ave = std::accumulate(eval.begin(), eval.end(), 0.0)/ eval.size();
+
+	double disper = 0;
+	for (auto &pi : eval) {
+		disper += (pi - ave) * (pi - ave);
+	}
+	return disper;
+}
+
 //近傍リストを作る
 void MakeList(std::vector<playerNim> &pop, int Para_KL1, int Para_KL2, int Para_KL3)
 {
@@ -274,7 +285,6 @@ void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::ve
 		//show_vec_1(child[c].stra);
 	}
 }
-
 //対戦相手を選ぶ
 void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, const int count_nitch)
 {

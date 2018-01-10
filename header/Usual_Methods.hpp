@@ -111,7 +111,22 @@ void Make_CSV_Directory(int method) {
 	File_Name << "/" << method;
 	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
 }
-
+int count_folder(const std::string str) 
+{
+	int folder_num = 0;
+	char fname[50];
+	while (1) {
+		sprintf_s(fname, "%s/%d/%d.dat", str.c_str(), folder_num, 0);
+		std::ifstream ifs(fname);
+		if (ifs.fail()) {
+			break;
+		}
+		else {
+			folder_num++;
+		}
+	}
+	return folder_num;
+}
 //ベクターの情報を表示するだけ
 template<class Vec>
 void show_vec_1(Vec &vec_1) 

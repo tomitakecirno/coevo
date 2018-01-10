@@ -24,7 +24,6 @@ class Coans_base {
 public:
 	__int64		Get_MatchUp_Num();			//対戦回数を取得
 	//データ取りミスったときに使うやつ
-	void	Stra_nitch_CSV();	//戦略データを読み込んで
 protected:
 	int method;						//手法比較の時に使う
 	int gene;						//世代数
@@ -50,45 +49,10 @@ protected:
 	void output_cr_pop();
 	void cal_best(int g);
 	void cal_rate();
+	void exp_dispersion();
 };
 __int64 Coans_base::Get_MatchUp_Num() {
 	return machup;
-}
-void Coans_base::Stra_nitch_CSV() {
-	/*
-	std::cout << "モード:" << 4 << std::endl;
-	std::cout << "手法:" << method << std::endl;
-	std::cout << "試行回数:" << trial << std::endl;
-	std::cout << "クラスタ数:" << cru_k << std::endl;
-	std::cout << "世代数:" << gene << std::endl;
-	std::cout << "区切り:" << per << std::endl;
-	std::cout << "集団個体数:" << KO << std::endl;
-
-	//Init
-	pop.resize(KO);
-	for (int i = 0; i < KO; i++) {
-	pop[i].Init();
-	}
-	Csv_exp csv_exp(dir, method, trial, gene, per);
-	for (int g = 0; g < gene / per + 1; g++) {
-	//戦略格納
-	for (int i = 0; i < KO; i++) {
-	char fname[50];
-	if (cru_k == 0) {
-	sprintf_s(fname, ("%s/%d/%d/%d/%d.dat"), dir.c_str(), method, trial, g, i);
-	}
-	else if (0 < cru_k) {
-	sprintf_s(fname, ("%s/%d/%d/%d/%d/%d.dat"), dir.c_str(), method, trial, cru_k, g, i);
-	}
-	//自プレイヤーの戦略格納
-	pop[i].input_stra(fname);
-	}
-	//クラスタリング
-	Crustering();
-	csv_exp.SetVec_Cr_Pop(pop, g);
-	}
-	csv_exp.fwrite_Cr_P();
-	*/
 }
 void Coans_base::input_stra(int g)
 {
@@ -255,7 +219,9 @@ void Coans_base::cal_rate()
 	std::cout << "　min currect : " << *min << " %" << std::endl;
 	std::cout << "　ave currect : " << ave << " %" << std::endl;
 }
+void Coans_base::exp_dispersion() {
 
+}
 class Coans : public Coans_base{
 //公開メンバ
 public :
@@ -487,8 +453,8 @@ protected:
 	void create_pop_with_sol();
 	void cal_fitness_alfa(std::vector<int>& sub, std::vector<playerNim>& child);
 	int get_best();
-	double cal_dispersion(const std::vector<int> &index);
 	void ans_nitch();
+	double distance_disper(const std::vector<int> &index);
 };
 void Coans_s::main_task() {
 	std::cout << "手法:" << method << std::endl;
@@ -727,21 +693,21 @@ void Coans_s::cal_fitness_alfa(std::vector<int>& sub, std::vector<playerNim>& ch
 		}
 	}
 }
-double Coans_s::cal_dispersion(const std::vector<int> &index)
+double Coans_s::distance_disper(const std::vector<int> &index) 
 {
-	double sum = 0;
-	for (auto &pi : index) {
-		sum += pop[pi].eval;
-	}
+	//重心からの距離の分散を求める
+	const int index_len = index.size();
+	std::vector<double> w_ave(W_SIZE, 0);
 
-	const double ave = sum / index.size();
+	for (int i = 0; i < W_SIZE; i++) {
+		for (auto &pi : index) {
+			w_ave[i] += pop[pi].stra[i];
+		}
+		w_ave[i] /= index_len;
+	}
 
 	double disper = 0;
-	for (auto &pi : index) {
-		double tmp_disper = (pop[pi].eval - ave) * (pop[pi].eval - ave);
-		disper += tmp_disper;
-	}
-	return disper;
+	for()
 }
 int Coans_s::get_best()
 {
@@ -784,18 +750,9 @@ int Coans_s::get_best()
 }
 void Coans_s::exp_upgma()
 {
-	int folder_num = 0;
 	char fname[50];
-	while (1) {
-		sprintf_s(fname, "./nim/%d/%d/%d/0.dat", method, 0, folder_num);
-		std::ifstream ifs(fname);
-		if (ifs.fail()) {
-			break;
-		}
-		else {
-			folder_num++;
-		}
-	}
+	sprintf_s(fname, "./nim/%d/%d", method, 0);
+	const int folder_num = count_folder(fname);
 
 	std::vector<std::vector<double>> cr_ave(folder_num);
 	std::vector<std::vector<double>> cr_max(folder_num);
@@ -820,55 +777,44 @@ void Coans_s::exp_upgma()
 			dis[i] = cal_euclidean(pop[0].stra, pop[i].stra);
 		}
 		ans_nitch();
+
 		std::vector<int> cr_pop(KO);
 		for (int i = 0; i < KO; i++) {
 			cr_pop[i] = pop[i].nitch; //ニッチ番号
 		}
-
-		const int cr_len = *max_element(cr_pop.begin(), cr_pop.end()) - 1;
-		std::vector<int> cr_count(cr_len, 0);
+		const int cr_len = *max_element(cr_pop.begin(), cr_pop.end());
 		std::vector<std::vector<int>> cr_index(cr_len);
-		std::vector<std::vector<double>> cr_eval(cr_len);
 
-		cr_ave[f].resize(cr_len);
-		cr_max[f].resize(cr_len);
-		cr_min[f].resize(cr_len);
-		cr_num[f].resize(cr_len);
-		cr_disper[f].resize(cr_len);
-
+		//クラスタ毎に個体のインデックスを仕分けして入れる
+		int size = 0;
 		for (int i = 0; i < cr_len; i++) {
-			int count = int(std::count(cr_pop.begin(), cr_pop.end(), i + 1));
-			if (count == 0) {
-				exit(EXIT_FAILURE);
-			}
-			cr_num[f][i] = count;
+			const int count = int(std::count(cr_pop.begin(), cr_pop.end(), i));
+			if (count) {
+				cr_index[size].resize(count);
+				auto itr = std::find(cr_pop.begin(), cr_pop.end(), i);
+				cr_index[size][0] = int(std::distance(cr_pop.begin(), itr));
 
-			//cr_index[i].resize(count);
-			cr_eval[i].resize(count);
-			for (int j = 0; j < KO; j++) {
-				if (pop[j].nitch == i + 1) {
-					count--;
-					cr_index[i][count] = j;
-					cr_eval[i][count] = pop[j].eval;
+				for (int j = 1; j < count; j++) {
+					itr = std::find(itr + 1, cr_pop.end(), i);
+					cr_index[size][j] = int(std::distance(cr_pop.begin(), itr));
 				}
+				size++;
 			}
-			cr_disper[f][i] = cal_dispersion(cr_index[i]);
-			cr_max[f][i] = *max_element(cr_eval[i].begin(), cr_eval[i].end());
-			cr_min[f][i] = *min_element(cr_eval[i].begin(), cr_eval[i].end());
-			cr_ave[f][i] = double(std::accumulate(cr_eval[i].begin(), cr_eval[i].end(), 0.0) / cr_eval[i].size());
 		}
 		std::cout << "folder : " << f << "...end" << std::endl;
 	}
 
-	show_vec_1(cr_ave[folder_num - 1]);
-	show_vec_1(cr_min[folder_num - 1]);
-	show_vec_1(cr_max[folder_num - 1]);
+	//show_vec_1(cr_ave[folder_num - 1]);
+	//show_vec_1(cr_min[folder_num - 1]);
+	//show_vec_1(cr_max[folder_num - 1]);
 	//char fname[50];
+	/*
 	CsvModules::csv_fwrite("./csv/4/ave_4.csv", cr_ave);
 	CsvModules::csv_fwrite("./csv/4/max_4.csv", cr_max);
 	CsvModules::csv_fwrite("./csv/4/min_4.csv", cr_min);
 	CsvModules::csv_fwrite("./csv/4/num_4.csv", cr_num);
 	CsvModules::csv_fwrite("./csv/4/disper_4.csv", cr_disper);
+	*/
 }
 void Coans_s::ans_nitch() {
 	MakeList(pop, 0, K_List2, 0);

@@ -113,18 +113,8 @@ void Match::evaluation()
 	std::vector<int> folder(TRIAL);
 
 	for (int t = 0; t < TRIAL; t++) {
-		int folder_num = 0;
-		while (1) {
-			sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method_pop, t, folder_num, 0);
-			std::ifstream ifs(fname);
-			if (ifs.fail()) {
-				break;
-			}
-			else {
-				folder_num++;
-			}
-		}
-		folder[t] = folder_num;
+		sprintf_s(fname, "./nim/%d/%d", method_pop, t);
+		folder[t] = count_folder(fname);
 	}
 	auto max = max_element(folder.begin(), folder.end());
 	std::vector<std::vector<double>> result_total;
