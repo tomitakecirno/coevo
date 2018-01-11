@@ -112,7 +112,7 @@ public:
 };
 void playerNim::Init_pn() {
 	Init();
-	nitch = 0;
+	nitch = -1;
 	List1.clear();
 	List2.clear();
 	List3.clear();

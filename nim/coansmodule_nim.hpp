@@ -29,7 +29,21 @@ double cal_euclidean(const Vec &one, const Vec &ano) {
 	}
 	return std::sqrt(sum);
 }
-double cal_cal_dispersion(const std::vector<double> &eval) 
+void cal_gravity(const std::vector<std::vector<double>> &w, std::vector<double> &gra)
+{
+	const int w_len = int(w.size());
+	gra.assign(W_SIZE, 0);
+
+	for (auto &pi : w) {
+		for (int i = 0; i < W_SIZE; i++) {
+			gra[i] += pi[i];
+		}
+	}
+	for (int i = 0; i < W_SIZE; i++) {
+		gra[i] /= w_len;
+	}
+}
+double cal_dispersion_1(const std::vector<double> &eval) 
 {
 	const double ave = std::accumulate(eval.begin(), eval.end(), 0.0)/ eval.size();
 
@@ -37,6 +51,27 @@ double cal_cal_dispersion(const std::vector<double> &eval)
 	for (auto &pi : eval) {
 		disper += (pi - ave) * (pi - ave);
 	}
+	return disper;
+}
+double cal_dispersion_2(const std::vector<std::vector<double>> &eval)
+{
+	const int len = int(eval.size());
+	const int len2 = int(eval[0].size());
+
+	std::vector<double> sum(len2, 0);
+	for (int i = 0; i < len; i++) {
+		for (int j = 0; j < len2; j++) {
+			sum[j] += eval[i][j];
+		}
+	}
+	for (int i = 0; i < len2; i++) {
+		sum[i] /= len;
+	}
+	std::vector<double> dis(len);
+	for (int i = 0; i < len; i++) {
+		dis[i] = cal_euclidean(eval[i],sum);
+	}
+	double disper;
 	return disper;
 }
 
@@ -159,7 +194,7 @@ void AnsList3(const std::vector<std::vector<int>> &IndexSave, std::vector<int> &
 //再帰的にニッチを割り当てていく
 int SetNitch(int nitch_number, int kotai, std::vector<playerNim> &pop)
 {
-	if (pop[kotai].nitch == 0) {
+	if (pop[kotai].nitch < 0) {
 		pop[kotai].nitch = nitch_number;
 		if (!pop[kotai].List2.empty()) {
 			const int list_len = int(pop[kotai].List2.size());

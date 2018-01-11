@@ -49,7 +49,7 @@ protected:
 	void output_cr_pop();
 	void cal_best(int g);
 	void cal_rate();
-	void exp_dispersion();
+	void asort_index_H(std::vector<std::vector<int>> &cr_index);
 };
 __int64 Coans_base::Get_MatchUp_Num() {
 	return machup;
@@ -219,9 +219,38 @@ void Coans_base::cal_rate()
 	std::cout << "　min currect : " << *min << " %" << std::endl;
 	std::cout << "　ave currect : " << ave << " %" << std::endl;
 }
-void Coans_base::exp_dispersion() {
+void Coans_base::asort_index_H(std::vector<std::vector<int>> &cr_index)
+{
+	std::vector<int> cr_pop(KO);
+	for (int i = 0; i < KO; i++) {
+		cr_pop[i] = pop[i].nitch;
+	}
+	const int cr_len = *max_element(cr_pop.begin(), cr_pop.end());
+	cr_index.resize(cr_len);
+	//クラスタ毎に個体のインデックスを仕分けして入れる
+	int size = 0;
+	for (int i = 0; i < cr_len + 1; i++) {
+		const int count = int(std::count(cr_pop.begin(), cr_pop.end(), i));
+		if (count) {
+			cr_index[size].resize(count);
+			auto itr = std::find(cr_pop.begin(), cr_pop.end(), i);
+			cr_index[size][0] = int(std::distance(cr_pop.begin(), itr));
 
+			for (int j = 1; j < count; j++) {
+				itr = std::find(itr + 1, cr_pop.end(), i);
+				cr_index[size][j] = int(std::distance(cr_pop.begin(), itr));
+			}
+			size++;
+		}
+	}
+	if (size < cr_len + 1) {
+		const int delta = cr_len - size;
+		for (int i = 0; i < delta; i++) {
+			cr_index.erase(cr_index.end());
+		}
+	}
 }
+
 class Coans : public Coans_base{
 //公開メンバ
 public :
@@ -454,7 +483,8 @@ protected:
 	void cal_fitness_alfa(std::vector<int>& sub, std::vector<playerNim>& child);
 	int get_best();
 	void ans_nitch();
-	double distance_disper(const std::vector<int> &index);
+	double distance_disper(const std::vector<int> &index, std::vector<double> &gra);
+	void cal_gravity_nitch(const std::vector<int> &index, std::vector<double> &gra);
 };
 void Coans_s::main_task() {
 	std::cout << "手法:" << method << std::endl;
@@ -693,21 +723,29 @@ void Coans_s::cal_fitness_alfa(std::vector<int>& sub, std::vector<playerNim>& ch
 		}
 	}
 }
-double Coans_s::distance_disper(const std::vector<int> &index) 
+void Coans_s::cal_gravity_nitch(const std::vector<int> &index, std::vector<double> &gra)
+{
+	const int index_len = int(index.size());
+	std::vector<std::vector<double>> w(index_len);
+
+	for (int i = 0; i < index_len; i++) {
+		w[i] = pop[index[i]].stra;
+	}
+	cal_gravity(w, gra);
+}
+double Coans_s::distance_disper(const std::vector<int> &index, std::vector<double> &gra)
 {
 	//重心からの距離の分散を求める
-	const int index_len = index.size();
-	std::vector<double> w_ave(W_SIZE, 0);
-
-	for (int i = 0; i < W_SIZE; i++) {
-		for (auto &pi : index) {
-			w_ave[i] += pop[pi].stra[i];
-		}
-		w_ave[i] /= index_len;
+	const int index_len = int(index.size());
+	//重心
+	cal_gravity_nitch(index, gra);
+	//分散
+	std::vector<double> dis2gra(index_len);
+	for (int i = 0; i < index_len; i++) {
+		dis2gra[i] = cal_euclidean(pop[index[i]].stra, gra);
 	}
-
-	double disper = 0;
-	for()
+	const double disper = cal_dispersion_1(dis2gra);
+	return disper;
 }
 int Coans_s::get_best()
 {
@@ -750,14 +788,10 @@ int Coans_s::get_best()
 }
 void Coans_s::exp_upgma()
 {
-	char fname[50];
-	sprintf_s(fname, "./nim/%d/%d", method, 0);
-	const int folder_num = count_folder(fname);
+	std::stringstream fname;
+	fname << "./nim/" << method << "0";
+	const int folder_num = count_folder(fname.str());
 
-	std::vector<std::vector<double>> cr_ave(folder_num);
-	std::vector<std::vector<double>> cr_max(folder_num);
-	std::vector<std::vector<double>> cr_min(folder_num);
-	std::vector<std::vector<double>> cr_num(folder_num);
 	std::vector<std::vector<double>> cr_disper(folder_num);
 
 	std::cout << "folder : " << folder_num << std::endl;
@@ -766,59 +800,35 @@ void Coans_s::exp_upgma()
 	nim nim2(1);
 	for (int f = 0; f < folder_num; f++) {
 		for (int i = 0; i < KO; i++) {
+			//個体情報インプット
 			char fname[50];
 			sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method, 0, f, i);
 			pop[i].input_stra(fname);
 			pop[i].Init_pn();
 			pop[i].eval = nim2.nim_evaluation(pop[i].stra) * 100;
 		}
-		std::vector<double> dis(KO);
-		for (int i = 0; i < KO; i++) {
-			dis[i] = cal_euclidean(pop[0].stra, pop[i].stra);
-		}
-		ans_nitch();
+		Crustering(); //クラスタリング
 
-		std::vector<int> cr_pop(KO);
-		for (int i = 0; i < KO; i++) {
-			cr_pop[i] = pop[i].nitch; //ニッチ番号
-		}
-		const int cr_len = *max_element(cr_pop.begin(), cr_pop.end());
-		std::vector<std::vector<int>> cr_index(cr_len);
+		std::vector<std::vector<int>> cr_index;
+		asort_index_H(cr_index);
 
-		//クラスタ毎に個体のインデックスを仕分けして入れる
-		int size = 0;
-		for (int i = 0; i < cr_len; i++) {
-			const int count = int(std::count(cr_pop.begin(), cr_pop.end(), i));
-			if (count) {
-				cr_index[size].resize(count);
-				auto itr = std::find(cr_pop.begin(), cr_pop.end(), i);
-				cr_index[size][0] = int(std::distance(cr_pop.begin(), itr));
-
-				for (int j = 1; j < count; j++) {
-					itr = std::find(itr + 1, cr_pop.end(), i);
-					cr_index[size][j] = int(std::distance(cr_pop.begin(), itr));
-				}
-				size++;
-			}
+		const int size = int(cr_index.size());
+		//重心
+		std::vector<std::vector<double>> cr_gra(size);
+		//分散
+		std::vector<double> cr_disper(size);
+		for (int i = 0; i < size; i++) {
+			//分散と重心
+			cr_disper[i] = distance_disper(cr_index[i], cr_gra[i]);
 		}
+		//const double disper = cal_dispersion_1(cr_gra);
+		show_vec_1(cr_disper);
 		std::cout << "folder : " << f << "...end" << std::endl;
 	}
-
-	//show_vec_1(cr_ave[folder_num - 1]);
-	//show_vec_1(cr_min[folder_num - 1]);
-	//show_vec_1(cr_max[folder_num - 1]);
-	//char fname[50];
-	/*
-	CsvModules::csv_fwrite("./csv/4/ave_4.csv", cr_ave);
-	CsvModules::csv_fwrite("./csv/4/max_4.csv", cr_max);
-	CsvModules::csv_fwrite("./csv/4/min_4.csv", cr_min);
-	CsvModules::csv_fwrite("./csv/4/num_4.csv", cr_num);
-	CsvModules::csv_fwrite("./csv/4/disper_4.csv", cr_disper);
-	*/
 }
 void Coans_s::ans_nitch() {
 	MakeList(pop, 0, K_List2, 0);
-	int cr_para = 1;
+	int cr_para = 0;
 	for (int i = 0; i < KO; i++) {
 		if (SetNitch(cr_para, i, pop) == 1) {
 			cr_para++;
