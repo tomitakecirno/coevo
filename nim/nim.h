@@ -7,7 +7,7 @@
 #include "config_nim.hpp"
 #include "player_nim.h"
 #include "../header/Usual_Methods.hpp"
-#include "NeuralNetwork.hpp"
+//#include "NeuralNetwork.hpp"
 
 class nim {
 public:
@@ -287,6 +287,7 @@ void nim::input_stra(const std::vector<double> &pop, const std::vector<double> &
 }
 void nim::vec2evalvec(const std::vector<double>& stra, std::vector<double>& eval_vec)
 {
+	/*
 	NN::NeuralNetwork<INPUT, MIDDLE, OUTPUT> nn;
 
 	const auto s = stra.size();
@@ -330,6 +331,7 @@ void nim::vec2evalvec(const std::vector<double>& stra, std::vector<double>& eval
 		}
 	}
 	//show_vec_1(eval_vec);
+	*/
 }
 void nim::test(const std::vector<double>& stra) {
 	show_vec_1(stra);

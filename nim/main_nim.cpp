@@ -3,7 +3,7 @@
 #include <time.h>
 #include <cstdlib>
 #include <cstring>
-#include "nim.h"
+//#include "nim.h"
 #include "coans_nim.h"
 #include "coansmodule_nim.hpp"
 #include "matchmethods_nim.h"
@@ -46,8 +46,8 @@ int main(int argc, char *argv[])
 		argv[4]:trial
 		argv[5]:nitch parameter
 	*/
-	//mode = 6;
-	mode = atoi(__argv[1]);
+	mode = 7;
+	//mode = atoi(__argv[1]);
 	if (mode == 1 || mode == 2 || mode == 4 || mode == 5) {
 		switch (__argc) {
 		case 1:
@@ -130,6 +130,10 @@ int main(int argc, char *argv[])
 	else if (mode == 6) {
 		mode4 m4("nim", trial);
 		m4.exp_upgma();
+	}
+	else if (mode == 7) {
+		//test mode
+		fuzzy_x_means();
 	}
 	const clock_t End_Main = clock();
 	Show_Time(Start_Main, End_Main);

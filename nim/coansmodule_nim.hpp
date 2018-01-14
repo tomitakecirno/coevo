@@ -4,6 +4,7 @@ ANS‚ğg‚Á‚½’ñˆÄè–@‚ÌŠÖ”‚Ü‚Æ‚ß
 -----------------------------------*/
 #include "config_nim.hpp"
 #include "player_nim.h"
+#include "nim.h"
 
 template<class Vec>
 double cal_euclidean(const Vec &one, const Vec &ano);
