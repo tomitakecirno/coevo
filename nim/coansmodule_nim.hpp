@@ -240,6 +240,7 @@ void ExtensionXLM(const int main_pare, const std::vector<int> &sub_pare, std::ve
 	}
 }
 //斎藤さんのEXLM
+//ステップサイズを広げたい
 void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::vector<playerNim> &pop, std::vector<playerNim> &child)
 {
 	const int sub_len = int(sub_pare.size());
@@ -284,6 +285,13 @@ void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::ve
 		tmp_eval[index] = -10000;
 	}
 	//重心を求める
+	double sub_g[W_SIZE] = { 0 };
+	for (int i = 0; i < W_SIZE; i++) {
+		for (int j = 0; j < sub_len * 2; j++) {
+			sub_g[i] += sub_2[j].stra[i];
+		}
+		sub_g[i] /= sub_len * 2;
+	}
 	double sub_max_g[W_SIZE] = { 0 };
 	for (int i = 0; i < W_SIZE; i++) {
 		for (auto &pi : max_sub) {
@@ -302,21 +310,18 @@ void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::ve
 
 	std::random_device rd;
 	std::mt19937 mt(rd());
-	std::normal_distribution<> dist(0.0, 1.0 / (std::sqrt(sub_len * 2)));
+	std::normal_distribution<> dist(0.0, 1.0 / (std::sqrt(sub_len * 2))); //乱数の範囲
 	//子個体の戦略生成
 	for (int c = 1; c < CHILD + 1; c++) {
 		//初期化
 		child[c].Init_pn();
-		child[c].stra.resize(W_SIZE);
+		child[c].stra = pop[main_pare].stra;
+		//差分ベクトルと重心スライド追加
 		for (int i = 0; i < sub_len * 2; i++) {
-			const double coe = dist(mt);
+			const double coe = dist(mt); //生成範囲設定
 			for (int j = 0; j < W_SIZE; j++) {
-				child[c].stra[j] += sub_delta[i][j] * coe;
+				child[c].stra[j] += sub_delta[i][j] * coe + (sub_max_g[i] - sub_g[i]);
 			}
-		}
-		//重心をスライド
-		for (int i = 0; i < W_SIZE; i++) {
-			child[c].stra[i] += sub_max_g[i];
 		}
 		//show_vec_1(child[c].stra);
 	}

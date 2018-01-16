@@ -367,17 +367,15 @@ void Coans::main_task()
 }
 void Coans::Crustering1() {
 	//近傍リスト生成＆クラスタ番号割り振り
-	MakeList(pop, K_List1, 0, 0);
-	/*
+	MakeList(pop, K_List1, K_List2, 0);
 	cr_num = 1;
 	for (int i = 0; i < KO; i++) {
 		if (SetNitch(cr_num, i, pop) == 1) {
 			cr_num++;
 		}
 	}
-	*/
-	Cru_Upgma(pop);
-	cr_num = K_UPGMA;
+	//Cru_Upgma(pop);
+	//cr_num = K_UPGMA;
 }
 void Coans::Crustering2() {
 	//近傍リスト生成
@@ -421,15 +419,20 @@ private:
 	virtual void Crustering();
 	virtual void Generate_Opp();
 };
-void coans_mode2::Crustering() {
-	//近傍リスト生成
-	//MakeList(Pop, true, false, false);
-	//クラスタ番号割り振り
-	Crustering1();
+void coans_mode2::Crustering() 
+{
+	MakeList(pop, K_List1, K_List2, 0);
+	cr_num = 0;
+	for (int i = 0; i < KO; i++) {
+		if (SetNitch(cr_num, i, pop) == 1) {
+			cr_num++;
+		}
+	}
 }
 void coans_mode2::Generate_Opp() 
 {
-	Generate_Opp_per();
+	choice_oppoment(pop, opp, cr_num);
+	opp_num = int(opp.size());
 }
 
 /*
@@ -463,7 +466,8 @@ void coans_mode3::Crustering() {
 }
 void coans_mode3::Generate_Opp()
 {
-	Generate_Opp_all();
+	opp = pop;
+	opp_num = KO;
 }
 
 class Coans_s : public Coans_base {
@@ -476,127 +480,115 @@ private:
 	virtual void Generate_Opp() = 0;
 protected:
 	std::vector<playerNim> local_s;
+	std::vector<double> pop_eval;
 
 	void child2sub(const std::vector<int> &subpare, const std::vector<playerNim> &child);
 	void create_pop();
 	void create_pop_with_sol();
-	void cal_fitness_alfa(std::vector<int>& sub, std::vector<playerNim>& child);
-	int get_best();
 	void ans_nitch();
-	double distance_disper(const std::vector<int> &index, std::vector<double> &gra);
+	void cal_fitness_alfa(std::vector<int>& sub, std::vector<playerNim>& child);
 	void cal_gravity_nitch(const std::vector<int> &index, std::vector<double> &gra);
+	int get_best();
+	double distance_disper(const std::vector<int> &index, std::vector<double> &gra);
+	bool end_decision();
 };
 void Coans_s::main_task() {
-	std::cout << "手法:" << method << std::endl;
-	std::cout << "世代数:" << gene << std::endl;
-	std::cout << "試行回数:" << trial << std::endl;
-	std::cout << "集団個体数:" << KO << std::endl;
-	std::cout << "子個体数:" << CHILD << std::endl;
-	int save_index = 0;
-	for (int cycle1 = 0; cycle1 < CYCLE; cycle1++) {
-		std::cout << "reboot" << std::endl;
-		if (!local_s.empty()) {
-			create_pop_with_sol();
+	std::cout << "method     :" << method << std::endl;
+	std::cout << "trial      :" << trial << std::endl;
+	std::cout << "pop_size   :" << KO << std::endl;
+	std::cout << "child_size :" << CHILD << std::endl;
+
+	create_pop();
+	//cal_rate();
+	pop_eval.assign(KO, 0);
+	output_stra(0);
+
+	machup = 0;
+	int machup_index = 1;
+
+	double loop_start = clock();
+	while (machup < END_GA && end_decision()) {
+		Crustering(); //crustering
+		//main parent
+		const int main = GetRand_Int(KO);
+		//sub parent
+		if (pop[main].List1.empty()) {
+			std::cout << "list1が空です main_tasks" << std::endl;
+			exit(EXIT_FAILURE);
 		}
 		else {
-			create_pop();
-		}
-		cal_rate();
-
-		machup = 0;
-		int machup_index = 1;
-
-		output_stra(save_index);
-		double loop_start = clock();
-		while (machup < END_GA) {
-			Crustering(); //クラスタリング
-			//主親
-			const int main = GetRand_Int(KO);
-			//副親があれば以下の処理を行う
-			if (pop[main].List1.empty()) {
-				std::cout << "list1が空です main_tasks" << std::endl;
-				exit(EXIT_FAILURE);
+			std::vector<int> sub(PARENT);
+			std::vector<int> tmp_list1;
+			tmp_list1 = pop[main].List1;
+			for (int i = 0; i < PARENT; i++) {
+				const int index = GetRand_Int(int(tmp_list1.size()));
+				sub[i] = tmp_list1[index];
+				tmp_list1.erase(tmp_list1.begin() + index);
 			}
-			else {
-				std::vector<int> sub(PARENT);
-				std::vector<int> tmp_list1;
-				tmp_list1 = pop[main].List1;
-				for (int i = 0; i < PARENT; i++) {
-					const int index = GetRand_Int(int(tmp_list1.size()));
-					sub[i] = tmp_list1[index];
-					tmp_list1.erase(tmp_list1.begin() + index);
-				}
 
-				child.resize(CHILD + 1);
-				//拡張XLM
-				child[0] = pop[main];
-				ExtensionXLM(main, sub, pop, child);
-				//EXLM_S(main, sub, pop, child);
-				Generate_Opp(); //対戦相手の個体を選ぶ
+			child.resize(CHILD + 1);
+			//crossover
+			child[0] = pop[main];
+			//ExtensionXLM(main, sub, pop, child);
+			EXLM_S(main, sub, pop, child);
+			Generate_Opp(); //choice opp
 
-				nim nim(2); //ニムのクラス定義
-				for (int c = 0; c < CHILD + 1; c++) {
-					child[c].Result.assign(opp_num, 0);
+			nim nim(2);
+			for (int c = 0; c < CHILD + 1; c++) {
+				child[c].Result.assign(opp_num, 0);
+			}
+			for (auto &pi : sub) {
+				pop[pi].Result.assign(opp_num, 0);
+			}
+			for (int i = 0; i < opp_num; i++) {
+				for (int c = 0; c < CHILD + 1; c++, machup += 2) {
+					//std::cout << "(c,r) = " << "(" << i << "," << j << ")" << std::endl;
+					nim.input_stra(child[c].stra, opp[i].stra);	//first
+					child[c].Result[i] += nim.nim_game(0)*WIN_FIRST;
+					nim.input_stra(opp[i].stra, child[c].stra);	//second
+					child[c].Result[i] += nim.nim_game(1)*WIN_LAST;
 				}
 				for (auto &pi : sub) {
-					pop[pi].Result.assign(opp_num, 0);
-				}
-				for (int i = 0; i < opp_num; i++) {
-					for (int c = 0; c < CHILD + 1; c++, machup += 2) {
-						//std::cout << "(c,r) = " << "(" << i << "," << j << ")" << std::endl;
-						//1回目
-						nim.input_stra(child[c].stra, opp[i].stra);	//先手
-						child[c].Result[i] += nim.nim_game(0)*WIN_FIRST;
-						//先手後手を入れ替えて2回目
-						nim.input_stra(opp[i].stra, child[c].stra);	//先手
-						child[c].Result[i] += nim.nim_game(1)*WIN_LAST;
-					}
-					for (auto &pi : sub) {
-						nim.input_stra(pop[pi].stra, opp[i].stra);	//先手
-						pop[pi].Result[i] += nim.nim_game(0)*WIN_FIRST;
-						//先手後手を入れ替えて2回目
-						nim.input_stra(opp[i].stra, pop[pi].stra);	//先手
-						pop[pi].Result[i] += nim.nim_game(1)*WIN_LAST;
-						machup += 2;
-					}
-				}
-				//適応度計算
-				/*
-				for (int i = 0; i < CHILD + 1; i++) {
-					child[i].cal_fitness();
-				}
-				*/
-				cal_fitness_alfa(sub, child);
-				//Best個体を集団へ
-				const int index = Choice_Best_Index();
-				if (index != 0) {
-					if (child[0].eval < child[index].eval) {
-						pop[main] = child[index];
-					}
-				}
-				child2sub(sub, child);
-				//実験用 : 戦略書き出し
-				if (BATTLE_PER*machup_index < machup) {
-					const double loop_end = clock();
-					printf("%d:%d:%I64d/%d　...%d[sec]\n", method, trial, machup, END_GA, int((loop_end - loop_start) / CLOCKS_PER_SEC));
-					std::cout << "max rate :" << child[index].eval << std::endl;
-
-					output_stra(save_index);
-					cal_rate();
-					machup_index++;
-					save_index++;
-					loop_start = clock();
-				}
-				//集団の解以外初期化
-				for (int i = 0; i < KO; i++) {
-					pop[i].Init_pn();
+					nim.input_stra(pop[pi].stra, opp[i].stra);	//first
+					pop[pi].Result[i] += nim.nim_game(0)*WIN_FIRST;
+					nim.input_stra(opp[i].stra, pop[pi].stra);	//second
+					pop[pi].Result[i] += nim.nim_game(1)*WIN_LAST;
+					machup += 2;
 				}
 			}
+			//cal_fitness
+			for (int i = 0; i < CHILD + 1; i++) {
+				child[i].cal_fitness();
+			}
+			for (auto &pi : sub) {
+				pop[pi].cal_fitness();
+			}
+			//Best -> pop
+			const int index = Choice_Best_Index();
+			if (index != 0) {
+				if (child[0].eval < child[index].eval) {
+					pop[main] = child[index];
+				}
+			}
+			//child -> sub
+			child2sub(sub, child);
+			//for experiment
+			if (BATTLE_PER*machup_index < machup) {
+				const double loop_end = clock();
+				printf("%d:%d:%I64d/%d　...%d[sec]\n", method, trial, machup, END_GA, int((loop_end - loop_start) / CLOCKS_PER_SEC));
+				std::cout << "max rate :" << child[index].eval << std::endl;
+
+				output_stra(machup_index);
+				cal_rate();
+				machup_index++;
+				loop_start = clock();
+			}
+			//reInit
+			for (int i = 0; i < KO; i++) {
+				pop[i].Init_pn();
+			}
 		}
-		const int max_index = get_best();
-		local_s.push_back(pop[max_index]);
 	}
-	
 }
 void Coans_s::child2sub(const std::vector<int> &subpare, const std::vector<playerNim> &child)
 {
@@ -835,6 +827,24 @@ void Coans_s::ans_nitch() {
 		}
 	}
 }
+bool Coans_s::end_decision() 
+{
+	if (machup == 0) {
+		return true;
+	}
+	std::vector<double> eval(KO);
+	for (int i = 0; i < KO; i++) {
+		eval[i] = pop[i].eval;
+	}
+	const double eval_diff = cal_euclidean(eval, pop_eval);
+	if (eval_diff > 0.1) { 
+		pop_eval = eval;
+		return true;
+	}
+	else {
+		return false;
+	}
+}
 
 class mode4 : public Coans_s {
 public:
@@ -859,6 +869,135 @@ void mode4::Generate_Opp()
 {
 	choice_oppoment(pop, opp, cr_num);
 	opp_num = int(opp.size());
+}
+
+class mode5 : public Coans_s {
+public:
+	mode5(std::string str, int t) {
+		dir = str;
+		method = 5;
+		trial = t;
+		local_s.clear();
+	}
+	void reboot_GA();
+private:
+	virtual void Crustering();
+	virtual void Generate_Opp();
+};
+void mode5::reboot_GA() {
+	std::cout << "method     :" << method << std::endl;
+	std::cout << "trial      :" << trial << std::endl;
+	std::cout << "pop_size   :" << KO << std::endl;
+	std::cout << "child_size :" << CHILD << std::endl;
+	int save_index = 0;
+	for (int cycle1 = 0; cycle1 < CYCLE; cycle1++) {
+		std::cout << "reboot" << std::endl;
+		if (!local_s.empty()) {
+			create_pop_with_sol();
+		}
+		else {
+			create_pop();
+		}
+		cal_rate();
+
+		machup = 0;
+		int machup_index = 1;
+
+		output_stra(save_index);
+		double loop_start = clock();
+		while (machup < END_GA) {
+			Crustering(); //クラスタリング
+						  //主親
+			const int main = GetRand_Int(KO);
+			//副親があれば以下の処理を行う
+			if (pop[main].List1.empty()) {
+				std::cout << "list1が空です main_tasks" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			else {
+				std::vector<int> sub(PARENT);
+				std::vector<int> tmp_list1;
+				tmp_list1 = pop[main].List1;
+				for (int i = 0; i < PARENT; i++) {
+					const int index = GetRand_Int(int(tmp_list1.size()));
+					sub[i] = tmp_list1[index];
+					tmp_list1.erase(tmp_list1.begin() + index);
+				}
+
+				child.resize(CHILD + 1);
+				//拡張XLM
+				child[0] = pop[main];
+				ExtensionXLM(main, sub, pop, child);
+				//EXLM_S(main, sub, pop, child);
+				Generate_Opp(); //対戦相手の個体を選ぶ
+
+				nim nim(2); //ニムのクラス定義
+				for (int c = 0; c < CHILD + 1; c++) {
+					child[c].Result.assign(opp_num, 0);
+				}
+				for (auto &pi : sub) {
+					pop[pi].Result.assign(opp_num, 0);
+				}
+				for (int i = 0; i < opp_num; i++) {
+					for (int c = 0; c < CHILD + 1; c++, machup += 2) {
+						//std::cout << "(c,r) = " << "(" << i << "," << j << ")" << std::endl;
+						//1回目
+						nim.input_stra(child[c].stra, opp[i].stra);	//先手
+						child[c].Result[i] += nim.nim_game(0)*WIN_FIRST;
+						//先手後手を入れ替えて2回目
+						nim.input_stra(opp[i].stra, child[c].stra);	//先手
+						child[c].Result[i] += nim.nim_game(1)*WIN_LAST;
+					}
+					for (auto &pi : sub) {
+						nim.input_stra(pop[pi].stra, opp[i].stra);	//先手
+						pop[pi].Result[i] += nim.nim_game(0)*WIN_FIRST;
+						//先手後手を入れ替えて2回目
+						nim.input_stra(opp[i].stra, pop[pi].stra);	//先手
+						pop[pi].Result[i] += nim.nim_game(1)*WIN_LAST;
+						machup += 2;
+					}
+				}
+				//適応度計算
+				/*
+				for (int i = 0; i < CHILD + 1; i++) {
+				child[i].cal_fitness();
+				}
+				*/
+				cal_fitness_alfa(sub, child);
+				//Best個体を集団へ
+				const int index = Choice_Best_Index();
+				if (index != 0) {
+					if (child[0].eval < child[index].eval) {
+						pop[main] = child[index];
+					}
+				}
+				child2sub(sub, child);
+				//実験用 : 戦略書き出し
+				if (BATTLE_PER*machup_index < machup) {
+					const double loop_end = clock();
+					printf("%d:%d:%I64d/%d　...%d[sec]\n", method, trial, machup, END_GA, int((loop_end - loop_start) / CLOCKS_PER_SEC));
+					std::cout << "max rate :" << child[index].eval << std::endl;
+
+					output_stra(save_index);
+					cal_rate();
+					machup_index++;
+					save_index++;
+					loop_start = clock();
+				}
+				//集団の解以外初期化
+				for (int i = 0; i < KO; i++) {
+					pop[i].Init_pn();
+				}
+			}
+		}
+		const int max_index = get_best();
+		local_s.push_back(pop[max_index]);
+	}
+}
+void mode5::Crustering() {
+}
+void mode5::Generate_Opp()
+{
 }
 /*
 

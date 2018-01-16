@@ -46,13 +46,13 @@ int main(int argc, char *argv[])
 		argv[4]:trial
 		argv[5]:nitch parameter
 	*/
-	mode = 7;
-	//mode = atoi(__argv[1]);
+	//mode = 7;
+	mode = atoi(__argv[1]);
 	if (mode == 1 || mode == 2 || mode == 4 || mode == 5) {
 		switch (__argc) {
 		case 1:
 			//Debug mode
-			method = 4;
+			method = atoi(__argv[2]);
 			ku = KU;
 			trial = 0;
 			break;
@@ -112,11 +112,6 @@ int main(int argc, char *argv[])
 			Mode3.main_task();
 			MatchUp_Count = Mode3.Get_MatchUp_Num();
 		}
-		if (method == 4)
-		{
-			mode4 m4("nim", trial);
-			m4.main_task();
-		}
 	}
 	//csvìùçá
 	else if (mode == 3) {
@@ -126,10 +121,6 @@ int main(int argc, char *argv[])
 	else if (mode == 1) {
 		Match match(method, 0, trial, KU, PER);
 		match.evaluation();
-	}
-	else if (mode == 6) {
-		mode4 m4("nim", trial);
-		m4.exp_upgma();
 	}
 	else if (mode == 7) {
 		//test mode
