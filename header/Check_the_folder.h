@@ -12,12 +12,23 @@ public:
 
   virtual ~CheckTheFolder(void){}
 
-  static bool checkExistenceOfFolder(const std::string folder_name) {
+  static bool checkExistenceAndMakeFolder(const std::string folder_name) 
+  {
     if( _mkdir( folder_name.c_str() ) == 0 ){
       return true;
     } else {
       return false;
     }
+  }
+  static bool checkExistenceOfFolder(const std::string folder_name) 
+  {
+	  struct stat statBuf;
+	  if (stat(folder_name.c_str(), &statBuf) == 0) {
+		  return true;
+	  }
+	  else {
+		  return false;
+	  }
   }
 };
 

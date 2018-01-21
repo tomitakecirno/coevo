@@ -2,21 +2,22 @@
 /* #define NDEBUG */
 
 //集団
-#define KO_L		1500				//集団
-#define KO			150					//集団
+#define KO_L		900				//集団
+#define KO			450					//集団
 #define KOT			100					//敵
-#define PARENT		10					//親
+#define PARENT		91					//親
 #define CHILD		100					//子
 #define KU			3000				//世代数
 #define PER			100					//
-#define BATTLE_PER	KO*(CHILD+1)*2*20	//
-#define END_GA		KO*(CHILD+1)*2*300		//世代交代モデルの終了条件
+#define BATTLE_PER	KO*(CHILD+1)*10	//
+#define END_GA		BATTLE_PER*100		//世代交代モデルの終了条件
 #define TRIAL		1
 #define WIN_RATE	60
 #define CYCLE		1
+#define STEP_SIZE	12.0
 
 //クラスタリング
-#define K_List1	10	/*ニッチの集団数*/
+#define K_List1	100	/*ニッチの集団数*/
 #define K_List2	2	/*ニッチの集団数*/
 #define K_List3	2	/*ニッチの集団数*/
 #define K_UPGMA		90

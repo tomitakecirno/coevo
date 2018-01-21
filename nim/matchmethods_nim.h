@@ -64,31 +64,8 @@ void Match::PvP(int Opp_Trial, int g)
 			//‘Îí‘Šè‚Ìí—ª“Ç‚İ‚İ
 			sprintf_s(fname2, "AIT/%d/%d/%d.dat", method_opp, Opp_Trial, ai_opp);
 			opp.input_stra(fname2);
-
-			//1‰ñ–Ú
-			double value;
-			nim.input_stra(pop.stra, opp.stra);	//æè
-			value = nim.nim_game(0);
-			if (0 < value) {
-				pop.Result[ai_opp] += 1;
-			}
-			if (value < 0) {
-				pop.Result[ai_opp] += 0;
-			}
-			else {
-				pop.Result[ai_opp] += 0;
-			}
-			//æèŒãè‚ğ“ü‚ê‘Ö‚¦‚Ä2‰ñ–Ú
-			nim.input_stra(opp.stra, pop.stra);	//æè
-			value = nim.nim_game(1);
-			if (0 < value) {
-				pop.Result[ai_opp] += 1;
-			}
-			if (value < 0) {
-				pop.Result[ai_opp] += 0;
-			}
-			else {
-				pop.Result[ai_opp] += 0;
+			if (nim.nim_game(pop.stra, opp.stra)) {
+				pop.Result[ai_opp]++;
 			}
 		}
 		eval[g][ai_pop] = std::accumulate(pop.Result.begin(), pop.Result.end(), 0.0);

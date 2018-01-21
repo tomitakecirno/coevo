@@ -72,16 +72,27 @@ void Cru_Upgma(std::vector<playerNim> &Pop) {
 				}
 			}
 		}
-		//クラスタ数更新
-		Group_Num[Min_Index_A] += Group_Num[Min_Index_B];
-		Group_Num[Min_Index_B] = Group_Num[Min_Index_A];
-		//クラスタ番号更新
-		for (int i = 0; i < Pop_Length; i++) {
-			if (Group_Index[i] == Group_Index[Min_Index_B] && i != Min_Index_B) {
-				Group_Index[i] = Group_Index[Min_Index_A];
+		//クラスタ数更新andクラスタ番号更新
+		const int tmp_index_A = Group_Index[Min_Index_A];
+		const int tmp_index_B = Group_Index[Min_Index_B];
+		if (tmp_index_A < tmp_index_B) {
+			Group_Num[Min_Index_A] += Group_Num[Min_Index_B];
+			Group_Num[Min_Index_B] = 0;
+			for (int i = 0; i < Pop_Length; i++) {
+				if (Group_Index[i] == tmp_index_B) {
+					Group_Index[i] = tmp_index_A;
+				}
 			}
 		}
-		Group_Index[Min_Index_B] = Group_Index[Min_Index_A];
+		else if (tmp_index_A > tmp_index_B) {
+			Group_Num[Min_Index_B] += Group_Num[Min_Index_A];
+			Group_Num[Min_Index_A] = 0;
+			for (int i = 0; i < Pop_Length; i++) {
+				if (Group_Index[i] == tmp_index_A) {
+					Group_Index[i] = tmp_index_B;
+				}
+			}
+		}
 		//同じクラスタに属している個体同士の距離を10000くらいにする
 		for (int i = 0; i < Pop_Length; i++) {
 			if (Group_Index[i] == Group_Index[Min_Index_A]) {
@@ -103,11 +114,21 @@ void Cru_Upgma(std::vector<playerNim> &Pop) {
 		//Show_Vector_2(Vec_Dis);
 	}
 	//std::cout << "1-4" << ',';
-	for (int i = 0; i < Pop_Length; i++) {
-		assert(Group_Index[i] < KO);
-		assert(0 <= Group_Index[i]);
-		Pop[i].nitch = Group_Index[i];
+	int size = 0;
+	std::vector<int> pop_index(KO);
+	const auto max = *max_element(Group_Index.begin(), Group_Index.end());
+	for (int i = 0; i < max + 1; i++) {
+		if (std::count(Group_Index.begin(), Group_Index.end(), i) > 0) {
+			for (int j = 0; j < Pop_Length; j++) {
+				if (Group_Index[j] == i) {
+					Pop[j].nitch = size;
+					pop_index[j] = size;
+				}
+			}
+			size++;
+		}
 	}
+	//show_vec_1(pop_index);
 }
 double Range_Ward(double D_io, double D_jo, double D_ij, int N_i, int N_j, int N_o) {
 	int nk;

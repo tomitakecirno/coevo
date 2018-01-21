@@ -20,11 +20,6 @@ public:
 	std::vector<double> stra;
 	std::vector<double> Result;
 
-	p_data() {
-		Init();
-		Init_stra();
-	}
-
 	void Init();
 	void Init_stra();
 	void cal_fitness();

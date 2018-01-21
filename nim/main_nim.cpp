@@ -46,13 +46,13 @@ int main(int argc, char *argv[])
 		argv[4]:trial
 		argv[5]:nitch parameter
 	*/
-	//mode = 7;
-	mode = atoi(__argv[1]);
+	mode = 2;
+	//mode = atoi(__argv[1]);
 	if (mode == 1 || mode == 2 || mode == 4 || mode == 5) {
 		switch (__argc) {
 		case 1:
 			//Debug mode
-			method = atoi(__argv[2]);
+			method = 4;
 			ku = KU;
 			trial = 0;
 			break;
@@ -111,6 +111,11 @@ int main(int argc, char *argv[])
 			coans_mode3 Mode3("nim", ku, per, trial);
 			Mode3.main_task();
 			MatchUp_Count = Mode3.Get_MatchUp_Num();
+		}
+		if (method == 4)
+		{
+			mode4 mode4("nim", trial);
+			mode4.main_task();
 		}
 	}
 	//csvìùçá

@@ -32,31 +32,14 @@ void Make_Directory(std::string str, int method, int trial, int gene, int per, i
 	std::stringstream Tmp_File_Name;
 	if (k == 0) {
 		File_Name << "./" << str;
-		CheckTheFolder::checkExistenceOfFolder(File_Name.str());
+		CheckTheFolder::checkExistenceAndMakeFolder(File_Name.str());
 		File_Name << "/" << method;
-		CheckTheFolder::checkExistenceOfFolder(File_Name.str());
+		CheckTheFolder::checkExistenceAndMakeFolder(File_Name.str());
 		File_Name << "/" << trial;
-		CheckTheFolder::checkExistenceOfFolder(File_Name.str());
+		CheckTheFolder::checkExistenceAndMakeFolder(File_Name.str());
 		for (int g = 0; g < gene / per + 1; g++) {
 			Tmp_File_Name << File_Name.str() << "/" << g;
-			CheckTheFolder::checkExistenceOfFolder(Tmp_File_Name.str());
-			std::cout << Tmp_File_Name.str() << std::endl;
-			Tmp_File_Name.str("");
-			Tmp_File_Name.clear(std::stringstream::goodbit);
-		}
-	}
-	else {
-		File_Name << "./" << str;
-		CheckTheFolder::checkExistenceOfFolder(File_Name.str());
-		File_Name << "/" << method;
-		CheckTheFolder::checkExistenceOfFolder(File_Name.str());
-		File_Name << "/" << trial;
-		CheckTheFolder::checkExistenceOfFolder(File_Name.str());
-		File_Name << "/" << k;
-		CheckTheFolder::checkExistenceOfFolder(File_Name.str());
-		for (int g = 0; g < gene / per + 1; g++) {
-			Tmp_File_Name << File_Name.str() << "/" << g;
-			CheckTheFolder::checkExistenceOfFolder(Tmp_File_Name.str());
+			CheckTheFolder::checkExistenceAndMakeFolder(Tmp_File_Name.str());
 			std::cout << Tmp_File_Name.str() << std::endl;
 			Tmp_File_Name.str("");
 			Tmp_File_Name.clear(std::stringstream::goodbit);
@@ -68,61 +51,45 @@ void Make_Directory2(std::string str, int method, int trial, int index)
 {
 	std::stringstream fname;
 	fname << "./" << str;
-	CheckTheFolder::checkExistenceOfFolder(fname.str());
+	CheckTheFolder::checkExistenceAndMakeFolder(fname.str());
 	fname << "/" << method;
-	CheckTheFolder::checkExistenceOfFolder(fname.str());
+	CheckTheFolder::checkExistenceAndMakeFolder(fname.str());
 	fname << "/" << trial;
-	CheckTheFolder::checkExistenceOfFolder(fname.str());
+	CheckTheFolder::checkExistenceAndMakeFolder(fname.str());
 	fname << "/" << index;
-	CheckTheFolder::checkExistenceOfFolder(fname.str());
+	CheckTheFolder::checkExistenceAndMakeFolder(fname.str());
 }
 void Make_Directory_AIT(int method, int trial) {
 	std::stringstream File_Name;
 
 	File_Name << "./AIT";
-	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
+	CheckTheFolder::checkExistenceAndMakeFolder(File_Name.str());
 	File_Name << "/" << method;
-	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
+	CheckTheFolder::checkExistenceAndMakeFolder(File_Name.str());
 	File_Name << "/" << trial;
-	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
-}
-void Make_Directory_GT2016(int trial, int gene, int per) {
-	std::stringstream File_Name;
-	std::stringstream Tmp_File_Name;
-
-	File_Name << "./2016";
-	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
-	File_Name << "/" << trial;
-	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
-
-	for (int g = 0; g < gene / per + 1; g++) {
-		Tmp_File_Name << File_Name.str() << "/" << g;
-		CheckTheFolder::checkExistenceOfFolder(Tmp_File_Name.str());
-		Tmp_File_Name.str("");
-		Tmp_File_Name.clear(std::stringstream::goodbit);
-	}
+	CheckTheFolder::checkExistenceAndMakeFolder(File_Name.str());
 }
 void Make_CSV_Directory(int method) {
 	std::stringstream File_Name;
 	std::stringstream Tmp_File_Name;
 
 	File_Name << "./csv";
-	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
+	CheckTheFolder::checkExistenceAndMakeFolder(File_Name.str());
 	File_Name << "/" << method;
-	CheckTheFolder::checkExistenceOfFolder(File_Name.str());
+	CheckTheFolder::checkExistenceAndMakeFolder(File_Name.str());
 }
 int count_folder(const std::string str) 
 {
+	int end_flag = 1;
 	int folder_num = 0;
 	char fname[50];
-	while (1) {
-		sprintf_s(fname, "%s/%d/%d.dat", str.c_str(), folder_num, 0);
-		std::ifstream ifs(fname);
-		if (ifs.fail()) {
-			break;
+	while (end_flag) {
+		sprintf_s(fname, "%s/%d", str.c_str(), folder_num);
+		if (CheckTheFolder::checkExistenceOfFolder(fname)) {
+			folder_num++;
 		}
 		else {
-			folder_num++;
+			end_flag = 0;
 		}
 	}
 	return folder_num;

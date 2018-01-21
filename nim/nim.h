@@ -19,14 +19,14 @@ public:
 		nim_status[1] = POLL2;
 		nim_status[2] = POLL3;
 		stra_len = (POLL1 + 1)*(POLL2 + 1)*(POLL3 + 1);
-		nim_status_vec.assign(stra_len,0);
+		nim_status_vec.assign(stra_len, 0);
 		mont_max = *max_element(nim_status.begin(), nim_status.end());
 		mont_size = mont_max;
 		//cal_optimal();
 
 		mode = m;
 	}
-	double nim_game(const int turn);
+	bool nim_game(const std::vector<double> &pop, const std::vector<double> &opp);
 	double nim_evaluation(const std::vector<double>& stra);
 	void input_stra(const std::vector<double> &pop, const std::vector<double> &opp);
 	void test(const std::vector<double>& stra);
@@ -56,8 +56,10 @@ protected:
 	void show_mont();
 };
 //0:プレイヤー先手，1:プレイヤー後手
-double nim::nim_game(const int turn)
+bool nim::nim_game(const std::vector<double> &pop, const std::vector<double> &opp)
 {
+	vec2evalvec(pop, pop_stra);
+	vec2evalvec(opp, opp_stra);
 	Init_mont(); //山の初期化
 	//show_mont();
 	int stra_index;
@@ -66,25 +68,12 @@ double nim::nim_game(const int turn)
 	while (1)
 	{
 		stra_index = choose_stra(pop_stra);
-		if (turn == 0) {
-			//save_index.push_back(stra_index);
-		}
 		if (!update_mont(stra_index)) {
-			if (turn == 0) {
-				//show_vec_1(save_index);
-				return 1;
-			}
-			else
-				return 0;
+			return true;
 		}
 		stra_index = choose_stra(opp_stra);
 		if (!update_mont(stra_index)) {
-			if (turn == 0) {
-				//show_vec_1(save_index);
-				return 0;
-			}
-			else
-				return 1;
+			return false;
 		}
 	}
 }

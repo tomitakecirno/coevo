@@ -14,12 +14,12 @@ void AnsList3(const std::vector<std::vector<int>> &IndexSave, std::vector<int> &
 void MakeList(std::vector<playerNim> &pop, int Para_KL1, int Para_KL2, int Para_KL3);
 int SetNitch(int nitch_number, int kotai, std::vector<playerNim> &pop);
 void ExtensionXLM(const int main_pare, const std::vector<int> &sub_pare, std::vector<playerNim> &pop, std::vector<playerNim> &child);
-void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, const int count_nitch);
+void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, int count_nitch = 0);
 
 template<class Vec>
 double cal_euclidean(const Vec &one, const Vec &ano) {
-	int one_size = int(one.size());
-	int ano_size = int(ano.size());
+	const int one_size = int(one.size());
+	const int ano_size = int(ano.size());
 	if (one_size != ano_size) {
 		std::cout << "ベクターのサイズが違います" << std::endl;
 		exit(EXIT_FAILURE);
@@ -59,20 +59,15 @@ double cal_dispersion_2(const std::vector<std::vector<double>> &eval)
 	const int len = int(eval.size());
 	const int len2 = int(eval[0].size());
 
-	std::vector<double> sum(len2, 0);
+	std::vector<double> gra;
+	std::vector<double> dis2gra(len);
+
+	//重心と重心からの分散
+	cal_gravity(eval, gra);
 	for (int i = 0; i < len; i++) {
-		for (int j = 0; j < len2; j++) {
-			sum[j] += eval[i][j];
-		}
+		dis2gra[i] = cal_euclidean(eval[i], gra);
 	}
-	for (int i = 0; i < len2; i++) {
-		sum[i] /= len;
-	}
-	std::vector<double> dis(len);
-	for (int i = 0; i < len; i++) {
-		dis[i] = cal_euclidean(eval[i],sum);
-	}
-	double disper;
+	const double disper = cal_dispersion_1(dis2gra);
 	return disper;
 }
 
@@ -229,7 +224,7 @@ void ExtensionXLM(const int main_pare, const std::vector<int> &sub_pare, std::ve
 	for (int c = 1; c < CHILD + 1; c++) {
 		//初期化
 		child[c].Init_pn();
-		child[c].stra.resize(W_SIZE);
+		child[c].stra = pop[main_pare].stra;
 		for (int i = 0; i < PARENT; i++) {
 			const double coe = dist(mt);
 			for (int j = 0; j < W_SIZE; j++) {
@@ -241,39 +236,37 @@ void ExtensionXLM(const int main_pare, const std::vector<int> &sub_pare, std::ve
 }
 //斎藤さんのEXLM
 //ステップサイズを広げたい
-void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::vector<playerNim> &pop, std::vector<playerNim> &child)
+void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::vector<playerNim> &pop, std::vector<playerNim> &child, double t = STEP_SIZE)
 {
 	const int sub_len = int(sub_pare.size());
-	
-	std::vector<p_data> sub_2(sub_len*2);
+
+	//重心を求める
+	double sub_g[W_SIZE] = { 0 };
+	for (int i = 0; i < W_SIZE; i++) {
+		for (int j = 0; j < sub_len; j++) {
+			sub_g[i] += pop[sub_pare[j]].stra[i];
+		}
+		sub_g[i] /= sub_len * 2;
+	}
+
+	std::vector<p_data> sub_2(sub_len * 2);
 	for (int i = 0; i < sub_len; i++) {
 		sub_2[i].stra = pop[sub_pare[i]].stra;
 
 		sub_2[i + sub_len].stra.resize(W_SIZE);
 		for (int j = 0; j < W_SIZE; j++) {
-			const double tmp_w = pop[sub_pare[i]].stra[j] - pop[main_pare].stra[j];
-			sub_2[i + sub_len].stra[j] = pop[main_pare].stra[j] - tmp_w;
+			const double tmp_w = pop[sub_pare[i]].stra[j] - sub_g[j];
+			sub_2[i + sub_len].stra[j] = sub_g[j] - tmp_w;
 		}
 	}
 	std::vector<double> tmp_eval(sub_len * 2, 0);
 	nim nim(2);
-	for (int i = 0; i < sub_len*2; i++) {
-		for (int j = i; j < sub_len*2; j++) {
-			//先行
-			nim.input_stra(sub_2[i].stra, sub_2[j].stra);
-			if (nim.nim_game(0)) {
-				tmp_eval[i] += WIN_FIRST;
-			}
-			else {
-				tmp_eval[j] += WIN_LAST;
-			}
-			//後攻
-			nim.input_stra(sub_2[j].stra, sub_2[i].stra);
-			if (nim.nim_game(1)) {
-				tmp_eval[j] += WIN_FIRST;
-			}
-			else {
-				tmp_eval[i] += WIN_LAST;
+	for (int i = 0; i < sub_len * 2; i++) {
+		for (int j = 0; j < sub_len * 2; j++) {
+			if (i != j) {
+				if (nim.nim_game(sub_2[i].stra, sub_2[j].stra)) {
+					tmp_eval[i]++;
+				}
 			}
 		}
 	}
@@ -284,13 +277,77 @@ void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::ve
 		max_sub[i] = index;
 		tmp_eval[index] = -10000;
 	}
+	double sub_max_g[W_SIZE] = { 0 };
+	for (int i = 0; i < W_SIZE; i++) {
+		for (auto &pi : max_sub) {
+			sub_max_g[i] += sub_2[pi].stra[i];
+		}
+		sub_max_g[i] /= sub_len;
+	}
+
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_real_distribution<double> dist(-std::sqrt((3 / (sub_len - 1)) + 1), std::sqrt((3 / (sub_len - 1)) + 1)); //乱数の範囲
+	std::uniform_real_distribution<double> dist_t(0.0, t); //乱数の範囲
+
+	//子個体の戦略生成
+	for (int c = 1; c < CHILD + 1; c++) {
+		//初期化
+		child[c].Init_pn();
+		child[c].stra = pop[main_pare].stra;
+		//重心スライド追加
+		for (int i = 0; i < W_SIZE; i++) {
+			child[c].stra[i] += dist_t(mt)*(sub_max_g[i] - pop[main_pare].stra[i]);
+		}
+		//差分ベクトル
+		for (int i = 0; i < sub_len * 2; i++) {
+			const double coe = dist(mt);
+			for (int j = 0; j < W_SIZE; j++) {
+				child[c].stra[j] += (sub_2[i].stra[j] - pop[main_pare].stra[j]) * coe;
+			}
+		}
+		//show_vec_1(child[c].stra);
+	}
+}
+void EXLM_S_T(const int main_pare, const std::vector<int> &sub_pare, const std::vector<playerNim> &pop, std::vector<playerNim> &child, double t) 
+{
+	const int sub_len = int(sub_pare.size());
+
 	//重心を求める
 	double sub_g[W_SIZE] = { 0 };
 	for (int i = 0; i < W_SIZE; i++) {
-		for (int j = 0; j < sub_len * 2; j++) {
-			sub_g[i] += sub_2[j].stra[i];
+		for (int j = 0; j < sub_len; j++) {
+			sub_g[i] += pop[sub_pare[j]].stra[i];
 		}
 		sub_g[i] /= sub_len * 2;
+	}
+
+	std::vector<p_data> sub_2(sub_len * 2);
+	for (int i = 0; i < sub_len; i++) {
+		sub_2[i].stra = pop[sub_pare[i]].stra;
+
+		sub_2[i + sub_len].stra.resize(W_SIZE);
+		for (int j = 0; j < W_SIZE; j++) {
+			const double tmp_w = pop[sub_pare[i]].stra[j] - sub_g[j];
+			sub_2[i + sub_len].stra[j] = sub_g[j] - tmp_w;
+		}
+	}
+	std::vector<double> tmp_eval(sub_len * 2, 0);
+	nim nim(2);
+	for (int i = 0; i < sub_len * 2; i++) {
+		for (int j = 0; j < sub_len * 2; j++) {
+			if (i != j) {
+				if (nim.nim_game(sub_2[i].stra, sub_2[j].stra)) {
+					tmp_eval[i]++;
+				}
+			}
+		}
+	}	std::vector<int> max_sub(sub_len);
+	for (int i = 0; i < sub_len; i++) {
+		const auto max = max_element(tmp_eval.begin(), tmp_eval.end());
+		const int index = int(std::distance(tmp_eval.begin(), max));
+		max_sub[i] = index;
+		tmp_eval[index] = -10000;
 	}
 	double sub_max_g[W_SIZE] = { 0 };
 	for (int i = 0; i < W_SIZE; i++) {
@@ -299,35 +356,91 @@ void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::ve
 		}
 		sub_max_g[i] /= sub_len;
 	}
-	//各副親から主親に対するベクトルを求める
-	std::vector<std::vector<double>> sub_delta(sub_len * 2);
-	for (int i = 0; i < sub_len * 2; i++) {
-		sub_delta[i].resize(W_SIZE);
-		for (int j = 0; j < W_SIZE; j++) {
-			sub_delta[i][j] = sub_2[i].stra[j] - pop[main_pare].stra[j];
-		}
-	}
 
 	std::random_device rd;
 	std::mt19937 mt(rd());
-	std::normal_distribution<> dist(0.0, 1.0 / (std::sqrt(sub_len * 2))); //乱数の範囲
-	//子個体の戦略生成
+	std::uniform_real_distribution<double> dist(-std::sqrt((3 / (sub_len - 1)) + 1), std::sqrt((3 / (sub_len - 1)) + 1)); //乱数の範囲
+	std::uniform_real_distribution<double> dist_t(0.0, 12.0); //乱数の範囲
+
+															 //子個体の戦略生成
 	for (int c = 1; c < CHILD + 1; c++) {
 		//初期化
 		child[c].Init_pn();
 		child[c].stra = pop[main_pare].stra;
-		//差分ベクトルと重心スライド追加
+		//重心スライド追加
+		for (int i = 0; i < W_SIZE; i++) {
+			child[c].stra[i] += dist_t(mt)*(sub_max_g[i] - sub_g[i]);
+		}
+		//差分ベクトル
 		for (int i = 0; i < sub_len * 2; i++) {
-			const double coe = dist(mt); //生成範囲設定
+			const double coe = dist(mt);
 			for (int j = 0; j < W_SIZE; j++) {
-				child[c].stra[j] += sub_delta[i][j] * coe + (sub_max_g[i] - sub_g[i]);
+				child[c].stra[j] += (sub_2[i].stra[j] - sub_g[j]) * coe;
 			}
 		}
 		//show_vec_1(child[c].stra);
 	}
 }
+void rexSter_C(std::vector<playerNim> &child, std::vector<playerNim> &tmp_child, double t = STEP_SIZE)
+{
+	tmp_child.resize(CHILD);
+	std::vector<double> tmp_eval(CHILD);
+	for (int i = 0; i < CHILD + 1; i++) {
+		tmp_child[i - 1] = child[i];
+		tmp_eval[i - 1] = child[i].eval;
+	}
+
+	std::vector<int> better_index(CHILD / 2);
+	for (int i = 0; i < CHILD / 2; i++) {
+		const auto max = max_element(tmp_eval.begin(), tmp_eval.end());
+		const int index = int(std::distance(tmp_eval.begin(), max));
+		better_index[i] = index;
+		tmp_eval[index] = -10000;
+	}
+
+	double sub_max_g[W_SIZE] = { 0 };
+	for (int i = 0; i < W_SIZE; i++) {
+		for (auto &pi : better_index) {
+			sub_max_g[i] += tmp_child[pi].stra[i];
+		}
+		sub_max_g[i] /= (CHILD / 2);
+	}
+	double sub_g[W_SIZE] = { 0 };
+	for (int i = 0; i < W_SIZE; i++) {
+		for (int j = 0; j < CHILD; j++) {
+			sub_g[i] += tmp_child[j].stra[i];
+		}
+		sub_g[i] /= CHILD;
+	}
+
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_real_distribution<double> dist(-std::sqrt((3 / W_SIZE) + 1), std::sqrt((3 / W_SIZE) + 1)); //乱数の範囲
+	std::uniform_real_distribution<double> dist_t(0.0, t); //乱数の範囲
+
+	for (int c = 1; c < CHILD + 1; c++) {
+		//初期化
+		child[c].Init_pn();
+		for (int i = 0; i < W_SIZE; i++) {
+			child[c].stra[i] = sub_g[i];
+		}
+		//重心スライド追加
+		for (int i = 0; i < W_SIZE; i++) {
+			child[c].stra[i] += dist_t(mt)*(sub_max_g[i] - sub_g[i]);
+		}
+		//差分ベクトル
+		for (int i = 0; i < CHILD; i++) {
+			const double coe = dist(mt);
+			for (int j = 0; j < W_SIZE; j++) {
+				child[c].stra[j] += (tmp_child[i].stra[j] - sub_g[j]) * coe;
+			}
+		}
+		//show_vec_1(child[c].stra);
+	}
+
+}
 //対戦相手を選ぶ
-void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, const int count_nitch)
+void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, int count_nitch)
 {
 	std::vector<int> tmpindex;
 	std::vector<int> tmp_nitch(KO);
@@ -335,33 +448,51 @@ void choice_oppoment(std::vector<playerNim> &pop, std::vector<playerNim> &opp, c
 		tmp_nitch[i] = pop[i].nitch;
 	}
 	int size = 0;
-	for (int i = 0; i < count_nitch; i++) {
+	const auto max = *max_element(tmp_nitch.begin(), tmp_nitch.end());
+	for (int i = 0; i <= max; i++) {
 		if (std::count(tmp_nitch.begin(), tmp_nitch.end(), i)) {
+			if (i != size) {
+				for (int j = 0; j < KO; i++) {
+					if (tmp_nitch[j] == i) {
+						tmp_nitch[j] = size;
+						pop[j].nitch = size;
+					}
+				}
+			}
 			size++;
 		}
 	}
-	int tmp_size = size;
-	std::vector<std::vector<int>> tmpCluster(size); //indexを入れる
-	for (int i = 0; i < count_nitch; i++) {
-		//リサイズ
-		int count = int(std::count(tmp_nitch.begin(), tmp_nitch.end(), i));
-		if (count > 0) {
-			size--;
-			tmpCluster[size].resize(count);
-			//格納
-			for (int j = 0; j < KO; j++) {
-				if (tmp_nitch[j] == i) {
-					count--;
-					tmpCluster[size][count] = j;
-				}
-			}
+	std::vector<int> cr_num(size);
+	for (int i = 0; i < size; i++) {
+		cr_num[i] = int(std::count(tmp_nitch.begin(), tmp_nitch.end(), i));
+	}
+	std::vector<std::vector<int>> pop_index(size);
+	int count_size = size;
+	for (int i = 0; i < size; i++) {
+		pop_index[i].resize(cr_num[i]);
+		auto f_itr = std::find(tmp_nitch.begin(), tmp_nitch.end(), i);
+		int index = int(std::distance(tmp_nitch.begin(), f_itr));
+		pop_index[i][0] = index;
+		for (int j = 1; j < cr_num[i]; j++) {
+			f_itr = std::find(f_itr + 1, tmp_nitch.end(), i);
+			index = int(std::distance(tmp_nitch.begin(), f_itr));
+			pop_index[i][j] = index;
 		}
 	}
-	opp.resize(tmp_size);
-	for (int i = 0; i < tmp_size; i++) {
-		int len = int(tmpCluster[i].size());
-		int rand = GetRand_Int(len);
-		int tmp_index = tmpCluster[i][rand];
-		opp[i] = pop[tmp_index];
+	opp.resize(size);
+	for (int i = 0; i < size; i++) {
+		const int len = cr_num[i];
+		std::vector<std::vector<double>> stra(len);
+		std::vector<double> gra, dis(len);
+		for (int j = 0; j < cr_num[i]; j++) {
+			stra[j] = pop[pop_index[i][j]].stra;
+		}
+		cal_gravity(stra, gra);
+		for (int j = 0; j < len; j++) {
+			dis[j] = cal_euclidean(stra[j], gra);
+		}
+		auto min = min_element(dis.begin(), dis.end());
+		const int index = int(std::distance(dis.begin(), min));
+		opp[i] = pop[pop_index[i][index]];
 	}
 }
