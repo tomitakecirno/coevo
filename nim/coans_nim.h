@@ -536,9 +536,7 @@ void Coans_s::main_task() {
 				tmp_list1.erase(tmp_list1.begin() + index);
 			}
 			std::cout << "2,";
-			child.resize(CHILD + 1);
-			//crossover
-			child[0] = pop[main];
+			child.resize(CHILD);
 			//ExtensionXLM(main, sub, pop, child);
 			Generate_Opp(); //choice opp
 			
@@ -547,13 +545,15 @@ void Coans_s::main_task() {
 			std::cout << "3,";
 			while (improve_decision(child, tmp_child)) {
 				if (child[1].eval == 0.0) {
+					//crossover
 					EXLM_S(main, sub, pop, child, t);
 					machup += PARENT*(PARENT - 1);
 				}
 				else {
 					rexSter_C(child, tmp_child, STEP_SIZE*2);
 				}
-				for (int c = 0; c < CHILD + 1; c++) {
+				pop[main].Result.assign(opp_num, 0);
+				for (int c = 0; c < CHILD; c++) {
 					child[c].Result.assign(opp_num, 0);
 				}
 				if (child[1].eval == 0.0) {
@@ -563,13 +563,16 @@ void Coans_s::main_task() {
 				}
 				//std::cout << "opp_num=" << opp_num << ",";
 				for (int i = 0; i < opp_num; i++) {
-					for (int c = 0; c < CHILD + 1; c++, machup++) {
+					for (int c = 0; c < CHILD; c++, machup++) {
 						//std::cout << "(c,r) = " << "(" << i << "," << j << ")" << std::endl;
 						if (nim.nim_game(child[c].stra, opp[i].stra)) {
 							child[c].Result[i]++;
 						}
 					}
 					if (child[1].eval == 0.0) {
+						if (nim.nim_game(pop[main].stra, opp[i].stra)) {
+							pop[main].Result[i]++;
+						}
 						for (auto &pi : sub) {
 							if (nim.nim_game(pop[pi].stra, opp[i].stra)) {
 								pop[pi].Result[i]++;
@@ -580,7 +583,8 @@ void Coans_s::main_task() {
 				}
 				std::cout << "5,";
 				//cal_fitness
-				for (int i = 0; i < CHILD + 1; i++) {
+				pop[main].cal_fitness();
+				for (int i = 0; i < CHILD; i++) {
 					child[i].cal_fitness();
 				}
 			}
@@ -590,7 +594,7 @@ void Coans_s::main_task() {
 			//Best -> pop
 			const int index = Choice_Best_Index();
 			if (index != 0) {
-				if (child[0].eval < child[index].eval) {
+				if (pop[main].eval < child[index].eval) {
 					pop[main] = child[index];
 				}
 			}
@@ -602,8 +606,13 @@ void Coans_s::main_task() {
 				std::cout << std::endl;
 				const double loop_end = clock();
 				printf("%d:%d:%I64d/%d　...%d[sec]\n", method, trial, machup, END_GA, int((loop_end - loop_start) / CLOCKS_PER_SEC));
-				std::cout << "max rate :" << child[index].eval/K_UPGMA*100 << std::endl;
+				std::cout << "　max rate :" << child[index].eval/K_UPGMA*100 << std::endl;
 
+				double eval = 0.0;
+				for (auto &pi : child) {
+					eval += (pi.eval / K_UPGMA);
+				}
+				std::cout << "　average eval : " << eval / (CHILD + 1) * 100 << "[%]" << std::endl;
 				//output_stra(machup_index);
 				cal_rate();
 				machup_index++;
@@ -612,12 +621,6 @@ void Coans_s::main_task() {
 					end_flag = 0;
 					cal_rate();
 				}
-				std::vector<std::vector<double>> stra(KO);
-				for (int i = 0; i < KO; i++) {
-					stra[i] = pop[i].stra;
-				}
-				const double disper = cal_dispersion_2(stra);
-				std::cout << "　disper : " << disper << std::endl << std::endl;
 			}
 			//reInit
 			for (int i = 0; i < KO; i++) {
@@ -770,34 +773,40 @@ bool Coans_s::end_decision()
 }
 bool Coans_s::improve_decision(std::vector<playerNim> &child_1, std::vector<playerNim> &child_2)
 {
-	if (child_1[1].eval == 0.0) {
+	if (child_1[0].eval == 0.0) {
 		return true;
 	}
+	std::cout << "　child size : " << child_1.size() << std::endl;
 	double ave_1 = 0.0;
-	for (int i = 1; i < CHILD + 1; i++) {
-		ave_1 += child_1[i].eval;
+	for (int i = 0; i < CHILD; i++) {
+		ave_1 += (child_1[i].eval / K_UPGMA);
 	}
 	ave_1 /= CHILD;
+	std::cout << "　child average : " << ave_1 << std::endl;
 	if (0.6 < ave_1) {
 		return false;
 	}
 	if (child_2.empty()) {
+		child_2.resize(CHILD);
 		return true;
 	}
+	std::cout << "　tmp_child size : " << child_2.size() << std::endl;
 	double ave_2 = 0.0;
-	for (int i = 1; i < CHILD + 1; i++) {
-		ave_2 += child_2[i].eval;
+	for (int i = 0; i < CHILD; i++) {
+		ave_2 += (child_2[i].eval / K_UPGMA);
 	}
 	ave_2 /= CHILD;
-
-	if (ave_1 < ave_2 && 0.6 < ave_2) {
+	std::cout << "　tmp_child average : " << ave_2 << std::endl;
+	if (ave_1 > ave_2 && 0.6 < ave_1) {
 		return false;
 	}
-	else if(ave_1 > ave_2){
+	else if(ave_1 < ave_2){
+		for (int i = 0; i < CHILD; i++) {
+			child_1[i + 1] = child_2[i];
+		}
 		return true;
 	}
 	else {
-		child_1 = child_2;
 		return true;
 	}
 }

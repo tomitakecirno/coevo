@@ -291,7 +291,7 @@ void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::ve
 	std::uniform_real_distribution<double> dist_t(0.0, t); //—”‚Ì”ÍˆÍ
 
 	//qŒÂ‘Ì‚Ìí—ª¶¬
-	for (int c = 1; c < CHILD + 1; c++) {
+	for (int c = 0; c < CHILD; c++) {
 		//‰Šú‰»
 		child[c].Init_pn();
 		child[c].stra = pop[main_pare].stra;
@@ -363,7 +363,7 @@ void EXLM_S_T(const int main_pare, const std::vector<int> &sub_pare, const std::
 	std::uniform_real_distribution<double> dist_t(0.0, 12.0); //—”‚Ì”ÍˆÍ
 
 															 //qŒÂ‘Ì‚Ìí—ª¶¬
-	for (int c = 1; c < CHILD + 1; c++) {
+	for (int c = 0; c < CHILD; c++) {
 		//‰Šú‰»
 		child[c].Init_pn();
 		child[c].stra = pop[main_pare].stra;
@@ -418,7 +418,7 @@ void rexSter_C(std::vector<playerNim> &child, std::vector<playerNim> &tmp_child,
 	std::uniform_real_distribution<double> dist(-std::sqrt((3 / W_SIZE) + 1), std::sqrt((3 / W_SIZE) + 1)); //—”‚Ì”ÍˆÍ
 	std::uniform_real_distribution<double> dist_t(0.0, t); //—”‚Ì”ÍˆÍ
 
-	for (int c = 1; c < CHILD + 1; c++) {
+	for (int c = 0; c < CHILD; c++) {
 		//‰Šú‰»
 		child[c].Init_pn();
 		for (int i = 0; i < W_SIZE; i++) {
