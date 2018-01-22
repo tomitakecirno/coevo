@@ -9,8 +9,8 @@
 #define CHILD		100					//子
 #define KU			3000				//世代数
 #define PER			100					//
-#define BATTLE_PER	KO*(CHILD+1)*10	//
-#define END_GA		BATTLE_PER*100		//世代交代モデルの終了条件
+#define BATTLE_PER	450*100*10*10	//
+#define END_GA		BATTLE_PER*10		//世代交代モデルの終了条件
 #define TRIAL		1
 #define WIN_RATE	60
 #define CYCLE		1

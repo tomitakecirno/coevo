@@ -21,7 +21,7 @@ double cal_euclidean(const Vec &one, const Vec &ano) {
 	const int one_size = int(one.size());
 	const int ano_size = int(ano.size());
 	if (one_size != ano_size) {
-		std::cout << "ベクターのサイズが違います" << std::endl;
+		std::cout << "ベクターのサイズが違います -> cal_euclidean" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	double sum = 0;
@@ -262,11 +262,9 @@ void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::ve
 	std::vector<double> tmp_eval(sub_len * 2, 0);
 	nim nim(2);
 	for (int i = 0; i < sub_len * 2; i++) {
-		for (int j = 0; j < sub_len * 2; j++) {
-			if (i != j) {
-				if (nim.nim_game(sub_2[i].stra, sub_2[j].stra)) {
-					tmp_eval[i]++;
-				}
+		for (int j = i; j < sub_len * 2; j++) {
+			if (nim.nim_game(sub_2[i].stra, sub_2[j].stra)) {
+				tmp_eval[j]++;
 			}
 		}
 	}

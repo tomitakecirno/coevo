@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 		if (method == 4)
 		{
 			mode4 mode4("nim", trial);
-			mode4.main_task();
+			mode4.main_task2();
 		}
 	}
 	//csvìùçá
