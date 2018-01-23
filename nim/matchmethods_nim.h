@@ -24,7 +24,6 @@ public:
 		result2 = std::vector<std::vector<double>>(loop, std::vector<double>(4, 0));
 		result2 = std::vector<std::vector<double>>(loop, std::vector<double>(KO, 0));
 	}
-	void main_task(int Opp_Trial);
 	void evaluation();
 private:
 	int gene;			//ê¢ë„êî
@@ -42,46 +41,10 @@ protected:
 	std::vector<std::vector<double>> result2;
 	std::vector<std::vector<double>> result3;
 	std::vector<std::vector<double>> eval;
-	void PvP(int Opp_Trial, int Gene);
 	void output_re_csv(int Opp_trial);
 	bool output_ni_csv();
 };
 
-void Match::PvP(int Opp_Trial, int g)
-{
-	nim nim(1);
-	p_data pop,opp;
-
-	pop.Init();
-	opp.Init();
-	char fname[50], fname2[50];
-	for (int ai_pop = 0; ai_pop < KO; ai_pop++) {
-		//ÉvÉåÉCÉÑÅ[ÇÃêÌó™ì«Ç›çûÇ›
-		sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method_pop, trial_pop, g, ai_pop);
-		pop.input_stra(fname);
-		pop.Result.assign(KOT, 0);
-		for (int ai_opp = 0; ai_opp < KOT; ai_opp++) {
-			//ëŒêÌëäéËÇÃêÌó™ì«Ç›çûÇ›
-			sprintf_s(fname2, "AIT/%d/%d/%d.dat", method_opp, Opp_Trial, ai_opp);
-			opp.input_stra(fname2);
-			if (nim.nim_game(pop.stra, opp.stra)) {
-				pop.Result[ai_opp]++;
-			}
-		}
-		eval[g][ai_pop] = std::accumulate(pop.Result.begin(), pop.Result.end(), 0.0);
-	}
-}
-void Match::main_task(int Opp_Trial)
-{
-	for (int g = 0; g < loop; g++) {
-		std::cout << "Opp:" << Opp_Trial << "  Generation:" << g << "   " << std::endl;;
-		//ëŒêÌÇµÇƒåãâ Çäiî[
-		PvP(Opp_Trial, g);
-	}
-	std::cout << "Set Data" << std::endl;
-	output_re_csv(Opp_Trial);
-	std::cout << "Output result csv" << std::endl;
-}
 void Match::evaluation() 
 {
 	nim nim(1);

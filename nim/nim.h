@@ -64,7 +64,6 @@ bool nim::nim_game(const std::vector<double> &pop, const std::vector<double> &op
 	//show_mont();
 	int stra_index;
 
-	std::vector<int> save_index;
 	while (1)
 	{
 		stra_index = choose_stra(pop_stra);

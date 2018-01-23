@@ -25,12 +25,16 @@ public:
 	void cal_fitness();
 	bool input_stra(std::string fname);
 	bool output_stra(std::string fname);
+	void Init_Result();
 };
 void p_data::Init() {
 	eval = 0;
 	Result.clear();
 }
-void p_data::Init_stra() 
+void p_data::Init_Result() {
+	Result.clear();
+}
+void p_data::Init_stra()
 {
 	std::random_device rd;
 	std::mt19937 mt(rd());
@@ -102,11 +106,18 @@ public:
 	std::vector<int> List1;
 	std::vector<int> List2;
 	std::vector<int> List3;
-
+	void Init_0();
 	void Init_pn();
 };
 void playerNim::Init_pn() {
 	Init();
+	nitch = -1;
+	List1.clear();
+	List2.clear();
+	List3.clear();
+}
+void playerNim::Init_0() {
+	Init_Result();
 	nitch = -1;
 	List1.clear();
 	List2.clear();

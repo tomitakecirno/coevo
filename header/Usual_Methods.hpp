@@ -20,11 +20,21 @@ int GetRand_Int(int pGetMax)
 //À”—”¶¬
 double GetRand_Real(double pGetMax)
 {
-	double get_save;
-	const double getrand_int32Max = 4294967295; // genrand_int32() ‚ÌÅ‘å’lBœZ‚Ì‚½‚ßdouble
-	get_save = getrand_int32Max / 2;
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_real_distribution<double> dist(-pGetMax, pGetMax); //—”‚Ì”ÍˆÍ
 
-	return ((double)genrand_int32() - get_save) / get_save*pGetMax;
+	const double rand = dist(mt);
+	return rand;
+}
+double GetRand_Real_0(double pGetMax)
+{
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_real_distribution<double> dist(0, pGetMax); //—”‚Ì”ÍˆÍ
+
+	const double rand = dist(mt);
+	return rand;
 }
 
 void Make_Directory(std::string str, int method, int trial, int gene, int per, int k = 0) {
@@ -114,4 +124,17 @@ void show_vec_2(Vec2 &vec_2)
 		}
 		std::cout << "]" << std::endl;
 	}
+}
+template<class Vec3>
+int cal_maxIndex(const Vec3 &vec_1) 
+{
+	const auto max = max_element(vec_1.begin(), vec_1.end());
+	const int index = int(std::distance(vec_1.begin(), max));
+	return index;
+}
+template<class Vec4>
+int cal_minIndex(const Vec4 &vec_1) {
+	const auto min = max_element(vec_1.begin(), vec_1.end());
+	const int index = int(std::distance(vec_1.begin(), max));
+	return index;
 }
