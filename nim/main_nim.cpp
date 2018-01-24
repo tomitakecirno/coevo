@@ -45,8 +45,9 @@ int main(int argc, char *argv[])
 		argv[4]:trial
 		argv[5]:nitch parameter
 	*/
-	//mode = 2;
-	mode = atoi(__argv[1]);
+	mode = 2;
+	method = 4;
+	//mode = atoi(__argv[1]);
 	if (mode == 1 || mode == 2 || mode == 4 || mode == 5) {
 		switch (__argc) {
 		case 1:
@@ -105,7 +106,7 @@ int main(int argc, char *argv[])
 		if (method == 4)
 		{
 			mode4 mode4("nim", trial);
-			mode4.main_task();
+			mode4.main_task2();
 		}
 	}
 	//csvìùçá

@@ -134,7 +134,7 @@ int cal_maxIndex(const Vec3 &vec_1)
 }
 template<class Vec4>
 int cal_minIndex(const Vec4 &vec_1) {
-	const auto min = max_element(vec_1.begin(), vec_1.end());
-	const int index = int(std::distance(vec_1.begin(), max));
+	const auto min = min_element(vec_1.begin(), vec_1.end());
+	const int index = int(std::distance(vec_1.begin(), min));
 	return index;
 }
