@@ -9,6 +9,26 @@
 #include "../header/Usual_Methods.hpp"
 #include "NeuralNetwork.hpp"
 
+class Numbers {
+public:
+	bool game(const std::vector<double> &pop, const std::vector<double> &opp);
+protected:
+};
+bool Numbers::game(const std::vector<double> &pop, const std::vector<double> &opp)
+{
+	std::vector<double> diff(W_SIZE);
+	for (int i = 0; i < W_SIZE; i++) {
+		diff[i] = std::sqrt((pop[i] - opp[i])*(pop[i] - opp[i]));
+	}
+	const int index = cal_maxIndex(diff);
+	if (pop[index] > opp[index]) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 class nim {
 public:
 	nim(int m)
@@ -319,11 +339,6 @@ void nim::vec2evalvec(const std::vector<double>& stra, std::vector<double>& eval
 	}
 	//show_vec_1(eval_vec);
 }
-void nim::test(const std::vector<double>& stra) {
-	show_vec_1(stra);
-	vec2evalvec(stra, pop_stra);
-	show_vec_1(pop_stra);
-}
 void nim::show_mont()
 {
 	std::vector<std::vector<int>> tmp_mont_vec;
@@ -339,4 +354,94 @@ void nim::show_mont()
 	}
 	std::cout << "]" << std::endl;
 	std::cout << "(0,1,2) = (" << nim_status[0] << "," << nim_status[1] << "," << nim_status[2] << ")" << std::endl << std::endl;
+}
+
+void competition_single(playerNim &player_1, std::vector<playerNim> &player_2) {
+	nim nim(1);
+	Numbers numbers;
+	const int len_2p = int(player_2.size());
+
+	player_1.Result.assign(len_2p, 0);
+	for (int i = 0; i < len_2p; i++) {
+		player_2[i].Result.assign(1, 0);
+	}
+	switch (GAME_NUM) {
+		//Numbers
+	case 0:
+		for (int j = 0; j < len_2p; j++) {
+			const double diff = numbers.game(player_1.stra, player_2[j].stra);
+			player_1.Result[j] = diff;
+			player_2[j].Result[0] = diff*(-1);
+		}
+		break;
+		//Nim
+	case 1:
+		for (int j = 0; j < len_2p; j++) {
+			//1‰ñ–Ú
+			if (nim.nim_game(player_1.stra, player_2[j].stra)) {
+				player_1.Result[j] += 0.8;
+			}
+			else {
+				player_2[j].Result[0] += 1.2;
+			}
+			//2‰ñ–Ú
+			if (nim.nim_game(player_2[j].stra, player_1.stra)) {
+				player_2[j].Result[0] += 0.8;
+			}
+			else {
+				player_1.Result[j] += 1.2;
+			}
+		}
+		break;
+	default:
+		exit(EXIT_FAILURE);
+		break;
+	}
+}
+void competition_multi(std::vector<playerNim> &player_1, std::vector<playerNim> &player_2)
+{
+	nim nim(1);
+	Numbers numbers;
+	const int len_1p = int(player_1.size());
+	const int len_2p = int(player_2.size());
+	for (int i = 0; i < len_1p; i++) {
+		player_1[i].Result.assign(len_2p, 0);
+	}
+	for (int i = 0; i < len_2p; i++) {
+		player_2[i].Result.assign(len_1p, 0);
+	}
+	switch (GAME_NUM) {
+		//Numbers
+	case 0:
+		for (int i = 0; i < len_1p; i++) {
+			for (int j = 0; j < len_2p; j++) {
+				const double diff = numbers.game(player_1[i].stra, player_2[j].stra);
+				player_1[i].Result[j] = diff;
+				player_2[j].Result[i] = diff*(-1);
+			}
+		}
+		break;
+		//Nim
+	case 1:
+		for (int i = 0; i < len_1p; i++) {
+			for (int j = 0; j < len_2p; j++) {
+				if (nim.nim_game(player_1[i].stra, player_2[j].stra)) {
+					player_1[i].Result[j] += 0.8;
+				}
+				else {
+					player_2[j].Result[i] += 1.2;
+				}
+				if (nim.nim_game(player_2[j].stra, player_1[i].stra)) {
+					player_2[j].Result[i] += 0.8;
+				}
+				else {
+					player_1[i].Result[j] += 1.2;
+				}
+			}
+		}
+		break;
+	default:
+		exit(EXIT_FAILURE);
+		break;
+	}
 }

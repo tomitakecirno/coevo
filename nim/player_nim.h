@@ -26,6 +26,7 @@ public:
 	bool input_stra(std::string fname);
 	bool output_stra(std::string fname);
 	void Init_Result();
+	void cal_fitness_alfa(int opp_size, const std::vector<double> &opp_eval);
 };
 void p_data::Init() {
 	eval = 0;
@@ -60,6 +61,14 @@ void p_data::Init_stra()
 void p_data::cal_fitness()
 {
 	eval = std::accumulate(Result.begin(), Result.end(), 0.0);
+}
+void p_data::cal_fitness_alfa(int opp_size, const std::vector<double> &opp_eval)
+{
+	double sum = 0;
+	for (int i = 0; i < opp_size; i++) {
+		sum += Result[i] + ALFA*opp_eval[i] * Result[i];
+	}
+	eval = sum;
 }
 bool p_data::input_stra(const std::string fname)
 {
