@@ -286,7 +286,7 @@ void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::ve
 	std::random_device rd;
 	std::mt19937 mt(rd());
 	std::uniform_real_distribution<double> dist(-std::sqrt((3 / (sub_len - 1)) + 1), std::sqrt((3 / (sub_len - 1)) + 1)); //—”‚Ì”ÍˆÍ
-	std::uniform_real_distribution<double> dist_t(0.0, t); //—”‚Ì”ÍˆÍ
+	std::uniform_real_distribution<double> dist_t(0.0, STEP_SIZE); //—”‚Ì”ÍˆÍ
 
 	//qŒÂ‘Ì‚Ìí—ª¶¬
 	for (int c = 0; c < CHILD; c++) {

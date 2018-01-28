@@ -38,18 +38,15 @@ public:
 		nim_status[0] = POLL1;
 		nim_status[1] = POLL2;
 		nim_status[2] = POLL3;
-		stra_len = (POLL1 + 1)*(POLL2 + 1)*(POLL3 + 1);
+		stra_len = EVALUATION_VEC;
 		nim_status_vec.assign(stra_len, 0);
 		mont_max = *max_element(nim_status.begin(), nim_status.end());
 		mont_size = mont_max;
 		//cal_optimal();
-
-		mode = m;
 	}
 	bool nim_game(const std::vector<double> &pop, const std::vector<double> &opp);
 	double nim_evaluation(const std::vector<double>& stra);
 	void input_stra(const std::vector<double> &pop, const std::vector<double> &opp);
-	void test(const std::vector<double>& stra);
 protected:
 	int mode;
 	int nim_n;	//山の数
@@ -65,7 +62,7 @@ protected:
 
 	void Init_mont();
 	int cal_index(const int a, const int b, const int c);
-	void cal_binary_vec(const int n, std::vector<int> &input, const int size = STRA_LEN); //10進数を2進数のベクターに変換する
+	void cal_binary_vec(const int n, std::vector<int> &input, const int size = EVALUATION_VEC); //10進数を2進数のベクターに変換する
 	void cal_xor_vec(std::vector<int> &one, std::vector<int> &ano, std::vector<int> &vec); //ベクター同士の排他的論理和
 	void cal_move_vec();
 	int cal_nimsum();
@@ -116,7 +113,7 @@ double nim::nim_evaluation(const std::vector<double>& stra)
 				if (nim_sum != 0) {
 					cal_move_vec(); //遷移可能状態を格納
 					stra_index = choose_stra(pop_stra); //戦略を選ぶ
-					if (stra_index != -1) {
+					if (stra_index > -1) {
 						nim_status[0] = stra_index / ((POLL2 + 1)*(POLL3 + 1));
 						nim_status[1] = (stra_index % ((POLL2 + 1)*(POLL3 + 1))) / (POLL3 + 1);
 						nim_status[2] = stra_index % (POLL3 + 1);
@@ -135,6 +132,10 @@ double nim::nim_evaluation(const std::vector<double>& stra)
 	//std::cout << "optimal_c : " << optimal_c << std::endl;
 	//std::cout << "battle_c : " << battle_c << std::endl;
 	//std::cout << "　currect : " << (optimal_c/battle_c)*100 << " %" << std::endl;
+	if (optimal_c / battle_c > 1) {
+		std::cout << "optimal_c > battle_c -> nim_evaluation" << std::endl;
+		exit(EXIT_FAILURE);
+	}
 	return optimal_c / battle_c;
 }
 void nim::Init_mont() {
@@ -220,8 +221,8 @@ int nim::cal_nimsum()
 	for (int i = 0; i < NIM; i++) {
 		cal_binary_vec(nim_status[i], mont_vec[i]);
 	}
-	std::vector<int> sum(STRA_LEN, 0);
-	for (int i = 0; i < STRA_LEN; i++) {
+	std::vector<int> sum(EVALUATION_VEC, 0);
+	for (int i = 0; i < EVALUATION_VEC; i++) {
 		int tmp_sum = 0;
 		for (int j = 0; j < NIM; j++) {
 			tmp_sum += mont_vec[j][i];
@@ -281,11 +282,11 @@ int nim::choose_stra(const std::vector<double> &stra)
 			tmp_stra[i] = stra[i];
 		}
 		else {
-			tmp_stra[i] = 1000;
+			tmp_stra[i] = -100000;
 		}
 	}
-	const auto min = min_element(tmp_stra.begin(), tmp_stra.end());
-	const int index = int(std::distance(tmp_stra.begin(), min));
+	const auto max = max_element(tmp_stra.begin(), tmp_stra.end());
+	const int index = int(std::distance(tmp_stra.begin(), max));
 	return index;
 }
 void nim::input_stra(const std::vector<double> &pop, const std::vector<double> &opp)
@@ -309,7 +310,7 @@ void nim::vec2evalvec(const std::vector<double>& stra, std::vector<double>& eval
 	std::vector<int> poll3(3, 0);
 	std::vector<int> input_vec(9, 0);
 
-	eval_vec.resize(STRA_LEN);
+	eval_vec.resize(EVALUATION_VEC);
 	int len = 0;
 	for (int i = 0; i < POLL3 + 1; i++) {
 		cal_binary_vec(i, poll3, 3);
@@ -356,7 +357,8 @@ void nim::show_mont()
 	std::cout << "(0,1,2) = (" << nim_status[0] << "," << nim_status[1] << "," << nim_status[2] << ")" << std::endl << std::endl;
 }
 
-void competition_single(playerNim &player_1, std::vector<playerNim> &player_2) {
+int competition_single(playerNim &player_1, std::vector<playerNim> &player_2) {
+	int mach = 0;
 	nim nim(1);
 	Numbers numbers;
 	const int len_2p = int(player_2.size());
@@ -368,7 +370,7 @@ void competition_single(playerNim &player_1, std::vector<playerNim> &player_2) {
 	switch (GAME_NUM) {
 		//Numbers
 	case 0:
-		for (int j = 0; j < len_2p; j++) {
+		for (int j = 0; j < len_2p; j++, mach++) {
 			const double diff = numbers.game(player_1.stra, player_2[j].stra);
 			player_1.Result[j] = diff;
 			player_2[j].Result[0] = diff*(-1);
@@ -376,7 +378,7 @@ void competition_single(playerNim &player_1, std::vector<playerNim> &player_2) {
 		break;
 		//Nim
 	case 1:
-		for (int j = 0; j < len_2p; j++) {
+		for (int j = 0; j < len_2p; j++, mach += 2) {
 			//1回目
 			if (nim.nim_game(player_1.stra, player_2[j].stra)) {
 				player_1.Result[j] += 0.8;
@@ -397,9 +399,11 @@ void competition_single(playerNim &player_1, std::vector<playerNim> &player_2) {
 		exit(EXIT_FAILURE);
 		break;
 	}
+	return mach;
 }
-void competition_multi(std::vector<playerNim> &player_1, std::vector<playerNim> &player_2)
+int competition_multi(std::vector<playerNim> &player_1, std::vector<playerNim> &player_2)
 {
+	int mach = 0;
 	nim nim(1);
 	Numbers numbers;
 	const int len_1p = int(player_1.size());
@@ -413,7 +417,7 @@ void competition_multi(std::vector<playerNim> &player_1, std::vector<playerNim> 
 	switch (GAME_NUM) {
 		//Numbers
 	case 0:
-		for (int i = 0; i < len_1p; i++) {
+		for (int i = 0; i < len_1p; i++, mach++) {
 			for (int j = 0; j < len_2p; j++) {
 				const double diff = numbers.game(player_1[i].stra, player_2[j].stra);
 				player_1[i].Result[j] = diff;
@@ -424,7 +428,7 @@ void competition_multi(std::vector<playerNim> &player_1, std::vector<playerNim> 
 		//Nim
 	case 1:
 		for (int i = 0; i < len_1p; i++) {
-			for (int j = 0; j < len_2p; j++) {
+			for (int j = 0; j < len_2p; j++, mach += 2) {
 				if (nim.nim_game(player_1[i].stra, player_2[j].stra)) {
 					player_1[i].Result[j] += 0.8;
 				}
@@ -444,4 +448,5 @@ void competition_multi(std::vector<playerNim> &player_1, std::vector<playerNim> 
 		exit(EXIT_FAILURE);
 		break;
 	}
+	return mach;
 }

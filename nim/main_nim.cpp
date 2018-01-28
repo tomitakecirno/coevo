@@ -19,7 +19,10 @@ DE
 2:ANSクラスタリング手法学習
 3:階層的クラスタリング手法
 ***************************/
-
+template<class T>
+void show(T value) {
+	std::cout << value << ":" << value*2 << std::endl;
+}
 void Show_Time(clock_t Start, clock_t End);
 /***********************************************
 PARAMETER
@@ -35,8 +38,8 @@ int main(int argc, char *argv[])
 	int ku;
 	int trial;
 	int cru_k = 0;
-
 	std::vector<int> method_vec;
+
 	/*
 		argv[0]:.exe
 		argv[1]:mode
@@ -45,14 +48,15 @@ int main(int argc, char *argv[])
 		argv[4]:trial
 		argv[5]:nitch parameter
 	*/
-	mode = 2;
-	method = 4;
-	//mode = atoi(__argv[1]);
+	//mode = 2;
+	//method = 4;
+	mode = atoi(__argv[1]);
 	if (mode == 1 || mode == 2 || mode == 4 || mode == 5) {
 		switch (__argc) {
 		case 1:
 			//Debug mode
 			method = 4;
+			trial = 0;
 			break;
 		case 4:
 			method = atoi(__argv[2]);
@@ -111,7 +115,8 @@ int main(int argc, char *argv[])
 	}
 	//csv統合
 	else if (mode == 3) {
-		csvmodules_exp Method;
+		coans_mode3 mode3("nim", trial);
+		mode3.exp_BestRate(method_vec);
 	}
 	else if (mode == 7) {
 		//test mode
