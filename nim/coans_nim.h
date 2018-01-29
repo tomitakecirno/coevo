@@ -92,7 +92,7 @@ void Coans_base::output_opp_stra(int g)
 		fname.str("");
 		fname.clear(std::stringstream::goodbit);
 	}
-	printf("%d:%d:%d opp strategy out put ...", method, trial, g);
+	printf("%d:%d:%d opp strategy out put ...\n", method, trial, g);
 }
 void Coans_base::output_stra(int g)
 {
@@ -111,7 +111,7 @@ void Coans_base::output_stra(int g)
 		fname.str("");
 		fname.clear(std::stringstream::goodbit);
 	}
-	printf("%d:%d:%d strategy out put ...", method, trial, g);
+	printf("%d:%d:%d strategy out put ...\n", method, trial, g);
 }
 int Coans_base::Choice_Best_Index()
 {
@@ -338,11 +338,9 @@ void Coans_base::exp_BestRate(const std::vector<int> &method)
 				for (int i = 0; i < KO; i++) {
 					//個体情報インプット
 					sprintf_s(fname, "%s/%d/%d/%d/%d.dat", STRA_DIR, method[m], t, g, i);
-					std::cout << fname << " : ";
 					pop[i].input_stra(fname);
+					//pop[i].Init_stra();
 					tmp_PopEval[i] = nim.nim_evaluation(pop[i].stra) * 100;
-					std::cout << pop[i].stra.size() << " : ";
-					std::cout << tmp_PopEval[i] << std::endl;
 				}
 				csv_max[g][m] += *max_element(tmp_PopEval.begin(), tmp_PopEval.end());
 				csv_min[g][m] += *min_element(tmp_PopEval.begin(), tmp_PopEval.end());

@@ -48,14 +48,14 @@ int main(int argc, char *argv[])
 		argv[4]:trial
 		argv[5]:nitch parameter
 	*/
-	//mode = 2;
+	//mode = 3;
 	//method = 4;
 	mode = atoi(__argv[1]);
 	if (mode == 1 || mode == 2 || mode == 4 || mode == 5) {
 		switch (__argc) {
 		case 1:
 			//Debug mode
-			method = 4;
+			method = 3;
 			trial = 0;
 			break;
 		case 4:
@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
 			method_vec[i] = atoi(__argv[i + 2]);
 			//method[i] = 2;
 		}
+		//method_vec.push_back(3);
 		std::cout << "ƒ‚[ƒh:csv“‡" << std::endl;
 	}
 	__int64 MatchUp_Count = 0;

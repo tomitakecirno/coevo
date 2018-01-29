@@ -83,7 +83,7 @@ bool p_data::input_stra(const std::string fname)
 
 	//std::cout << fname << std::endl;
 	int count = 0;
-	int tmp;
+	double tmp;
 	stra.resize(W_SIZE);
 	while (fin >> tmp && count < W_SIZE) {
 		stra[count] = tmp;

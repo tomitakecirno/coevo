@@ -282,11 +282,11 @@ int nim::choose_stra(const std::vector<double> &stra)
 			tmp_stra[i] = stra[i];
 		}
 		else {
-			tmp_stra[i] = -100000;
+			tmp_stra[i] = 10000;
 		}
 	}
-	const auto max = max_element(tmp_stra.begin(), tmp_stra.end());
-	const int index = int(std::distance(tmp_stra.begin(), max));
+	const auto min = min_element(tmp_stra.begin(), tmp_stra.end());
+	const int index = int(std::distance(tmp_stra.begin(), min));
 	return index;
 }
 void nim::input_stra(const std::vector<double> &pop, const std::vector<double> &opp)
