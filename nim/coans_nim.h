@@ -939,9 +939,9 @@ void Coans_s::exp_upgma()
 			//個体情報インプット
 			char fname[50];
 			sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method, 0, f, i);
-			pop[i].input_stra(fname);
 			pop[i].Init_pn();
-			pop[i].eval = nim2.nim_evaluation(pop[i].stra) * 100;
+			pop[i].input_stra(fname);
+			pop[i].eval = nim2.nim_evaluation(pop[i].nim_evaluation_vec) * 100;
 		}
 		Cru_Upgma(pop);
 
