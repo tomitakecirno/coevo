@@ -51,7 +51,7 @@ constexpr int OUTPUT = 1;
 
 constexpr auto CSV_DIR		= "./csv";
 constexpr int K_UPGMA		= W_SIZE;
-constexpr int TRIAL			= 5;
+constexpr int TRIAL			= 10;
 constexpr int DELETE		= 50;
 constexpr int ENEMY			= 10;
 constexpr double WIN_RATE	= 60;

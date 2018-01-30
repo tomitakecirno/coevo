@@ -100,24 +100,23 @@ int main(int argc, char *argv[])
 		//階層的クラスタリングを盛り込んだ手法
 		if (method == 2)
 		{
-			coans_mode2 Mode2("nim", trial);
-			Mode2.main_task();
+			std::vector<coans_mode2> mode2(TRIAL, { trial });
+			mode2[trial].main_task();
 		}
 		if (method == 3)
 		{
-			coans_mode3 Mode3("nim", trial);
-			Mode3.main_task();
+			std::vector<coans_mode3> mode3(TRIAL, { trial });
+			mode3[trial].main_task();
 		}
 		if (method == 4)
 		{
-			mode4 mode4("nim", trial);
-			mode4.main_task2();
+			std::vector<mode4> mode4(TRIAL, { trial });
+			mode4[trial].main_task2();
 		}
 	}
 	//csv統合
 	else if (mode == 3) {
-		coans_mode3 mode3("nim", trial);
-		mode3.exp_BestRate(method_vec);
+		exp_BestRate(method_vec);
 	}
 	else if (mode == 7) {
 		//test mode

@@ -19,11 +19,65 @@ CoansMode4	前手法：前評価方法
 
 #define TIME_PER 100
 
+void exp_BestRate(const std::vector<int> &method)
+{
+	std::vector<p_data> pop(KO);
+	nim nim(1);
+	char fname[50];
+	const int method_len = int(method.size());
+	std::vector<int> gene(method_len);
+	for (int i = 0; i < method_len; i++) {
+		sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[i], 0);
+		gene[i] = count_folder(fname);
+	}
+	const int min_num = *min_element(gene.begin(), gene.end());
+
+	std::vector<std::vector<double>> csv_max;
+	std::vector<std::vector<double>> csv_min;
+	std::vector<std::vector<double>> csv_ave;
+	csv_max = std::vector<std::vector<double>>(min_num, std::vector<double>(method_len, 0));
+	csv_min = csv_max;
+	csv_ave = csv_max;
+	//m
+	for (int m = 0; m < method_len; m++) {
+		sprintf_s(fname, "%s/%d", STRA_DIR, method[m]);
+		const int trial = count_folder(fname);
+		int gene;
+		//t
+		for (int t = 0; t < trial; t++) {
+			sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[m], t);
+			gene = count_folder(fname);
+			//g
+			for (int g = 0; g < gene; g++) {
+				printf("method:%d trial:%d generation:%d\n", method[m], t, g);
+				std::vector<double> tmp_PopEval(KO);
+				for (int i = 0; i < KO; i++) {
+					//個体情報インプット
+					sprintf_s(fname, "%s/%d/%d/%d/%d.dat", STRA_DIR, method[m], t, g, i);
+					pop[i].input_stra(fname);
+					//pop[i].Init_stra();
+					tmp_PopEval[i] = nim.nim_evaluation(pop[i].stra) * 100;
+				}
+				csv_max[g][m] += *max_element(tmp_PopEval.begin(), tmp_PopEval.end());
+				csv_min[g][m] += *min_element(tmp_PopEval.begin(), tmp_PopEval.end());
+				csv_ave[g][m] += accumulate(tmp_PopEval.begin(), tmp_PopEval.end(), 0.0) / KO;
+			}
+		}
+		for (int g = 0; g < gene; g++) {
+			csv_max[g][m] /= trial;
+			csv_min[g][m] /= trial;
+			csv_ave[g][m] /= trial;
+		}
+	}
+	CsvModules::csv_fwrite("method_max.csv", csv_max);
+	CsvModules::csv_fwrite("method_min.csv", csv_min);
+	CsvModules::csv_fwrite("method_ave.csv", csv_ave);
+}
+
 /*手法のクラス*/
 class Coans_base {
 public:
 	__int64		Get_MatchUp_Num();			//対戦回数を取得
-	void exp_BestRate(const std::vector<int> &method);
 	//データ取りミスったときに使うやつ
 protected:
 	int method;						//手法比較の時に使う
@@ -36,7 +90,6 @@ protected:
 	int sel_child;
 	__int64 machup;						//対戦回数
 
-	std::string dir;
 	std::vector<playerNim> pop;
 	std::vector<playerNim> child;
 	std::vector<playerNim> opp;
@@ -62,7 +115,7 @@ __int64 Coans_base::Get_MatchUp_Num() {
 void Coans_base::input_stra(int g)
 {
 	std::stringstream tmp_fname;
-	tmp_fname << "./" << dir << "/" << method << "/" << trial << "/" << g;
+	tmp_fname << STRA_DIR << "/" << method << "/" << trial << "/" << g;
 
 	for (int i = 0; i < KO; i++) {
 		std::stringstream fname;
@@ -79,27 +132,23 @@ void Coans_base::input_stra(int g)
 }
 void Coans_base::output_opp_stra(int g)
 {
-	std::stringstream tmp_fname;
+	char fname[50];
+	Make_Directory2(STRA_DIR, method, trial, g);
 	for (int i = 0; i < opp_num; i++) {
-		std::stringstream fname;
-
-		fname << tmp_fname.str() << "/opp_" << i << ".dat";
-		if (!opp[i].output_stra(fname.str())) {
+		sprintf_s(fname, "%s/%d/%d/%d/opp_%d.dat", STRA_DIR, method, trial, g, i);
+		if (!opp[i].output_stra(fname)) {
 			std::cout << "error : output_stra -> opp" << std::endl;
 			exit(EXIT_FAILURE);
 		}
-		//クリア
-		fname.str("");
-		fname.clear(std::stringstream::goodbit);
 	}
 	printf("%d:%d:%d opp strategy out put ...\n", method, trial, g);
 }
 void Coans_base::output_stra(int g)
 {
 	std::stringstream tmp_fname;
-	tmp_fname << "./" << dir << "/" << method << "/" << trial << "/" << g;
+	tmp_fname << "./" << STRA_DIR << "/" << method << "/" << trial << "/" << g;
 
-	Make_Directory2(dir, method, trial, g);
+	Make_Directory2(STRA_DIR, method, trial, g);
 	for (int i = 0; i < KO; i++) {
 		std::stringstream fname;
 		fname << tmp_fname.str() << "/" << i << ".dat";
@@ -303,60 +352,6 @@ void Coans_base::cal_gravity_and_disper()
 	const double cr_disper_soto = cal_dispersion_2(cr_gra);
 	std::cout << "disper( in : out : n ) = " << cr_disper_uchi << " : " << cr_disper_soto << " : " << cr_num_disper << std::endl;
 }
-void Coans_base::exp_BestRate(const std::vector<int> &method) 
-{
-	pop.resize(KO);
-	nim nim(1);
-	char fname[50];
-	const int method_len = int(method.size());
-	std::vector<int> gene(method_len);
-	for (int i = 0; i < method_len; i++) {
-		sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[i], 0);
-		gene[i] = count_folder(fname);
-	}
-	const int min_num = *min_element(gene.begin(), gene.end());
-
-	std::vector<std::vector<double>> csv_max;
-	std::vector<std::vector<double>> csv_min;
-	std::vector<std::vector<double>> csv_ave;
-	csv_max = std::vector<std::vector<double>>(min_num, std::vector<double>(method_len, 0));
-	csv_min = csv_max;
-	csv_ave = csv_max;
-	//m
-	for (int m = 0; m < method_len; m++) {
-		sprintf_s(fname, "%s/%d", STRA_DIR, method[m]);
-		const int trial = count_folder(fname);
-		int gene;
-		//t
-		for (int t = 0; t < trial; t++) {
-			sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[m], t);
-			gene = count_folder(fname);
-			//g
-			for (int g = 0; g < gene; g++) {
-				printf("method:%d trial:%d generation:%d\n", method[m], t, g);
-				std::vector<double> tmp_PopEval(KO);
-				for (int i = 0; i < KO; i++) {
-					//個体情報インプット
-					sprintf_s(fname, "%s/%d/%d/%d/%d.dat", STRA_DIR, method[m], t, g, i);
-					pop[i].input_stra(fname);
-					//pop[i].Init_stra();
-					tmp_PopEval[i] = nim.nim_evaluation(pop[i].stra) * 100;
-				}
-				csv_max[g][m] += *max_element(tmp_PopEval.begin(), tmp_PopEval.end());
-				csv_min[g][m] += *min_element(tmp_PopEval.begin(), tmp_PopEval.end());
-				csv_ave[g][m] += accumulate(tmp_PopEval.begin(), tmp_PopEval.end(), 0.0) / KO;
-			}
-		}
-		for (int g = 0; g < gene; g++) {
-			csv_max[g][m] /= trial;
-			csv_min[g][m] /= trial;
-			csv_ave[g][m] /= trial;
-		}
-	}
-	CsvModules::csv_fwrite("method_max.csv", csv_max);
-	CsvModules::csv_fwrite("method_min.csv", csv_min);
-	CsvModules::csv_fwrite("method_ave.csv", csv_ave);
-}
 
 class Coans : public Coans_base{
 //公開メンバ
@@ -532,8 +527,7 @@ bool Coans::end_decision()
 */
 class coans_mode2 : public Coans {
 public:
-	coans_mode2(std::string str, int t, int k = 0) {
-		dir = str;
+	coans_mode2(int t, int k = 0) {
 		method = 2;
 		trial = t;
 		machup = 0;					//対戦回数
@@ -546,16 +540,19 @@ private:
 };
 void coans_mode2::Crustering() 
 {
-	MakeList(pop, K_List1, K_List2, 0);
+	MakeList(pop, K_List1, 0, 0);
+	/*
 	cr_num = 0;
 	for (int i = 0; i < KO; i++) {
 		if (SetNitch(cr_num, i, pop) == 1) {
 			cr_num++;
 		}
 	}
+	*/
 }
 void coans_mode2::Generate_Opp() 
 {
+	Cru_Upgma(pop);
 	choice_oppoment(pop, opp, cr_num);
 	opp_num = int(opp.size());
 }
@@ -569,8 +566,7 @@ void coans_mode2::Generate_Opp()
 
 class coans_mode3 : public Coans {
 public:
-	coans_mode3(std::string str, int t, int k = 0) {
-		dir = str;
+	coans_mode3(int t, int k = 0) {
 		method = 3;
 		trial = t;
 		machup = 0;					//対戦回数
@@ -772,8 +768,9 @@ void Coans_s::main_task2() {
 	Cru_Upgma(pop);
 	cr_num = int(opp.size());
 	Generate_Opp();
-	all_comp();
-
+	output_opp_stra(0);
+	//all_comp();
+	/*
 	double opp_disper;
 	std::vector<std::vector<double>> opp_stra(opp_num);
 	for (int i = 0; i < opp_num; i++) {
@@ -781,9 +778,10 @@ void Coans_s::main_task2() {
 	}
 	opp_disper = cal_dispersion_2(opp_stra);
 	std::cout << "　opp_num : opp_disper = " << opp_num << " : " << opp_disper << std::endl;
+	*/
 	machup = 0;
 	int machup_index = 1;
-	cal_rate();
+	//cal_rate();
 
 	double rate = 65.0;
 	int end_flag = 1;
@@ -869,22 +867,24 @@ void Coans_s::main_task2() {
 			if (opp_min < child[index].eval / opp_num) {
 				opp[min_index] = child[index];
 			}
-			//std::cout << "6, " << ": machup = " << machup;
+			std::cout << "machup = " << machup << std::endl;
 			//for experiment
 			if (BATTLE_PER*machup_index < machup) {
 				std::cout << "machup = " << machup;
 				std::cout << std::endl;
 				const double loop_end = clock();
 				printf("%d:%d:%I64d/%d　...%d[sec]\n", method, trial, machup, END_GA, int((loop_end - loop_start) / CLOCKS_PER_SEC));
+				/*
 				for (int i = 0; i < opp_num; i++) {
 					opp_stra[i] = opp[i].stra;
 				}
 				opp_disper = cal_dispersion_2(opp_stra);
 				std::cout << "　opp_num : opp_disper = " << opp_num << " : " << opp_disper << std::endl;
-				output_stra(machup_index);
-				output_opp_stra(machup_index);
 				cal_rate();
 				all_comp();
+				*/
+				output_stra(machup_index);
+				output_opp_stra(machup_index);
 				//Cru_Upgma(pop);
 				//cal_gravity_and_disper();
 				machup_index++;
@@ -1196,10 +1196,9 @@ void Coans_s::cal_cr_eval()
 
 class mode4 : public Coans_s {
 public:
-	mode4(std::string str, int t) {
-		dir = str;
-		method = 4;
+	mode4(int t, int k = 0) {
 		trial = t;
+		method = 4;
 		machup = 0;					//対戦回数
 	}
 private:
