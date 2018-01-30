@@ -231,7 +231,9 @@ void ExtensionXLM(const int main_pare, const std::vector<int> &sub_pare, std::ve
 				child[c].stra[j] += sub_delta[i][j] * coe;
 			}
 		}
-		//show_vec_1(child[c].stra);
+		if (GAME_NUM == 1) {
+			vec2evalvec_nim(child[c].stra, child[c].nim_evaluation_vec);
+		}
 	}
 }
 //斎藤さんのEXLMを共進化的に修正したもの
@@ -257,6 +259,11 @@ void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::ve
 		for (int j = 0; j < W_SIZE; j++) {
 			const double tmp_w = pop[sub_pare[i]].stra[j] - sub_g[j];
 			sub_2[i + sub_len].stra[j] = sub_g[j] - tmp_w;
+		}
+	}
+	if (GAME_NUM == 1) {
+		for (int i = 0; i < sub_len * 2; i++) {
+			vec2evalvec_nim(sub_2[i].stra, sub_2[i].nim_evaluation_vec);
 		}
 	}
 	//対戦で評価値を決める
@@ -304,77 +311,8 @@ void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::ve
 				child[c].stra[j] += (sub_2[i].stra[j] - pop[main_pare].stra[j]) * coe;
 			}
 		}
-		//show_vec_1(child[c].stra);
-	}
-}
-void EXLM_S_T(const int main_pare, const std::vector<int> &sub_pare, const std::vector<playerNim> &pop, std::vector<playerNim> &child, double t) 
-{
-	const int sub_len = int(sub_pare.size());
-
-	//重心を求める
-	double sub_g[W_SIZE] = { 0 };
-	for (int i = 0; i < W_SIZE; i++) {
-		for (int j = 0; j < sub_len; j++) {
-			sub_g[i] += pop[sub_pare[j]].stra[i];
-		}
-		sub_g[i] /= sub_len * 2;
-	}
-
-	std::vector<p_data> sub_2(sub_len * 2);
-	for (int i = 0; i < sub_len; i++) {
-		sub_2[i].stra = pop[sub_pare[i]].stra;
-
-		sub_2[i + sub_len].stra.resize(W_SIZE);
-		for (int j = 0; j < W_SIZE; j++) {
-			const double tmp_w = pop[sub_pare[i]].stra[j] - sub_g[j];
-			sub_2[i + sub_len].stra[j] = sub_g[j] - tmp_w;
-		}
-	}
-	std::vector<double> tmp_eval(sub_len * 2, 0);
-	nim nim(2);
-	for (int i = 0; i < sub_len * 2; i++) {
-		for (int j = 0; j < sub_len * 2; j++) {
-			if (i != j) {
-				if (nim.nim_game(sub_2[i].stra, sub_2[j].stra)) {
-					tmp_eval[i]++;
-				}
-			}
-		}
-	}	std::vector<int> max_sub(sub_len);
-	for (int i = 0; i < sub_len; i++) {
-		const auto max = max_element(tmp_eval.begin(), tmp_eval.end());
-		const int index = int(std::distance(tmp_eval.begin(), max));
-		max_sub[i] = index;
-		tmp_eval[index] = -10000;
-	}
-	double sub_max_g[W_SIZE] = { 0 };
-	for (int i = 0; i < W_SIZE; i++) {
-		for (auto &pi : max_sub) {
-			sub_max_g[i] += sub_2[pi].stra[i];
-		}
-		sub_max_g[i] /= sub_len;
-	}
-
-	std::random_device rd;
-	std::mt19937 mt(rd());
-	std::uniform_real_distribution<double> dist(-std::sqrt((3 / (sub_len - 1)) + 1), std::sqrt((3 / (sub_len - 1)) + 1)); //乱数の範囲
-	std::uniform_real_distribution<double> dist_t(0.0, 12.0); //乱数の範囲
-
-															 //子個体の戦略生成
-	for (int c = 0; c < CHILD; c++) {
-		//初期化
-		child[c].Init_pn();
-		child[c].stra = pop[main_pare].stra;
-		//重心スライド追加
-		for (int i = 0; i < W_SIZE; i++) {
-			child[c].stra[i] += dist_t(mt)*(sub_max_g[i] - sub_g[i]);
-		}
-		//差分ベクトル
-		for (int i = 0; i < sub_len * 2; i++) {
-			const double coe = dist(mt);
-			for (int j = 0; j < W_SIZE; j++) {
-				child[c].stra[j] += (sub_2[i].stra[j] - sub_g[j]) * coe;
-			}
+		if (GAME_NUM == 1) {
+			vec2evalvec_nim(child[c].stra, child[c].nim_evaluation_vec);
 		}
 		//show_vec_1(child[c].stra);
 	}
@@ -432,6 +370,9 @@ void rexSter_C(std::vector<playerNim> &child, std::vector<playerNim> &tmp_child,
 			for (int j = 0; j < W_SIZE; j++) {
 				child[c].stra[j] += (tmp_child[i].stra[j] - sub_g[j]) * coe;
 			}
+		}
+		if (GAME_NUM == 1) {
+			vec2evalvec_nim(child[c].stra, child[c].nim_evaluation_vec);
 		}
 		//show_vec_1(child[c].stra);
 	}

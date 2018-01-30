@@ -9,6 +9,54 @@
 #include "../header/Usual_Methods.hpp"
 #include "NeuralNetwork.hpp"
 
+void vec2evalvec_nim(const std::vector<double>& stra, std::vector<double>& eval_vec)
+
+		NN::NeuralNetwork<INPUT, MIDDLE, OUTPUT> nn;
+
+		const auto s = stra.size();
+		Eigen::VectorXd vec = Eigen::VectorXd::Zero(s);
+		for (auto i = 0U; i < s; ++i) {
+			vec[i] = stra[i];
+		}
+		nn.setWeight(vec); //重みセット
+
+		std::vector<int> poll1(3, 0);
+		std::vector<int> poll2(3, 0);
+		std::vector<int> poll3(3, 0);
+		std::vector<int> input_vec(9, 0);
+
+		eval_vec.resize(EVALUATION_VEC);
+		int len = 0;
+		for (int i = 0; i < POLL3 + 1; i++) {
+			cal_binary_vec(i, poll3, 3);
+			//show_vec_1(poll3);
+
+			for (int j = 0; j < POLL2 + 1; j++) {
+				cal_binary_vec(j, poll2, 3);
+
+				for (int k = 0; k < POLL1 + 1; k++, len++) {
+					cal_binary_vec(k, poll1, 3);
+
+					for (int l = 0; l < 3; l++) {
+						input_vec[l + 0] = poll1[l];
+						input_vec[l + 3] = poll2[l];
+						input_vec[l + 6] = poll3[l];
+					}
+					for (int l = 0; l < 9; l++) {
+						if (input_vec[l] == 0) {
+							input_vec[l] = -1;
+						}
+					}
+					//show_vec_1(input_vec);
+					nn.setInput(input_vec); //入力
+					eval_vec[len] = nn.getOutPut(); //出力
+				}
+			}
+		}
+		//show_vec_1(eval_vec);
+	}
+}
+
 class Numbers {
 public:
 	bool game(const std::vector<double> &pop, const std::vector<double> &opp);
@@ -31,7 +79,7 @@ bool Numbers::game(const std::vector<double> &pop, const std::vector<double> &op
 
 class nim {
 public:
-	nim(int m)
+	nim()
 	{
 		nim_n = NIM;
 		nim_status.resize(NIM);
@@ -69,14 +117,14 @@ protected:
 	void generate_mont(int a, int b, int c, std::vector<std::vector<int>> &mont);
 	bool update_mont(int index); //戦略情報から山の状態を更新する
 	int choose_stra(const std::vector<double> &stra);
-	void vec2evalvec(const std::vector<double>& stra, std::vector<double>& eval_vec);
 	void show_mont();
 };
 //0:プレイヤー先手，1:プレイヤー後手
-bool nim::nim_game(const std::vector<double> &pop, const std::vector<double> &opp)
+//入力は評価用ベクター
+bool nim::nim_game(const std::vector<double> &pop_eval_vec, const std::vector<double> &opp_eval_vec)
 {
-	vec2evalvec(pop, pop_stra);
-	vec2evalvec(opp, opp_stra);
+	pop_stra = pop_eval_vec;
+	opp_stra = opp_eval_vec;
 	Init_mont(); //山の初期化
 	//show_mont();
 	int stra_index;
@@ -93,7 +141,7 @@ bool nim::nim_game(const std::vector<double> &pop, const std::vector<double> &op
 		}
 	}
 }
-double nim::nim_evaluation(const std::vector<double>& stra)
+double nim::nim_evaluation(const std::vector<double>& eval_vec)
 {
 	//show_mont();
 	int stra_index;
@@ -103,7 +151,7 @@ double nim::nim_evaluation(const std::vector<double>& stra)
 	//int count = int(std::count(opt.begin(), opt.end(), 1));
 	//std::cout << "最適手 :" << count << std::endl;
 	std::vector<std::vector<int>> mont;
-	vec2evalvec(stra, pop_stra);
+	pop_stra = eval_vec;
 	for (int i = 0; i < POLL1 + 1; i++) {
 		for (int j = 0; j < POLL2 + 1; j++) {
 			for (int k = 0; k < POLL3 + 1; k++) {
@@ -294,52 +342,6 @@ void nim::input_stra(const std::vector<double> &pop, const std::vector<double> &
 	vec2evalvec(pop, pop_stra);
 	vec2evalvec(opp, opp_stra);
 }
-void nim::vec2evalvec(const std::vector<double>& stra, std::vector<double>& eval_vec)
-{
-	NN::NeuralNetwork<INPUT, MIDDLE, OUTPUT> nn;
-
-	const auto s = stra.size();
-	Eigen::VectorXd vec = Eigen::VectorXd::Zero(s);
-	for (auto i = 0U; i < s; ++i) {
-		vec[i] = stra[i];
-	}
-	nn.setWeight(vec); //重みセット
-
-	std::vector<int> poll1(3, 0);
-	std::vector<int> poll2(3, 0);
-	std::vector<int> poll3(3, 0);
-	std::vector<int> input_vec(9, 0);
-
-	eval_vec.resize(EVALUATION_VEC);
-	int len = 0;
-	for (int i = 0; i < POLL3 + 1; i++) {
-		cal_binary_vec(i, poll3, 3);
-		//show_vec_1(poll3);
-
-		for (int j = 0; j < POLL2 + 1; j++) {
-			cal_binary_vec(j, poll2, 3);
-
-			for (int k = 0; k < POLL1 + 1; k++, len++) {
-				cal_binary_vec(k, poll1, 3);
-
-				for (int l = 0; l < 3; l++) {
-					input_vec[l + 0] = poll1[l];
-					input_vec[l + 3] = poll2[l];
-					input_vec[l + 6] = poll3[l];
-				}
-				for (int l = 0; l < 9; l++) {
-					if (input_vec[l] == 0) {
-						input_vec[l] = -1;
-					}
-				}
-				//show_vec_1(input_vec);
-				nn.setInput(input_vec); //入力
-				eval_vec[len] = nn.getOutPut(); //出力
-			}
-		}
-	}
-	//show_vec_1(eval_vec);
-}
 void nim::show_mont()
 {
 	std::vector<std::vector<int>> tmp_mont_vec;
@@ -380,14 +382,14 @@ int competition_single(playerNim &player_1, std::vector<playerNim> &player_2) {
 	case 1:
 		for (int j = 0; j < len_2p; j++, mach += 2) {
 			//1回目
-			if (nim.nim_game(player_1.stra, player_2[j].stra)) {
+			if (nim.nim_game(player_1.nim_evaluation_vec, player_2[j].nim_evaluation_vec)) {
 				player_1.Result[j] += 0.8;
 			}
 			else {
 				player_2[j].Result[0] += 1.2;
 			}
 			//2回目
-			if (nim.nim_game(player_2[j].stra, player_1.stra)) {
+			if (nim.nim_game(player_2[j].nim_evaluation_vec, player_1.nim_evaluation_vec)) {
 				player_2[j].Result[0] += 0.8;
 			}
 			else {
@@ -429,13 +431,13 @@ int competition_multi(std::vector<playerNim> &player_1, std::vector<playerNim> &
 	case 1:
 		for (int i = 0; i < len_1p; i++) {
 			for (int j = 0; j < len_2p; j++, mach += 2) {
-				if (nim.nim_game(player_1[i].stra, player_2[j].stra)) {
+				if (nim.nim_game(player_1[i].nim_evaluation_vec, player_2[j].nim_evaluation_vec)) {
 					player_1[i].Result[j] += 0.8;
 				}
 				else {
 					player_2[j].Result[i] += 1.2;
 				}
-				if (nim.nim_game(player_2[j].stra, player_1[i].stra)) {
+				if (nim.nim_game(player_2[j].nim_evaluation_vec, player_1[i].nim_evaluation_vec)) {
 					player_2[j].Result[i] += 0.8;
 				}
 				else {

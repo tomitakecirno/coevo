@@ -19,6 +19,7 @@ public:
 	double eval;
 	std::vector<double> stra;
 	std::vector<double> Result;
+	std::vector<double> nim_evaluation_vec;
 
 	void Init();
 	void Init_stra();
@@ -60,6 +61,9 @@ void p_data::Init_stra()
 	for (int i = 0; i < MIDDLE*OUTPUT; i++, len++) {
 		stra[len] = dist_w2(mt);
 	}
+	if (GAME_NUM == 1) {
+		vec2evalvec_nim(stra, nim_evaluation_vec);
+	}
 }
 void p_data::cal_fitness()
 {
@@ -88,6 +92,9 @@ bool p_data::input_stra(const std::string fname)
 	while (fin >> tmp && count < W_SIZE) {
 		stra[count] = tmp;
 		count++;
+	}
+	if (GAME_NUM == 1) {
+		vec2evalvec_nim(stra, nim_evaluation_vec);
 	}
 	return true;
 }
