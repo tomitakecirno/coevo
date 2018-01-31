@@ -48,14 +48,15 @@ int main(int argc, char *argv[])
 		argv[4]:trial
 		argv[5]:nitch parameter
 	*/
-	//mode = 3;
+	//mode = 2;
 	//method = 4;
 	mode = atoi(__argv[1]);
 	if (mode == 1 || mode == 2 || mode == 4 || mode == 5) {
 		switch (__argc) {
 		case 1:
 			//Debug mode
-			method = 3;
+			std::cout << "Debug mode" << std::endl;
+			method = 4;
 			trial = 0;
 			break;
 		case 4:
@@ -98,6 +99,11 @@ int main(int argc, char *argv[])
 	if (mode == 2) {
 		//現手法
 		//階層的クラスタリングを盛り込んだ手法
+		if (method == 1)
+		{
+			std::vector<coans_mode1> mode1(TRIAL, { trial });
+			mode1[trial].main_task2();
+		}
 		if (method == 2)
 		{
 			std::vector<coans_mode2> mode2(TRIAL, { trial });
@@ -116,6 +122,8 @@ int main(int argc, char *argv[])
 	}
 	//csv統合
 	else if (mode == 3) {
+		std::cout << "method :";
+		show_vec_1(method_vec);
 		exp_BestRate(method_vec);
 	}
 	else if (mode == 7) {

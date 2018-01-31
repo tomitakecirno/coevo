@@ -40,29 +40,33 @@ void p_data::Init_stra()
 {
 	std::random_device rd;
 	std::mt19937 mt(rd());
+	std::uniform_real_distribution<> dist(-INIT_VALUE, INIT_VALUE);
+	std::uniform_real_distribution<> dist_rad(0, 360);
 
 	int len = 0;
 	stra.resize(W_SIZE);
-	/*
-	std::uniform_real_distribution<> dist_w1(
-	-std::sqrt(6. / ((INPUT + 1) + MIDDLE)),
-	std::sqrt(6. / ((INPUT + 1) + MIDDLE))
-	);
-	std::uniform_real_distribution<> dist_w2(
-	-std::sqrt(6. / ((MIDDLE + 1) + OUTPUT)),
-	std::sqrt(6. / ((MIDDLE + 1) + OUTPUT))
-	);
-	*/
-	std::uniform_real_distribution<> dist_w1(-INIT_VALUE, INIT_VALUE);
-	std::uniform_real_distribution<> dist_w2(-INIT_VALUE, INIT_VALUE);
-	for (int i = 0; i < INPUT*MIDDLE; i++, len++) {
-		stra[len] = dist_w1(mt);
-	}
-	for (int i = 0; i < MIDDLE*OUTPUT; i++, len++) {
-		stra[len] = dist_w2(mt);
-	}
-	if (GAME_NUM == 1) {
-		vec2evalvec_nim(stra, nim_evaluation_vec);
+	switch (GAME_NUM) {
+	case 0: //numbers
+		for (int i = 0; i < DEM; i++) {
+			stra[i] = dist(mt);
+		}
+		break;
+	case 1: //nim
+		for (int i = 0; i < INPUT*MIDDLE; i++, len++) {
+			stra[len] = dist(mt);
+		}
+		for (int i = 0; i < MIDDLE*OUTPUT; i++, len++) {
+			stra[len] = dist(mt);
+		}
+		break;
+	case 2: //numbers_kai
+		for (int i = 0; i < kaiDEM-1; i++) {
+			stra[i] = dist(mt);
+		}
+		stra[kaiDEM] = dist_rad(mt);
+		break;
+	default:
+		break;
 	}
 }
 void p_data::cal_fitness()
@@ -92,9 +96,6 @@ bool p_data::input_stra(const std::string fname)
 	while (fin >> tmp && count < W_SIZE) {
 		stra[count] = tmp;
 		count++;
-	}
-	if (GAME_NUM == 1) {
-		vec2evalvec_nim(stra, nim_evaluation_vec);
 	}
 	return true;
 }

@@ -9,73 +9,114 @@
 #include "../header/Usual_Methods.hpp"
 #include "NeuralNetwork.hpp"
 
-void vec2evalvec_nim(const std::vector<double>& stra, std::vector<double>& eval_vec)
+void cal_binary_vec(int n, std::vector<int> &input, int size = EVALUATION_VEC)
+{
+	int zero_len = 0;
+	input.assign(size, 0);
 
-		NN::NeuralNetwork<INPUT, MIDDLE, OUTPUT> nn;
-
-		const auto s = stra.size();
-		Eigen::VectorXd vec = Eigen::VectorXd::Zero(s);
-		for (auto i = 0U; i < s; ++i) {
-			vec[i] = stra[i];
+	int syou = n;
+	int amari;
+	while (0 < syou) {
+		amari = syou % 2;
+		syou = syou / 2;
+		input[size - zero_len - 1] = amari;
+		zero_len++;
+	}
+	if (zero_len < size) {
+		for (int i = zero_len; i < size; i++) {
+			input[size - zero_len - 1] = 0;
 		}
-		nn.setWeight(vec); //重みセット
+	}
+}
+void vec2evalvec_nim(const std::vector<double>& stra, std::vector<double>& eval_vec) 
+{
 
-		std::vector<int> poll1(3, 0);
-		std::vector<int> poll2(3, 0);
-		std::vector<int> poll3(3, 0);
-		std::vector<int> input_vec(9, 0);
+	NN::NeuralNetwork<INPUT, MIDDLE, OUTPUT> nn;
 
-		eval_vec.resize(EVALUATION_VEC);
-		int len = 0;
-		for (int i = 0; i < POLL3 + 1; i++) {
-			cal_binary_vec(i, poll3, 3);
-			//show_vec_1(poll3);
+	const auto s = stra.size();
+	Eigen::VectorXd vec = Eigen::VectorXd::Zero(s);
+	for (auto i = 0U; i < s; ++i) {
+		vec[i] = stra[i];
+	}
+	nn.setWeight(vec); //重みセット
 
-			for (int j = 0; j < POLL2 + 1; j++) {
-				cal_binary_vec(j, poll2, 3);
+	std::vector<int> poll1(3, 0);
+	std::vector<int> poll2(3, 0);
+	std::vector<int> poll3(3, 0);
+	std::vector<int> input_vec(9, 0);
 
-				for (int k = 0; k < POLL1 + 1; k++, len++) {
-					cal_binary_vec(k, poll1, 3);
+	eval_vec.resize(EVALUATION_VEC);
+	int len = 0;
+	for (int i = 0; i < POLL3 + 1; i++) {
+		cal_binary_vec(i, poll3, 3);
+		//show_vec_1(poll3);
 
-					for (int l = 0; l < 3; l++) {
-						input_vec[l + 0] = poll1[l];
-						input_vec[l + 3] = poll2[l];
-						input_vec[l + 6] = poll3[l];
-					}
-					for (int l = 0; l < 9; l++) {
-						if (input_vec[l] == 0) {
-							input_vec[l] = -1;
-						}
-					}
-					//show_vec_1(input_vec);
-					nn.setInput(input_vec); //入力
-					eval_vec[len] = nn.getOutPut(); //出力
+		for (int j = 0; j < POLL2 + 1; j++) {
+			cal_binary_vec(j, poll2, 3);
+
+			for (int k = 0; k < POLL1 + 1; k++, len++) {
+				cal_binary_vec(k, poll1, 3);
+
+				for (int l = 0; l < 3; l++) {
+					input_vec[l + 0] = poll1[l];
+					input_vec[l + 3] = poll2[l];
+					input_vec[l + 6] = poll3[l];
 				}
+				for (int l = 0; l < 9; l++) {
+					if (input_vec[l] == 0) {
+						input_vec[l] = -1;
+					}
+				}
+				//show_vec_1(input_vec);
+				nn.setInput(input_vec); //入力
+				eval_vec[len] = nn.getOutPut(); //出力
 			}
 		}
-		//show_vec_1(eval_vec);
 	}
+	//show_vec_1(eval_vec);
 }
 
 class Numbers {
 public:
-	bool game(const std::vector<double> &pop, const std::vector<double> &opp);
+	inline static int game(const std::vector<double> &pop, const std::vector<double> &opp) 
+	{
+		std::vector<double> diff(W_SIZE);
+		for (int i = 0; i < W_SIZE; i++) {
+			diff[i] = std::sqrt((pop[i] - opp[i])*(pop[i] - opp[i]));
+		}
+		const int index = cal_minIndex(diff);
+		if (pop[index] > opp[index]) {
+			return 1;
+		}
+		else if(pop[index] < opp[index]) {
+			return -1;
+		}
+		else {
+			return 0;
+		}
+	}
+	inline static int game_kai(const std::vector<double> &pop, const std::vector<double> &opp) 
+	{
+		const double pop_dis = cal_dis(pop);
+		const double opp_dis = cal_dis(opp);
+		if (pop_dis > opp_dis) {
+			return 1;
+		}
+		else if (pop_dis < opp_dis) {
+			return -1;
+		}
+		else {
+			return 0;
+		}
+	}
 protected:
+	inline static double cal_dis(const std::vector<double> &pop) {
+		const double pop_x = pop[0] * cos(pop[2] - 180.0) - pop[1] * sin(pop[2] - 180.0);
+		const double pop_y = pop[0] * sin(pop[2] - 180.0) + pop[1] * cos(pop[2] - 180.0);
+		const double dis = std::sqrt((kaiOPT_X - pop_x)*(kaiOPT_X - pop_x) + (kaiOPT_Y - pop_y)*(kaiOPT_Y - pop_y));
+		return dis;
+	}
 };
-bool Numbers::game(const std::vector<double> &pop, const std::vector<double> &opp)
-{
-	std::vector<double> diff(W_SIZE);
-	for (int i = 0; i < W_SIZE; i++) {
-		diff[i] = std::sqrt((pop[i] - opp[i])*(pop[i] - opp[i]));
-	}
-	const int index = cal_maxIndex(diff);
-	if (pop[index] > opp[index]) {
-		return true;
-	}
-	else {
-		return false;
-	}
-}
 
 class nim {
 public:
@@ -94,7 +135,6 @@ public:
 	}
 	bool nim_game(const std::vector<double> &pop, const std::vector<double> &opp);
 	double nim_evaluation(const std::vector<double>& stra);
-	void input_stra(const std::vector<double> &pop, const std::vector<double> &opp);
 protected:
 	int mode;
 	int nim_n;	//山の数
@@ -110,7 +150,6 @@ protected:
 
 	void Init_mont();
 	int cal_index(const int a, const int b, const int c);
-	void cal_binary_vec(const int n, std::vector<int> &input, const int size = EVALUATION_VEC); //10進数を2進数のベクターに変換する
 	void cal_xor_vec(std::vector<int> &one, std::vector<int> &ano, std::vector<int> &vec); //ベクター同士の排他的論理和
 	void cal_move_vec();
 	int cal_nimsum();
@@ -230,25 +269,6 @@ int nim::cal_index(const int a, const int b, const int c) {
 	}
 	return tmp_index;
 }
-void nim::cal_binary_vec(const int n, std::vector<int> &input, const int size) 
-{
-	int zero_len = 0;
-	input.assign(size, 0);
-
-	int syou = n;
-	int amari;
-	while (0 < syou) {
-		amari = syou % 2;
-		syou = syou / 2;
-		input[size - zero_len - 1] = amari;
-		zero_len++;
-	}
-	if (zero_len < size) {
-		for (int i = zero_len; i < size; i++) {
-			input[size - zero_len - 1] = 0;
-		}
-	}
-}
 void nim::cal_xor_vec(std::vector<int> &one, std::vector<int> &ano, std::vector<int> &input) 
 {
 	int one_size = int(one.size());
@@ -337,11 +357,6 @@ int nim::choose_stra(const std::vector<double> &stra)
 	const int index = int(std::distance(tmp_stra.begin(), min));
 	return index;
 }
-void nim::input_stra(const std::vector<double> &pop, const std::vector<double> &opp)
-{
-	vec2evalvec(pop, pop_stra);
-	vec2evalvec(opp, opp_stra);
-}
 void nim::show_mont()
 {
 	std::vector<std::vector<int>> tmp_mont_vec;
@@ -361,8 +376,7 @@ void nim::show_mont()
 
 int competition_single(playerNim &player_1, std::vector<playerNim> &player_2) {
 	int mach = 0;
-	nim nim(1);
-	Numbers numbers;
+	nim nim;
 	const int len_2p = int(player_2.size());
 
 	player_1.Result.assign(len_2p, 0);
@@ -373,7 +387,7 @@ int competition_single(playerNim &player_1, std::vector<playerNim> &player_2) {
 		//Numbers
 	case 0:
 		for (int j = 0; j < len_2p; j++, mach++) {
-			const double diff = numbers.game(player_1.stra, player_2[j].stra);
+			const double diff = Numbers::game(player_1.stra, player_2[j].stra);
 			player_1.Result[j] = diff;
 			player_2[j].Result[0] = diff*(-1);
 		}
@@ -397,6 +411,13 @@ int competition_single(playerNim &player_1, std::vector<playerNim> &player_2) {
 			}
 		}
 		break;
+	case 2:
+		for (int j = 0; j < len_2p; j++, mach++) {
+			const double diff = Numbers::game_kai(player_1.stra, player_2[j].stra);
+			player_1.Result[j] = diff;
+			player_2[j].Result[0] = diff*(-1);
+		}
+		break;
 	default:
 		exit(EXIT_FAILURE);
 		break;
@@ -406,8 +427,7 @@ int competition_single(playerNim &player_1, std::vector<playerNim> &player_2) {
 int competition_multi(std::vector<playerNim> &player_1, std::vector<playerNim> &player_2)
 {
 	int mach = 0;
-	nim nim(1);
-	Numbers numbers;
+	nim nim;
 	const int len_1p = int(player_1.size());
 	const int len_2p = int(player_2.size());
 	for (int i = 0; i < len_1p; i++) {
@@ -421,7 +441,7 @@ int competition_multi(std::vector<playerNim> &player_1, std::vector<playerNim> &
 	case 0:
 		for (int i = 0; i < len_1p; i++, mach++) {
 			for (int j = 0; j < len_2p; j++) {
-				const double diff = numbers.game(player_1[i].stra, player_2[j].stra);
+				const double diff = Numbers::game(player_1[i].stra, player_2[j].stra);
 				player_1[i].Result[j] = diff;
 				player_2[j].Result[i] = diff*(-1);
 			}
@@ -446,6 +466,14 @@ int competition_multi(std::vector<playerNim> &player_1, std::vector<playerNim> &
 			}
 		}
 		break;
+	case 2:
+		for (int i = 0; i < len_1p; i++, mach++) {
+			for (int j = 0; j < len_2p; j++) {
+				const double diff = Numbers::game_kai(player_1[i].stra, player_2[j].stra);
+				player_1[i].Result[j] = diff;
+				player_2[j].Result[i] = diff*(-1);
+			}
+		}
 	default:
 		exit(EXIT_FAILURE);
 		break;

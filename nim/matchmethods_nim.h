@@ -47,7 +47,7 @@ protected:
 
 void Match::evaluation() 
 {
-	nim nim(1);
+	nim nim;
 	p_data pop;
 	char fname[50];
 	std::vector<int> folder(TRIAL);
