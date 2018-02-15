@@ -22,6 +22,8 @@ double cal_euclidean(const Vec &one, const Vec &ano) {
 	const int ano_size = int(ano.size());
 	if (one_size != ano_size) {
 		std::cout << "ベクターのサイズが違います -> cal_euclidean" << std::endl;
+		std::cout << "one_size:" << one_size << std::endl;
+		std::cout << "ano_size:" << ano_size << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	double sum = 0;
@@ -33,14 +35,16 @@ double cal_euclidean(const Vec &one, const Vec &ano) {
 void cal_gravity(const std::vector<std::vector<double>> &w, std::vector<double> &gra)
 {
 	const int w_len = int(w.size());
-	gra.assign(W_SIZE, 0);
+	const int w_len2 = int(w[0].size());
+
+	gra.assign(w_len2, 0);
 
 	for (auto &pi : w) {
-		for (int i = 0; i < W_SIZE; i++) {
+		for (int i = 0; i < w_len2; i++) {
 			gra[i] += pi[i];
 		}
 	}
-	for (int i = 0; i < W_SIZE; i++) {
+	for (int i = 0; i < w_len2; i++) {
 		gra[i] /= w_len;
 	}
 }
@@ -216,12 +220,13 @@ void ExtensionXLM(const int main_pare, const std::vector<int> &sub_pare, std::ve
 			sub_delta[i][j] = pop[sub_pare[i]].stra[j] - pop[main_pare].stra[j];
 		}
 	}
-
+	const int child_len = int(child.size());
+	const int plus = (child_len == CHILD) ? 0 : 1;
 	std::random_device rd;
 	std::mt19937 mt(rd());
 	std::normal_distribution<> dist(0.0, 1.0 / (std::sqrt(PARENT)));
 	//子個体の戦略生成
-	for (int c = 1; c < CHILD + 1; c++) {
+	for (int c = plus; c < CHILD + plus; c++) {
 		//初期化
 		child[c].Init_pn();
 		child[c].stra = pop[main_pare].stra;
@@ -236,6 +241,7 @@ void ExtensionXLM(const int main_pare, const std::vector<int> &sub_pare, std::ve
 		}
 	}
 }
+//EXLM_REX
 //斎藤さんのEXLMを共進化的に修正したもの
 //ステップサイズを広げたい
 void EXLM_S(const int main_pare, const std::vector<int> &sub_pare, const std::vector<playerNim> &pop, std::vector<playerNim> &child ,std::vector<playerNim> &opp, double t = STEP_SIZE)

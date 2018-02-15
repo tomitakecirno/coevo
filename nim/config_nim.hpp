@@ -1,10 +1,11 @@
 #pragma once
 /* #define NDEBUG */
 
-#define GAME_NUM	1 /* Num:1 Numbers:0 NumbersKai:2*/
+#define _USE_MATH_DEFINES
+#define GAME_NUM 1 /* Num:1 Numbers:0 NumbersKai:2*/
 
 //Numbers
-constexpr int DEM = 2;	//次元数
+constexpr int DEM = 10;	//次元数
 constexpr double OPT_X = 100;	//次元数
 constexpr double OPT_Y = 100;	//次元数
 
@@ -12,6 +13,8 @@ constexpr double OPT_Y = 100;	//次元数
 constexpr int kaiDEM = 3;	//次元数
 constexpr double kaiOPT_X = 70.0;
 constexpr double kaiOPT_Y = 70.0;
+constexpr double PI = 3.141592653589793;
+
 
 //Nim
 constexpr int NIM = 3;			//ニムの山の数
@@ -31,11 +34,11 @@ constexpr int OUTPUT = 1;
 #if GAME_NUM == 0
 	constexpr auto STRA_DIR		= "./numbers";
 	constexpr int W_SIZE		= DEM;				//次元数
-	constexpr int KO			= W_SIZE * 5;		//集団
+	constexpr int KO			= W_SIZE * 7;		//集団
 	constexpr int KO_L			= KO * 3;			//集団
 	constexpr int PARENT		= W_SIZE + 1;		//親
 	constexpr int CHILD			= W_SIZE * 2;		//子
-	constexpr int BATTLE_PER	= KO*CHILD * 10;	//
+	constexpr int BATTLE_PER	= KO*CHILD*20;	//
 	constexpr int END_GA		= BATTLE_PER * 20;	//世代交代モデルの終了条件
 	constexpr double INIT_VALUE = 10.0;
 	constexpr int battle_n		= 1;
@@ -49,7 +52,8 @@ constexpr int OUTPUT = 1;
 	constexpr int KO_L			= KO * 3;			//集団
 	constexpr int PARENT		= W_SIZE + 1;		//親
 	constexpr int CHILD			= W_SIZE * 2;		//子
-	constexpr int BATTLE_PER	= KO*CHILD * 10;	//
+	constexpr int BATTLE_PER	= KO*CHILD * 20;	//
+	//constexpr int BATTLE_PER	= KO*CHILD;	//
 	constexpr int END_GA		= BATTLE_PER * 50;	//世代交代モデルの終了条件
 	constexpr double INIT_VALUE = 1.0;
 	constexpr int battle_n		= 2;
@@ -63,12 +67,12 @@ constexpr int OUTPUT = 1;
 	constexpr int KO_L = KO * 3;				//集団
 	constexpr int PARENT = W_SIZE + 1;			//親
 	constexpr int CHILD = W_SIZE * 2;			//子
-	constexpr int BATTLE_PER = KO*CHILD * 10;	//
-	constexpr int END_GA = BATTLE_PER * 50;		//世代交代モデルの終了条件
+	constexpr int BATTLE_PER = KO*CHILD * 20;	//
+	constexpr int END_GA = BATTLE_PER * 20;		//世代交代モデルの終了条件
 	constexpr double INIT_VALUE = 10.0;
 	constexpr int battle_n = 1;
 
-constexpr int K_List1 = W_SIZE + 10;	/*ニッチの集団数*/
+constexpr int K_List1 = W_SIZE + 5;	/*ニッチの集団数*/
 constexpr int K_List2 = 2;				/*ニッチの集団数*/
 #endif
 
@@ -78,5 +82,5 @@ constexpr int TRIAL			= 10;
 constexpr int DELETE		= 50;
 constexpr int ENEMY			= 10;
 constexpr double WIN_RATE	= 60;
-constexpr double STEP_SIZE	= 12.0;
+constexpr double STEP_SIZE	= 2.0;
 constexpr double ALFA		= 0.1;

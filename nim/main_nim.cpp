@@ -49,14 +49,13 @@ int main(int argc, char *argv[])
 		argv[5]:nitch parameter
 	*/
 	//mode = 2;
-	//method = 4;
+	//method = 6;
 	mode = atoi(__argv[1]);
-	if (mode == 1 || mode == 2 || mode == 4 || mode == 5) {
+	if (mode == 1 || mode == 2 || mode == 5) {
 		switch (__argc) {
 		case 1:
 			//Debug mode
 			std::cout << "Debug mode" << std::endl;
-			method = 4;
 			trial = 0;
 			break;
 		case 4:
@@ -78,7 +77,7 @@ int main(int argc, char *argv[])
 			std::cout << "ÉÇÅ[Éh:äwèK" << std::endl;
 		}
 	}
-	if (mode == 3) {
+	if (mode == 3 || mode == 4) {
 		//method.resize(1);
 		//method[0] = 2;
 		method_vec.resize(__argc - 2);
@@ -119,16 +118,33 @@ int main(int argc, char *argv[])
 			std::vector<mode4> mode4(TRIAL, { trial });
 			mode4[trial].main_task2();
 		}
+		if (method == 5)
+		{
+			std::vector<mode5> mode5(TRIAL, { trial });
+			mode5[trial].main_task();
+		}
+		if (method == 6)
+		{
+			std::vector<mode6> mode6(TRIAL, { trial });
+			mode6[trial].main_task3();
+		}
 	}
 	//csvìùçá
 	else if (mode == 3) {
 		std::cout << "method :";
 		show_vec_1(method_vec);
-		exp_BestRate(method_vec);
+		//exp_opp_stra_disper(method_vec);
+		exp_pop_stra_disper(method_vec);
+		//exp_BestRate(method_vec);
+		//exp_opp_BestRate(method_vec);
+		//exp_pop_pseudoF(method_vec);
+		//exp_pop_disper(method_vec);
 	}
-	else if (mode == 7) {
-		//test mode
-		fuzzy_x_means();
+	else if (mode == 4) {
+		if (method_vec.empty()) {
+			exit(EXIT_FAILURE);
+		}
+		save_opp_stra(method_vec);
 	}
 	const clock_t End_Main = clock();
 	Show_Time(Start_Main, End_Main);
@@ -138,6 +154,6 @@ int main(int argc, char *argv[])
 }
 
 void Show_Time(clock_t Start, clock_t End) {
-	int time = (End - Start) / CLOCKS_PER_SEC;
+	double time = (End - Start) / double(CLOCKS_PER_SEC);
 	std::cout << "Process time:" << time << "[sec]" << std::endl;
 }

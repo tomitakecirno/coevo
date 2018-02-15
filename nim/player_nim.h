@@ -41,6 +41,7 @@ void p_data::Init_stra()
 	std::random_device rd;
 	std::mt19937 mt(rd());
 	std::uniform_real_distribution<> dist(-INIT_VALUE, INIT_VALUE);
+	std::uniform_real_distribution<> dist_0(0, INIT_VALUE);
 	std::uniform_real_distribution<> dist_rad(0, 360);
 
 	int len = 0;
@@ -48,7 +49,7 @@ void p_data::Init_stra()
 	switch (GAME_NUM) {
 	case 0: //numbers
 		for (int i = 0; i < DEM; i++) {
-			stra[i] = dist(mt);
+			stra[i] = dist_0(mt);
 		}
 		break;
 	case 1: //nim
@@ -60,10 +61,10 @@ void p_data::Init_stra()
 		}
 		break;
 	case 2: //numbers_kai
-		for (int i = 0; i < kaiDEM-1; i++) {
-			stra[i] = dist(mt);
+		for (int i = 0; i < kaiDEM-1; i++,len++) {
+			stra[len] = dist(mt);
 		}
-		stra[kaiDEM] = dist_rad(mt);
+		stra[len] = dist_rad(mt);
 		break;
 	default:
 		break;

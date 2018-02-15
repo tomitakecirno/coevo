@@ -80,10 +80,15 @@ class Numbers {
 public:
 	inline static int game(const std::vector<double> &pop, const std::vector<double> &opp) 
 	{
+		//std::cout << "pop :";
+		//show_vec_1(pop);
+		//std::cout << "opp :";
+		//show_vec_1(opp);
 		std::vector<double> diff(W_SIZE);
 		for (int i = 0; i < W_SIZE; i++) {
 			diff[i] = std::sqrt((pop[i] - opp[i])*(pop[i] - opp[i]));
 		}
+		//show_vec_1(diff);
 		const int index = cal_minIndex(diff);
 		if (pop[index] > opp[index]) {
 			return 1;
@@ -99,22 +104,31 @@ public:
 	{
 		const double pop_dis = cal_dis(pop);
 		const double opp_dis = cal_dis(opp);
-		if (pop_dis > opp_dis) {
+		if (pop_dis < opp_dis) {
 			return 1;
 		}
-		else if (pop_dis < opp_dis) {
+		else if (pop_dis > opp_dis) {
 			return -1;
 		}
 		else {
 			return 0;
 		}
 	}
+	inline static double evaluation_kai(const std::vector<double> &pop) {
+		const double dis = cal_dis(pop);
+		return dis;
+	}
 protected:
 	inline static double cal_dis(const std::vector<double> &pop) {
-		const double pop_x = pop[0] * cos(pop[2] - 180.0) - pop[1] * sin(pop[2] - 180.0);
-		const double pop_y = pop[0] * sin(pop[2] - 180.0) + pop[1] * cos(pop[2] - 180.0);
+		const double radian = degree2radian(pop[2]);
+		const double pop_x = pop[0] * cos(radian) - pop[1] * sin(radian);
+		const double pop_y = pop[0] * sin(radian) + pop[1] * cos(radian);
 		const double dis = std::sqrt((kaiOPT_X - pop_x)*(kaiOPT_X - pop_x) + (kaiOPT_Y - pop_y)*(kaiOPT_Y - pop_y));
 		return dis;
+	}
+	inline static double degree2radian(double degree) {
+		double radian = degree * PI / 180.0;
+		return radian;
 	}
 };
 
@@ -374,7 +388,32 @@ void nim::show_mont()
 	std::cout << "(0,1,2) = (" << nim_status[0] << "," << nim_status[1] << "," << nim_status[2] << ")" << std::endl << std::endl;
 }
 
-int competition_single(playerNim &player_1, std::vector<playerNim> &player_2) {
+inline double evaluation(const std::vector<double> &player_stra) {
+	if (player_stra.size() != W_SIZE) {
+		std::cout << "stra error ->evaluation" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	nim nim;
+	double evaluation;
+	std::vector<double> p_nim_evalvec;
+	switch (GAME_NUM) {
+	case 0:
+		evaluation = std::sqrt((OPT_X - player_stra[0])*(OPT_X - player_stra[0]) + (OPT_Y - player_stra[1])*(OPT_Y - player_stra[1]));
+		break;
+	case 1:
+		vec2evalvec_nim(player_stra, p_nim_evalvec);
+		evaluation = nim.nim_evaluation(p_nim_evalvec)*100;
+		break;
+	case 2:
+		evaluation = Numbers::evaluation_kai(player_stra);
+		break;
+	default:
+		exit(EXIT_FAILURE);
+		break;
+	}
+	return evaluation;
+}
+inline int competition_single(playerNim &player_1, std::vector<playerNim> &player_2) {
 	int mach = 0;
 	nim nim;
 	const int len_2p = int(player_2.size());
@@ -424,7 +463,7 @@ int competition_single(playerNim &player_1, std::vector<playerNim> &player_2) {
 	}
 	return mach;
 }
-int competition_multi(std::vector<playerNim> &player_1, std::vector<playerNim> &player_2)
+inline int competition_multi(std::vector<playerNim> &player_1, std::vector<playerNim> &player_2)
 {
 	int mach = 0;
 	nim nim;
@@ -467,13 +506,14 @@ int competition_multi(std::vector<playerNim> &player_1, std::vector<playerNim> &
 		}
 		break;
 	case 2:
-		for (int i = 0; i < len_1p; i++, mach++) {
-			for (int j = 0; j < len_2p; j++) {
+		for (int i = 0; i < len_1p; i++) {
+			for (int j = 0; j < len_2p; j++, mach++) {
 				const double diff = Numbers::game_kai(player_1[i].stra, player_2[j].stra);
 				player_1[i].Result[j] = diff;
 				player_2[j].Result[i] = diff*(-1);
 			}
 		}
+		break;
 	default:
 		exit(EXIT_FAILURE);
 		break;

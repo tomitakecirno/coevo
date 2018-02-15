@@ -18,11 +18,78 @@ CoansMode4	前手法：前評価方法
 #include "CrusteringMethod_nim.h"
 
 #define TIME_PER 100
-
-void exp_BestRate(const std::vector<int> &method)
+inline void asort_index_H(std::vector<playerNim> &pop, std::vector<std::vector<int>> &cr_index)
 {
+	std::vector<int> cr_pop(KO);
+	for (int i = 0; i < KO; i++) {
+		cr_pop[i] = pop[i].nitch;
+	}
+	const int cr_len = *max_element(cr_pop.begin(), cr_pop.end());
+	cr_index.resize(cr_len + 1);
+	//クラスタ毎に個体のインデックスを仕分けして入れる
+	int size = 0;
+	for (int i = 0; i < cr_len + 1; i++) {
+		const int count = int(std::count(cr_pop.begin(), cr_pop.end(), i));
+		if (count) {
+			cr_index[size].resize(count);
+			auto itr = std::find(cr_pop.begin(), cr_pop.end(), i);
+			cr_index[size][0] = int(std::distance(cr_pop.begin(), itr));
+
+			for (int j = 1; j < count; j++) {
+				itr = std::find(itr + 1, cr_pop.end(), i);
+				cr_index[size][j] = int(std::distance(cr_pop.begin(), itr));
+			}
+			size++;
+		}
+	}
+	if (size < cr_len + 1) {
+		const int delta = cr_len - size;
+		for (int i = 0; i < delta; i++) {
+			cr_index.erase(cr_index.end());
+		}
+	}
+}
+inline double pseudoF(std::vector<playerNim> &pop)
+{
+	/*
+	クラスタの評価関数
+	分子:クラスタ間分散，分母:クラスタ内分散
+	値が大きいほど良い
+	*/
+	std::vector<std::vector<int>> cr_index;
+	Cru_Upgma(pop);
+	asort_index_H(pop, cr_index);
+
+	int size = 0;
+	double dis_T = 0;
+	//std::vector<double> all_dis(KO*(KO - 1));
+	for (int i = 0; i < KO; i++) {
+		for (int j = i; j < KO; j++, size++) {
+			dis_T += cal_euclidean(pop[i].stra, pop[j].stra);
+		}
+	}
+
+	const int cr_len = int(cr_index.size());
+	std::vector<double> cr_dis(cr_len, 0);
+	for (int i = 0; i < cr_len; i++) {
+		const int cr_len2 = int(cr_index[i].size());
+		for (int j = 0; j < cr_len2; j++) {
+			for (int k = j; k < cr_len2; k++) {
+				cr_dis[i] += cal_euclidean(pop[cr_index[i][j]].stra, pop[cr_index[i][k]].stra);
+			}
+		}
+	}
+	const double W_k = std::accumulate(cr_dis.begin(), cr_dis.end(), 0.0);
+	/*実験用*/
+	const double de = W_k / (KO - cr_len);
+	const double mo = (dis_T - W_k) / (cr_len - 1);
+	const double value_pseudoF = mo / de;
+	return value_pseudoF;
+}
+inline void exp_BestRate(const std::vector<int> &method)
+{
+	std::cout << "pop evaluation" << std::endl;
 	std::vector<playerNim> pop(KO);
-	nim nim;
 	char fname[50];
 	const int method_len = int(method.size());
 	std::vector<int> gene(method_len);
@@ -36,6 +103,77 @@ void exp_BestRate(const std::vector<int> &method)
 		exit(EXIT_FAILURE);
 	}
 
+	std::vector<std::vector<double>> csv_max;
+	std::vector<std::vector<double>> csv_min;
+	std::vector<std::vector<double>> csv_ave;
+	csv_max = std::vector<std::vector<double>>(min_num, std::vector<double>(method_len, 0));
+	csv_min = csv_max;
+	csv_ave = csv_max;
+	//m
+	for (int m = 0; m < method_len; m++) {
+		sprintf_s(fname, "%s/%d", STRA_DIR, method[m]);
+		//const int trial = count_folder(fname);
+		const int trial = 3;
+		int gene;
+		if (trial == 0) {
+			std::cout << "フォルダがありません method = " << m << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		//t
+		for (int t = 0; t < trial; t++) {
+			sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[m], t);
+			gene = count_folder(fname);
+			if (trial == 0) {
+				std::cout << "フォルダがありません method:trial = " << m << "," << t << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			//g
+			for (int g = 0; g < min_num; g++) {
+				printf("method:%d trial:%d generation:%d\n", method[m], t, g);
+				std::vector<double> tmp_PopEval(KO);
+				for (int i = 0; i < KO; i++) {
+					//個体情報インプット
+					sprintf_s(fname, "%s/%d/%d/%d/%d.dat", STRA_DIR, method[m], t, g, i);
+					pop[i].input_stra(fname);
+					//pop[i].Init_stra();
+					tmp_PopEval[i] = evaluation(pop[i].stra);
+				}
+				csv_max[g][m] += *max_element(tmp_PopEval.begin(), tmp_PopEval.end());
+				csv_min[g][m] += *min_element(tmp_PopEval.begin(), tmp_PopEval.end());
+				csv_ave[g][m] += accumulate(tmp_PopEval.begin(), tmp_PopEval.end(), 0.0) / KO;
+			}
+		}
+		for (int g = 0; g < min_num; g++) {
+			csv_max[g][m] /= trial;
+			csv_min[g][m] /= trial;
+			csv_ave[g][m] /= trial;
+		}
+		std::cout << "method " << method[m] << "...done" << std::endl;
+	}
+	std::stringstream ss1, ss2, ss3;
+	ss1 << STRA_DIR << "/method_max_" << W_SIZE << ".csv";
+	ss2 << STRA_DIR << "/method_min_" << W_SIZE << ".csv";
+	ss3 << STRA_DIR << "/method_ave_" << W_SIZE << ".csv";
+	CsvModules::csv_fwrite(ss1.str(), csv_max, BATTLE_PER);
+	CsvModules::csv_fwrite(ss2.str(), csv_min, BATTLE_PER);
+	CsvModules::csv_fwrite(ss3.str(), csv_ave, BATTLE_PER);
+}
+inline void exp_opp_BestRate(const std::vector<int> &method)
+{
+	std::cout << "opp evaluation" << std::endl;
+
+	char fname[50];
+	const int method_len = int(method.size());
+	std::vector<int> gene(method_len);
+	for (int i = 0; i < method_len; i++) {
+		sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[i], 0);
+		gene[i] = count_folder(fname);
+	}
+	const int min_num = *min_element(gene.begin(), gene.end());
+	if (min_num == 0) {
+		std::cout << "フォルダがありません ->exp_BestRate " << std::endl;
+		exit(EXIT_FAILURE);
+	}
 	std::vector<std::vector<double>> csv_max;
 	std::vector<std::vector<double>> csv_min;
 	std::vector<std::vector<double>> csv_ave;
@@ -62,18 +200,66 @@ void exp_BestRate(const std::vector<int> &method)
 			//g
 			for (int g = 0; g < min_num; g++) {
 				printf("method:%d trial:%d generation:%d\n", method[m], t, g);
-				std::vector<double> tmp_PopEval(KO);
-				for (int i = 0; i < KO; i++) {
+				std::vector<playerNim> pop;
+				std::vector<playerNim> opp;
+				int opp_num;
+				switch (method[m]) {
+				case 1:
+					opp.resize(K_UPGMA);
+					opp_num = K_UPGMA;
+					for (int i = 0; i < K_UPGMA; i++) {
+						sprintf_s(fname, "%s/%d/%d/%d/opp_%d.dat", STRA_DIR, method[m], t, g, i);
+						opp[i].input_stra(fname);
+					}
+					break;
+				case 2:
+					pop.resize(KO);
+					for (int i = 0; i < KO; i++) {
+						sprintf_s(fname, "%s/%d/%d/%d/%d.dat", STRA_DIR, method[m], t, g, i);
+						pop[i].input_stra(fname);
+					}
+					Cru_Upgma(pop);
+					choice_oppoment(pop, opp, K_UPGMA);
+					opp_num = int(opp.size());
+					break;
+				case 3:
+					opp.resize(KO);
+					opp_num = KO;
+					for (int i = 0; i < KO; i++) {
+						sprintf_s(fname, "%s/%d/%d/%d/%d.dat", STRA_DIR, method[m], t, g, i);
+						opp[i].input_stra(fname);
+					}
+					break;
+				case 4:
+					opp.resize(K_UPGMA);
+					opp_num = K_UPGMA;
+					for (int i = 0; i < K_UPGMA; i++) {
+						sprintf_s(fname, "%s/%d/%d/%d/opp_%d.dat", STRA_DIR, method[m], t, g, i);
+						opp[i].input_stra(fname);
+					}
+					break;
+				case 5:
+					pop.resize(KO);
+					for (int i = 0; i < KO; i++) {
+						sprintf_s(fname, "%s/%d/%d/%d/%d.dat", STRA_DIR, method[m], t, g, i);
+						pop[i].input_stra(fname);
+					}
+					Cru_Upgma(pop);
+					choice_oppoment(pop, opp, K_UPGMA);
+					opp_num = int(opp.size());
+					break;
+				default:
+					exit(EXIT_FAILURE);
+					break;
+				}
+				std::vector<double> tmp_PopEval(opp_num);
+				for (int i = 0; i < opp_num; i++) {
 					//個体情報インプット
-					sprintf_s(fname, "%s/%d/%d/%d/%d.dat", STRA_DIR, method[m], t, g, i);
-					pop[i].input_stra(fname);
-					//pop[i].Init_stra();
-					vec2evalvec_nim(pop[i].stra, pop[i].nim_evaluation_vec);
-					tmp_PopEval[i] = nim.nim_evaluation(pop[i].nim_evaluation_vec) * 100;
+					tmp_PopEval[i] = evaluation(opp[i].stra);
 				}
 				csv_max[g][m] += *max_element(tmp_PopEval.begin(), tmp_PopEval.end());
 				csv_min[g][m] += *min_element(tmp_PopEval.begin(), tmp_PopEval.end());
-				csv_ave[g][m] += accumulate(tmp_PopEval.begin(), tmp_PopEval.end(), 0.0) / KO;
+				csv_ave[g][m] += accumulate(tmp_PopEval.begin(), tmp_PopEval.end(), 0.0) / opp_num;
 			}
 		}
 		for (int g = 0; g < min_num; g++) {
@@ -81,11 +267,309 @@ void exp_BestRate(const std::vector<int> &method)
 			csv_min[g][m] /= trial;
 			csv_ave[g][m] /= trial;
 		}
+		std::cout << "method_opp " << method[m] << "...done" << std::endl;
+	}
+	std::stringstream ss1, ss2, ss3;
+	ss1 << STRA_DIR << "/method_max_opp_" << W_SIZE << ".csv";
+	ss2 << STRA_DIR << "/method_min_opp_" << W_SIZE << ".csv";
+	ss3 << STRA_DIR << "/method_ave_opp_" << W_SIZE << ".csv";
+	CsvModules::csv_fwrite(ss1.str(), csv_max, BATTLE_PER);
+	CsvModules::csv_fwrite(ss2.str(), csv_min, BATTLE_PER);
+	CsvModules::csv_fwrite(ss3.str(), csv_ave, BATTLE_PER);
+}
+inline void exp_pop_pseudoF(const std::vector<int> &method) 
+{
+	std::cout << "cal pseudoF" << std::endl;
+	char fname[50];
+	const int method_len = int(method.size());
+	std::vector<playerNim> pop(KO);
+	std::vector<int> gene(method_len);
+	for (int i = 0; i < method_len; i++) {
+		sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[i], 0);
+		gene[i] = count_folder(fname);
+	}
+	const int min_num = *min_element(gene.begin(), gene.end());
+	if (min_num == 0) {
+		std::cout << "フォルダがありません ->exp_BestRate " << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	std::vector<std::vector<double>> csv_pseudoF;
+	csv_pseudoF = std::vector<std::vector<double>>(min_num, std::vector<double>(method_len, 0));
+	//m
+	for (int m = 0; m < method_len; m++) {
+		sprintf_s(fname, "%s/%d", STRA_DIR, method[m]);
+		const int trial = count_folder(fname);
+		int gene;
+		if (trial == 0) {
+			std::cout << "フォルダがありません method = " << m << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		//t
+		for (int t = 0; t < trial; t++) {
+			sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[m], t);
+			gene = count_folder(fname);
+			if (trial == 0) {
+				std::cout << "フォルダがありません method:trial = " << m << "," << t << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			//g
+			for (int g = 0; g < min_num; g++) {
+				printf("method:%d trial:%d generation:%d\n", method[m], t, g);
+				for (int i = 0; i < KO; i++) {
+					//個体情報インプット
+					sprintf_s(fname, "%s/%d/%d/%d/%d.dat", STRA_DIR, method[m], t, g, i);
+					pop[i].input_stra(fname);
+					pop[i].Init_0();
+				}
+				csv_pseudoF[g][m] += pseudoF(pop);
+			}
+		}
+		for (int g = 0; g < min_num; g++) {
+			csv_pseudoF[g][m] /= trial;
+		}
 		std::cout << "method " << method[m] << "...done" << std::endl;
 	}
-	CsvModules::csv_fwrite("method_max.csv", csv_max, BATTLE_PER);
-	CsvModules::csv_fwrite("method_min.csv", csv_min, BATTLE_PER);
-	CsvModules::csv_fwrite("method_ave.csv", csv_ave, BATTLE_PER);
+
+	std::stringstream ss1;
+	ss1 << STRA_DIR << "/pseudoF_" << W_SIZE << ".csv";
+	CsvModules::csv_fwrite(ss1.str(), csv_pseudoF, BATTLE_PER);
+}
+inline void exp_pop_disper(const std::vector<int> &method)
+{
+	std::cout << "cal disper" << std::endl;
+	char fname[50];
+	const int method_len = int(method.size());
+	std::vector<playerNim> pop(KO);
+	std::vector<int> gene(method_len);
+	for (int i = 0; i < method_len; i++) {
+		sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[i], 0);
+		gene[i] = count_folder(fname);
+	}
+	const int min_num = *min_element(gene.begin(), gene.end());
+	if (min_num == 0) {
+		std::cout << "フォルダがありません ->exp_BestRate " << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	std::vector<std::vector<double>> csv_disper;
+	csv_disper = std::vector<std::vector<double>>(min_num, std::vector<double>(method_len, 0));
+	//m
+	for (int m = 0; m < method_len; m++) {
+		sprintf_s(fname, "%s/%d", STRA_DIR, method[m]);
+		const int trial = count_folder(fname);
+		int gene;
+		if (trial == 0) {
+			std::cout << "フォルダがありません method = " << m << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		//t
+		for (int t = 0; t < trial; t++) {
+			sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[m], t);
+			gene = count_folder(fname);
+			if (trial == 0) {
+				std::cout << "フォルダがありません method:trial = " << m << "," << t << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			//g
+			for (int g = 0; g < min_num; g++) {
+				printf("method:%d trial:%d generation:%d\n", method[m], t, g);
+				std::vector<std::vector<double>> stra(KO);
+				for (int i = 0; i < KO; i++) {
+					//個体情報インプット
+					sprintf_s(fname, "%s/%d/%d/%d/%d.dat", STRA_DIR, method[m], t, g, i);
+					pop[i].input_stra(fname);
+					stra[i] = pop[i].stra;
+				}
+				csv_disper[g][m] += cal_dispersion_2(stra);
+			}
+		}
+		for (int g = 0; g < min_num; g++) {
+			csv_disper[g][m] /= trial;
+		}
+		std::cout << "method " << method[m] << "...done" << std::endl;
+	}
+
+	std::stringstream ss1;
+	ss1 << STRA_DIR << "/disper_" << W_SIZE << ".csv";
+	CsvModules::csv_fwrite(ss1.str(), csv_disper, BATTLE_PER);
+}
+inline void save_opp_stra(const std::vector<int> &method) 
+{
+	std::cout << "save opp" << std::endl;
+	char fname[50];
+	const int method_len = int(method.size());
+	std::vector<playerNim> pop(KO);
+	std::vector<playerNim> opp(K_UPGMA);
+	for (int m = 0; m < method_len; m++) {
+		if (method[m] == 1 || method[m] == 3 || method[m] == 4) {
+			exit(EXIT_FAILURE);
+		}
+		sprintf_s(fname, "%s/%d", STRA_DIR, method[m]);
+		const int trial = count_folder(fname);
+		int gene;
+		if (trial == 0) {
+			std::cout << "フォルダがありません method = " << m << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		//t
+		for (int t = 0; t < trial; t++) {
+			sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[m], t);
+			gene = count_folder(fname);
+			if (trial == 0) {
+				std::cout << "フォルダがありません method:trial = " << m << "," << t << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			//g
+			for (int g = 0; g < gene; g++) {
+				printf("method:%d trial:%d generation:%d\n", method[m], t, g);
+				for (int i = 0; i < KO; i++) {
+					//個体情報インプット
+					sprintf_s(fname, "%s/%d/%d/%d/%d.dat", STRA_DIR, method[m], t, g, i);
+					pop[i].input_stra(fname);
+				}
+				Cru_Upgma(pop);
+				choice_oppoment(pop, opp, K_UPGMA);
+				for (int i = 0; i < K_UPGMA; i++) {
+					sprintf_s(fname, "%s/%d/%d/%d/opp_%d.dat", STRA_DIR, method[m], t, g, i);
+					opp[i].output_stra(fname);
+				}
+			}
+		}
+		std::cout << "method " << method[m] << "...done" << std::endl;
+	}
+}
+inline void exp_opp_stra_disper(const std::vector<int> &method)
+{
+	std::cout << "opp stra disper" << std::endl;
+
+	char fname[50];
+	const int method_len = int(method.size());
+	std::vector<int> gene(method_len);
+	for (int i = 0; i < method_len; i++) {
+		sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[i], 0);
+		gene[i] = count_folder(fname);
+	}
+	const int min_num = *min_element(gene.begin(), gene.end());
+	if (min_num == 0) {
+		std::cout << "フォルダがありません ->exp_BestRate " << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	std::vector<std::vector<double>> csv_stra_disper;
+	std::vector<std::vector<double>> csv_eval_disper;
+	csv_stra_disper = std::vector<std::vector<double>>(min_num, std::vector<double>(method_len, 0));
+	csv_eval_disper = std::vector<std::vector<double>>(min_num, std::vector<double>(method_len, 0));
+	//m
+	for (int m = 0; m < method_len; m++) {
+		sprintf_s(fname, "%s/%d", STRA_DIR, method[m]);
+		const int trial = count_folder(fname);
+		int gene;
+		if (trial == 0) {
+			std::cout << "フォルダがありません method = " << m << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		//t
+		for (int t = 0; t < trial; t++) {
+			sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[m], t);
+			gene = count_folder(fname);
+			if (trial == 0) {
+				std::cout << "フォルダがありません method:trial = " << m << "," << t << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			//g
+			for (int g = 0; g < min_num; g++) {
+				printf("method:%d trial:%d generation:%d\n", method[m], t, g);
+				std::vector<playerNim> opp(K_UPGMA);
+				std::vector<std::vector<double>> opp_stra(K_UPGMA);
+				std::vector<std::vector<double>> opp_eval(K_UPGMA);
+				for (int i = 0; i < K_UPGMA; i++) {
+					//個体情報インプット
+					sprintf_s(fname, "%s/%d/%d/%d/opp_%d.dat", STRA_DIR, method[m], t, g, i);
+					opp[i].input_stra(fname);
+					vec2evalvec_nim(opp[i].stra, opp[i].nim_evaluation_vec);
+					opp_stra[i] = opp[i].stra;
+					opp_eval[i] = opp[i].nim_evaluation_vec;
+				}
+				csv_stra_disper[g][m] += cal_dispersion_2(opp_stra);
+				csv_eval_disper[g][m] += cal_dispersion_2(opp_eval);
+			}
+		}
+		for (int g = 0; g < min_num; g++) {
+			csv_stra_disper[g][m] /= trial;
+			csv_eval_disper[g][m] /= trial;
+		}
+		std::cout << "method_opp " << method[m] << "...done" << std::endl;
+	}
+	std::stringstream ss1, ss2;
+	ss1 << STRA_DIR << "/method_opp_stra_disper" << W_SIZE << ".csv";
+	ss2 << STRA_DIR << "/method_opp_eval_disper" << W_SIZE << ".csv";
+	CsvModules::csv_fwrite(ss1.str(), csv_stra_disper, BATTLE_PER);
+	CsvModules::csv_fwrite(ss2.str(), csv_eval_disper, BATTLE_PER);
+}
+inline void exp_pop_stra_disper(const std::vector<int> &method)
+{
+	std::cout << "opp stra disper" << std::endl;
+
+	char fname[50];
+	const int method_len = int(method.size());
+	std::vector<int> gene(method_len);
+	for (int i = 0; i < method_len; i++) {
+		sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[i], 0);
+		gene[i] = count_folder(fname);
+	}
+	const int min_num = *min_element(gene.begin(), gene.end());
+	if (min_num == 0) {
+		std::cout << "フォルダがありません ->exp_BestRate " << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	std::vector<std::vector<double>> csv_stra_disper;
+	std::vector<std::vector<double>> csv_eval_disper;
+	csv_stra_disper = std::vector<std::vector<double>>(min_num, std::vector<double>(method_len, 0));
+	csv_eval_disper = std::vector<std::vector<double>>(min_num, std::vector<double>(method_len, 0));
+	//m
+	for (int m = 0; m < method_len; m++) {
+		sprintf_s(fname, "%s/%d", STRA_DIR, method[m]);
+		const int trial = count_folder(fname);
+		int gene;
+		if (trial == 0) {
+			std::cout << "フォルダがありません method = " << m << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		//t
+		for (int t = 0; t < trial; t++) {
+			sprintf_s(fname, "%s/%d/%d", STRA_DIR, method[m], t);
+			gene = count_folder(fname);
+			if (trial == 0) {
+				std::cout << "フォルダがありません method:trial = " << m << "," << t << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			//g
+			for (int g = 0; g < min_num; g++) {
+				printf("method:%d trial:%d generation:%d\n", method[m], t, g);
+				std::vector<playerNim> opp(KO);
+				std::vector<std::vector<double>> opp_stra(KO);
+				std::vector<std::vector<double>> opp_eval(KO);
+				for (int i = 0; i < KO; i++) {
+					//個体情報インプット
+					sprintf_s(fname, "%s/%d/%d/%d/%d.dat", STRA_DIR, method[m], t, g, i);
+					opp[i].input_stra(fname);
+					vec2evalvec_nim(opp[i].stra, opp[i].nim_evaluation_vec);
+					opp_stra[i] = opp[i].stra;
+					opp_eval[i] = opp[i].nim_evaluation_vec;
+				}
+				csv_stra_disper[g][m] += cal_dispersion_2(opp_stra);
+				csv_eval_disper[g][m] += cal_dispersion_2(opp_eval);
+			}
+		}
+		for (int g = 0; g < min_num; g++) {
+			csv_stra_disper[g][m] /= trial;
+			csv_eval_disper[g][m] /= trial;
+		}
+		std::cout << "method_opp " << method[m] << "...done" << std::endl;
+	}
+	std::stringstream ss1, ss2;
+	ss1 << STRA_DIR << "/method_pop_stra_disper" << W_SIZE << ".csv";
+	ss2 << STRA_DIR << "/method_pop_eval_disper" << W_SIZE << ".csv";
+	CsvModules::csv_fwrite(ss1.str(), csv_stra_disper, BATTLE_PER);
+	CsvModules::csv_fwrite(ss2.str(), csv_eval_disper, BATTLE_PER);
 }
 
 /*手法のクラス*/
@@ -118,8 +602,6 @@ protected:
 	void output_stra(int g);
 	void cal_best(int g = 0);
 	void cal_rate();
-	void asort_index_H();
-	double pseudoF();
 	void cal_gravity_and_disper();
 	void output_opp_stra(int g);
 };
@@ -159,20 +641,14 @@ void Coans_base::output_opp_stra(int g)
 }
 void Coans_base::output_stra(int g)
 {
-	std::stringstream tmp_fname;
-	tmp_fname << "./" << STRA_DIR << "/" << method << "/" << trial << "/" << g;
-
+	char fname[50];
 	Make_Directory2(STRA_DIR, method, trial, g);
 	for (int i = 0; i < KO; i++) {
-		std::stringstream fname;
-		fname << tmp_fname.str() << "/" << i << ".dat";
-		if (!pop[i].output_stra(fname.str())) {
+		sprintf_s(fname, "%s/%d/%d/%d/%d.dat", STRA_DIR, method, trial, g, i);
+		if (!pop[i].output_stra(fname)) {
 			std::cout << "error : output_stra -> pop" << std::endl;
 			exit(EXIT_FAILURE);
 		}
-		//クリア
-		fname.str("");
-		fname.clear(std::stringstream::goodbit);
 	}
 	printf("%d:%d:%d strategy out put ...\n", method, trial, g);
 }
@@ -229,10 +705,9 @@ void Coans_base::cal_best(int g)
 }
 void Coans_base::cal_rate()
 {
-	nim nim2;
 	std::vector<double> pop_sum_eval(KO);
 	for (int i = 0; i < KO; i++) {
-		pop_sum_eval[i] = nim2.nim_evaluation(pop[i].nim_evaluation_vec) * 100;
+		pop_sum_eval[i] = evaluation(pop[i].stra);
 	}
 	//show_vec_1(sum_eval);
 	double max = *max_element(pop_sum_eval.begin(), pop_sum_eval.end());
@@ -244,7 +719,7 @@ void Coans_base::cal_rate()
 
 	std::vector<double> opp_eval(opp_num);
 	for (int i = 0; i < opp_num; i++) {
-		opp_eval[i] = nim2.nim_evaluation(opp[i].nim_evaluation_vec) * 100;
+		opp_eval[i] = evaluation(opp[i].stra);
 	}
 	max = *max_element(opp_eval.begin(), opp_eval.end());
 	min = *min_element(opp_eval.begin(), opp_eval.end());
@@ -254,75 +729,10 @@ void Coans_base::cal_rate()
 	std::cout << "　opp min currect : " << min << " %" << std::endl;
 	std::cout << "　opp ave currect : " << sum << " %" << std::endl;
 }
-void Coans_base::asort_index_H()
-{
-	std::vector<int> cr_pop(KO);
-	for (int i = 0; i < KO; i++) {
-		cr_pop[i] = pop[i].nitch;
-	}
-	const int cr_len = *max_element(cr_pop.begin(), cr_pop.end());
-	cr_index.resize(cr_len + 1);
-	//クラスタ毎に個体のインデックスを仕分けして入れる
-	int size = 0;
-	for (int i = 0; i < cr_len + 1; i++) {
-		const int count = int(std::count(cr_pop.begin(), cr_pop.end(), i));
-		if (count) {
-			cr_index[size].resize(count);
-			auto itr = std::find(cr_pop.begin(), cr_pop.end(), i);
-			cr_index[size][0] = int(std::distance(cr_pop.begin(), itr));
-
-			for (int j = 1; j < count; j++) {
-				itr = std::find(itr + 1, cr_pop.end(), i);
-				cr_index[size][j] = int(std::distance(cr_pop.begin(), itr));
-			}
-			size++;
-		}
-	}
-	if (size < cr_len + 1) {
-		const int delta = cr_len - size;
-		for (int i = 0; i < delta; i++) {
-			cr_index.erase(cr_index.end());
-		}
-	}
-}
-double Coans_base::pseudoF() 
-{
-	/*
-		クラスタの評価関数
-		分子:クラスタ間分散，分母:クラスタ内分散
-		値が大きいほど良い
-	*/
-	asort_index_H();
-
-	int size = 0;
-	double dis_T = 0;
-	//std::vector<double> all_dis(KO*(KO - 1));
-	for (int i = 0; i < KO; i++) {
-		for (int j = i; j < KO; j++, size++) {
-			dis_T += cal_euclidean(pop[i].stra, pop[j].stra);
-		}
-	}
-
-	const int cr_len = int(cr_index.size());
-	std::vector<double> cr_dis(cr_len, 0);
-	for (int i = 0; i < cr_len; i++) {
-		const int cr_len2 = int(cr_index[i].size());
-		for (int j = 0; j < cr_len2; j++) {
-			for (int k = j; k < cr_len2; k++) {
-				cr_dis[i] += cal_euclidean(pop[cr_index[i][j]].stra, pop[cr_index[i][k]].stra);
-			}
-		}
-	}
-	const double W_k = std::accumulate(cr_dis.begin(), cr_dis.end(), 0.0);
-	/*実験用*/
-	const double de = W_k / (KO - cr_len);
-	const double mo = (dis_T - W_k) / (cr_len - 1);
-	const double value_pseudoF = mo / de;
-	return value_pseudoF;
-}
 void Coans_base::cal_gravity_and_disper() 
 {
-	asort_index_H();
+	std::vector<std::vector<int>> cr_index;
+	asort_index_H(pop, cr_index);
 
 	const int cr_len = int(cr_index.size());
 	std::vector<std::vector<double>> cr_gra(cr_len);
@@ -688,7 +1098,7 @@ void coans_mode2::Crustering()
 void coans_mode2::Generate_Opp() 
 {
 	Cru_Upgma(pop);
-	choice_oppoment(pop, opp, cr_num);
+	choice_oppoment(pop, opp, K_UPGMA);
 	opp_num = int(opp.size());
 }
 
@@ -727,11 +1137,12 @@ void coans_mode3::Generate_Opp()
 class Coans_s : public Coans_base {
 	//公開メンバ
 public:
+	void main_task(); 	//改良案
 	void main_task2(); 	//改良案
+	void main_task3(); 	//改良案
 
 	//実験用
 	void exp_pop_disper();
-	void exp_upgma();
 private:
 	virtual void Crustering(int index) = 0;
 	virtual void Generate_Opp() = 0;
@@ -748,6 +1159,144 @@ protected:
 	void all_comp();
 	void cal_cr_eval();
 };
+void Coans_s::main_task() {
+	/*
+	始めだけクラスタリングして敵を選ぶ
+	*/
+	std::cout << "method     :" << method << std::endl;
+	std::cout << "trial      :" << trial << std::endl;
+	std::cout << "pop_size   :" << KO << std::endl;
+	std::cout << "child_size :" << CHILD << std::endl;
+	std::cout << "w_size     :" << W_SIZE << std::endl;
+	std::cout << "K          :" << K_UPGMA << std::endl;
+
+	create_pop();
+	if (GAME_NUM == 1) {
+		for (int i = 0; i < KO; i++) {
+			vec2evalvec_nim(pop[i].stra, pop[i].nim_evaluation_vec);
+		}
+	}
+
+	pop_eval.assign(KO, 0);
+	Generate_Opp();
+	output_stra(0);
+	output_opp_stra(0);
+	//cal_rate();
+	machup = 0;
+	int machup_index = 1;
+	//cal_rate();
+
+	double rate = 65.0;
+	int end_flag = 1;
+	double loop_start = clock();
+	//ループスタート
+	//std::cout << "1,";
+	while (END_GA > machup) {
+		//std::cout << "1,";
+		//main parent
+		//const int cr_tmp_index = cal_minIndex(cr_eval);
+		//const int cr_len = int(cr_index[cr_tmp_index].size());
+		const int main = choice_main();
+		Crustering(main); //crustering
+						  //sub parent
+		if (pop[main].List1.empty()) {
+			std::cout << "list1が空です main_tasks" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		else {
+			std::vector<int> sub(PARENT);
+			std::vector<int> tmp_list1;
+			tmp_list1 = pop[main].List1;
+			for (int i = 0; i < PARENT; i++) {
+				const int index = GetRand_Int(int(tmp_list1.size()));
+				sub[i] = tmp_list1[index];
+				tmp_list1.erase(tmp_list1.begin() + index);
+			}
+			//std::cout << "2,";
+			child.resize(CHILD);
+
+			//cross
+			Generate_Opp();
+			EXLM_S(main, sub, pop, child, opp, STEP_SIZE);
+			machup += (PARENT * 2 * opp_num) * battle_n;
+			//std::cout << "3,";
+
+			std::vector<double> opp_eval(opp_num, 0);
+			competition_single(pop[main], opp);
+			machup += opp_num * battle_n;
+			for (int i = 0; i < opp_num; i++) {
+				opp[i].cal_fitness();
+				opp_eval[i] += opp[i].eval;
+			}
+			for (auto &pi : sub) {
+				competition_single(pop[pi], opp);
+				for (int i = 0; i < opp_num; i++) {
+					opp[i].cal_fitness();
+					opp_eval[i] += opp[i].eval;
+				}
+			}
+			machup += (PARENT*opp_num) * battle_n;
+			competition_multi(child, opp);
+			machup += (CHILD*opp_num) * battle_n;
+			for (int i = 0; i < opp_num; i++) {
+				opp[i].cal_fitness();
+				opp_eval[i] += opp[i].eval;
+			}
+			//std::cout << "5,";
+			//cal_fitness
+			pop[main].cal_fitness();
+			for (int i = 0; i < CHILD; i++) {
+				child[i].cal_fitness();
+			}
+			for (auto &pi : sub) {
+				pop[pi].cal_fitness();
+			}
+			//Best -> pop
+			const int index = Choice_Best_Index();
+			if (index != 0) {
+				if (pop[main].eval < child[index].eval) {
+					//const int tmp_nitch = pop[main].nitch;
+					pop[main] = child[index];
+					//pop[main].nitch = tmp_nitch;
+				}
+			}
+			//child -> sub
+			child2sub(sub, child);
+			for (auto &pi : sub) {
+				pop_eval[pi] = pop[pi].eval;
+			}
+			if (WIN_RATE < child[index].eval / opp_num*battle_n) {
+				const int min_index = cal_minIndex(opp_eval);
+				const double opp_min = opp_eval[min_index] / double((CHILD + PARENT + 1)*battle_n);
+				if (opp_min < child[index].eval / opp_num*battle_n) {
+					opp[min_index] = child[index];
+				}
+			}
+			//std::cout << "machup = " << machup << std::endl;
+			//for experiment
+			if (BATTLE_PER*machup_index < machup) {
+				std::cout << "machup = " << machup;
+				std::cout << std::endl;
+				const double loop_end = clock();
+				printf("%d:%d:%I64d/%d　...%d[sec]\n", method, trial, machup, END_GA, int((loop_end - loop_start) / CLOCKS_PER_SEC));
+
+				output_stra(machup_index);
+				output_opp_stra(machup_index);
+				//cal_rate();
+				//Cru_Upgma(pop);
+				//cal_gravity_and_disper();
+				machup_index++;
+				loop_start = clock();
+			}
+			//reInit
+			pop[main].Init_0();
+			for (auto &pi : sub) {
+				pop[pi].Init_0();
+			}
+			//exit(EXIT_FAILURE);
+		}
+	}
+}
 void Coans_s::main_task2() {
 	/*
 		始めだけクラスタリングして敵を選ぶ
@@ -769,11 +1318,9 @@ void Coans_s::main_task2() {
 	pop_eval.assign(KO, 0);
 	output_stra(0);
 
-	Cru_Upgma(pop);
-	cr_num = int(opp.size());
 	Generate_Opp();
 	output_opp_stra(0);
-	cal_rate();
+	//cal_rate();
 	machup = 0;
 	int machup_index = 1;
 	//cal_rate();
@@ -873,7 +1420,7 @@ void Coans_s::main_task2() {
 
 				output_stra(machup_index);
 				output_opp_stra(machup_index);
-				cal_rate();
+				//cal_rate();
 				//Cru_Upgma(pop);
 				//cal_gravity_and_disper();
 				machup_index++;
@@ -1054,45 +1601,6 @@ void Coans_s::exp_pop_disper()
 	}
 	CsvModules::csv_fwrite("disper_4.csv", disper, KO*(CHILD + 1) * 2 * 10);
 }
-void Coans_s::exp_upgma()
-{
-	std::stringstream fname;
-	fname << "./nim/" << method << "0";
-	const int folder_num = count_folder(fname.str());
-
-	std::vector<std::vector<double>> cr_disper(folder_num);
-
-	std::cout << "folder : " << folder_num << std::endl;
-
-	pop.resize(KO);
-	nim nim2;
-	for (int f = 0; f < folder_num; f++) {
-		for (int i = 0; i < KO; i++) {
-			//個体情報インプット
-			char fname[50];
-			sprintf_s(fname, "./nim/%d/%d/%d/%d.dat", method, 0, f, i);
-			pop[i].Init_pn();
-			pop[i].input_stra(fname);
-			pop[i].eval = nim2.nim_evaluation(pop[i].nim_evaluation_vec) * 100;
-		}
-		Cru_Upgma(pop);
-
-		asort_index_H();
-
-		const int size = int(cr_index.size());
-		//重心
-		std::vector<std::vector<double>> cr_gra(size);
-		//分散
-		std::vector<double> cr_disper(size);
-		for (int i = 0; i < size; i++) {
-			//分散と重心
-			//cr_disper[i] = distance_disper(cr_index[i], cr_gra[i]);
-		}
-		//const double disper = cal_dispersion_1(cr_gra);
-		show_vec_1(cr_disper);
-		std::cout << "folder : " << f << "...end" << std::endl;
-	}
-}
 int Coans_s::choice_main() 
 {
 	double sum_eval = 0;
@@ -1190,6 +1698,190 @@ void mode4::Crustering(int index) {
 }
 void mode4::Generate_Opp()
 {
-	choice_oppoment(pop, opp, cr_num);
+	Cru_Upgma(pop);
+	choice_oppoment(pop, opp, K_UPGMA);
+	opp_num = int(opp.size());
+}
+
+class mode5 : public Coans_s {
+public:
+	mode5(int t, int k = 0) {
+		trial = t;
+		method = 5;
+		machup = 0;					//対戦回数
+	}
+private:
+	virtual void Crustering(int index);
+	virtual void Generate_Opp();
+};
+void mode5::Crustering(int index) {
+	//近傍リスト生成
+	std::vector<double> dis(KO);
+	pop[index].List1.resize(K_List1);
+	for (int i = 0; i < KO; i++) {
+		if (i == index) {
+			dis[i] = 10000;
+		}
+		else {
+			dis[i] = cal_euclidean(pop[index].stra, pop[i].stra);
+		}
+	}
+	for (int i = 0; i < K_List1; i++) {
+		const int min_index = cal_minIndex(dis);
+		pop[index].List1[i] = min_index;
+		dis[min_index] = 10000;
+	}
+}
+void mode5::Generate_Opp()
+{
+	Cru_Upgma(pop);
+	choice_oppoment(pop, opp, K_UPGMA);
+	opp_num = int(opp.size());
+}
+
+class mode6 : public Coans_s {
+public:
+	mode6(int t, int k = 0) {
+		trial = t;
+		method = 6;
+		machup = 0;					//対戦回数
+	}
+	void main_task3();
+private:
+	virtual void Crustering(int index);
+	virtual void Generate_Opp();
+};
+void mode6::main_task3() {
+	/*
+	始めだけクラスタリングして敵を選ぶ
+	*/
+	std::cout << "method     :" << method << std::endl;
+	std::cout << "trial      :" << trial << std::endl;
+	std::cout << "pop_size   :" << KO << std::endl;
+	std::cout << "child_size :" << CHILD << std::endl;
+	std::cout << "w_size     :" << W_SIZE << std::endl;
+	std::cout << "K          :" << K_UPGMA << std::endl;
+	create_pop();
+	if (GAME_NUM == 1) {
+		for (int i = 0; i < KO; i++) {
+			vec2evalvec_nim(pop[i].stra, pop[i].nim_evaluation_vec);
+		}
+	}
+	output_stra(0);
+
+	Generate_Opp();
+	output_opp_stra(0);
+	//cal_rate();
+	machup = 0;
+	int machup_index = 1;
+	//cal_rate();
+
+	double loop_start = clock();
+	//ループスタート
+	//std::cout << "1,";
+	while (END_GA > machup) {
+		//std::cout << "1,";
+		//main parent
+		const int main = GetRand_Int(KO);
+		Crustering(main); //crustering
+						  //sub parent
+		if (pop[main].List1.empty()) {
+			std::cout << "list1が空です main_tasks" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		else {
+			std::vector<int> sub(PARENT);
+			std::vector<int> tmp_list1;
+			tmp_list1 = pop[main].List1;
+			for (int i = 0; i < PARENT; i++) {
+				const int index = GetRand_Int(int(tmp_list1.size()));
+				sub[i] = tmp_list1[index];
+				tmp_list1.erase(tmp_list1.begin() + index);
+			}
+			//std::cout << "2,";
+			child.resize(CHILD);
+
+			//cross
+			//mainpare vs 
+			//std::cout << "3,";
+			ExtensionXLM(main, sub, pop, child);
+			//std::cout << "4,";
+			Generate_Opp();
+			//subpare vs 
+			competition_single(pop[main], opp);
+			machup += opp_num * battle_n;
+			for (auto &pi : sub) {
+				competition_single(pop[pi], opp);
+			}
+			machup += (PARENT*opp_num) * battle_n;
+			//child vs 
+			competition_multi(child, opp);
+			machup += (CHILD*opp_num) * battle_n;
+			//std::cout << "5,";
+			//cal_fitness
+			pop[main].cal_fitness();
+			for (int i = 0; i < CHILD; i++) {
+				child[i].cal_fitness();
+			}
+			for (auto &pi : sub) {
+				pop[pi].cal_fitness();
+			}
+			//Best -> pop
+			//std::cout << "6,";
+			const int index = Choice_Best_Index();
+			if (index != 0) {
+				if (pop[main].eval < child[index].eval) {
+					//const int tmp_nitch = pop[main].nitch;
+					pop[main] = child[index];
+					//pop[main].nitch = tmp_nitch;
+				}
+			}
+			//child -> sub
+			//std::cout << "7,";
+			child2sub(sub, child);
+			//std::cout << "machup = " << machup << std::endl;
+			//for experiment
+			if (BATTLE_PER*machup_index < machup) {
+				//std::cout << "7,";
+				const double loop_end = clock();
+				printf("%d:%d:%I64d/%d　...%d[sec]\n", method, trial, machup, END_GA, int((loop_end - loop_start) / CLOCKS_PER_SEC));
+
+				output_stra(machup_index);
+				output_opp_stra(machup_index);
+				machup_index++;
+				loop_start = clock();
+			}
+			//std::cout << "8,";
+			//reInit
+			pop[main].Init_0();
+			for (auto &pi : sub) {
+				pop[pi].Init_0();
+			}
+			//exit(EXIT_FAILURE);
+		}
+	}
+}
+void mode6::Crustering(int index) {
+	//近傍リスト生成
+	std::vector<double> dis(KO);
+	pop[index].List1.resize(K_List1);
+	for (int i = 0; i < KO; i++) {
+		if (i == index) {
+			dis[i] = 10000;
+		}
+		else {
+			dis[i] = cal_euclidean(pop[index].stra, pop[i].stra);
+		}
+	}
+	for (int i = 0; i < K_List1; i++) {
+		const int min_index = cal_minIndex(dis);
+		pop[index].List1[i] = min_index;
+		dis[min_index] = 10000;
+	}
+}
+void mode6::Generate_Opp()
+{
+	Cru_Upgma(pop);
+	choice_oppoment(pop, opp, K_UPGMA);
 	opp_num = int(opp.size());
 }
